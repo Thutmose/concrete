@@ -1,6 +1,6 @@
 package thutconcrete.common;
 
-import thutconcrete.common.BlocksItems.BlockRebar;
+import thutconcrete.common.blocks.BlockRebar;
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
 import net.minecraft.creativetab.CreativeTabs;

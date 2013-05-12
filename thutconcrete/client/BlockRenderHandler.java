@@ -3,7 +3,7 @@ package thutconcrete.client;
 
 import org.lwjgl.opengl.GL11;
 
-import thutconcrete.common.BlocksItems.*;
+import thutconcrete.common.blocks.*;
 import thutconcrete.common.utils.*;
 import net.minecraft.block.Block;
 import net.minecraft.client.renderer.EntityRenderer;
@@ -23,28 +23,28 @@ public class BlockRenderHandler implements ISimpleBlockRenderingHandler{
     {
         Tessellator tessellator = Tessellator.instance;
         float f = 1.0F;
-        Icon icon = null;
-        Icon icon1 = null;
+        Icon icon = parblock.getIcon(0, 0);
+        Icon icon1 = parblock.getIcon(0, 0);
         boolean concrete = false;
         boolean rebar = false;
         if(parblock instanceof BlockLiquidREConcrete){
         	BlockLiquidREConcrete block = (BlockLiquidREConcrete)parblock;
-        	icon = block.blockIcon;
+        	icon = block.getIcon(0, 0);
         	icon1 = block.theIcon;
         	concrete = true;
         	rebar = true;
         }
         if(parblock instanceof BlockREConcrete){
         	BlockREConcrete block = (BlockREConcrete)parblock;
-        	icon = block.blockIcon;
+        	icon = block.getIcon(0, 0);
         	icon1 = block.theIcon;
         	concrete = true;
         	rebar = true;
         }
         if(parblock instanceof BlockRebar){
         	BlockRebar block = (BlockRebar)parblock;
-        	icon = block.blockIcon;
-        	icon1 = block.theIcon;
+        	icon = block.getIcon(0, 0);
+        	icon1 = block.getIcon(0, 0);
         	rebar = true;
         	
         }
