@@ -1,4 +1,4 @@
-package concrete.common.utils;
+package thutconcrete.common.utils;
 
 import net.minecraft.block.Block;
 import net.minecraft.util.Icon;

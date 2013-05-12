@@ -1,8 +1,8 @@
-package concrete.client;
+package thutconcrete.client;
 
 import java.util.EnumSet;
 
-import concrete.common.ticks.Ticker;
+import thutconcrete.common.ticks.Ticker;
 
 import cpw.mods.fml.common.ITickHandler;
 import cpw.mods.fml.common.TickType;

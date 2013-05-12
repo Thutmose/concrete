@@ -1,4 +1,4 @@
-package concrete.common.BlocksItems;
+package thutconcrete.common.BlocksItems;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -102,7 +102,7 @@ public class BlockLiquidConcrete extends Block16Fluid {
 	@SideOnly(Side.CLIENT)
     public void registerIcons(IconRegister par1IconRegister)
     {
-        this.blockIcon = par1IconRegister.registerIcon("concrete:" + this.getUnlocalizedName2());
+        this.blockIcon = par1IconRegister.registerIcon("thutconcrete:" + this.getUnlocalizedName2());
     }
 	
 	

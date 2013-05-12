@@ -1,4 +1,4 @@
-package concrete.common.BlocksItems;
+package thutconcrete.common.BlocksItems;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -105,8 +105,8 @@ public class BlockDust extends Block16Fluid
      */
     public void registerIcons(IconRegister par1IconRegister)
     {
-        this.blockIcon = par1IconRegister.registerIcon("concrete:" + this.getUnlocalizedName2());
-        this.iconFloatingDust = par1IconRegister.registerIcon("concrete:" + "dustCloud");
+        this.blockIcon = par1IconRegister.registerIcon("thutconcrete:" + this.getUnlocalizedName2());
+        this.iconFloatingDust = par1IconRegister.registerIcon("thutconcrete:" + "dustCloud");
     }
     
     @SideOnly(Side.CLIENT)

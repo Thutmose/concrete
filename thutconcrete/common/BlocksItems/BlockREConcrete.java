@@ -1,6 +1,9 @@
-package concrete.common.BlocksItems;
+package thutconcrete.common.BlocksItems;
 
 import java.util.Random;
+
+import thutconcrete.client.BlockRenderHandler;
+import thutconcrete.common.utils.IRebar;
 
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
@@ -16,30 +19,31 @@ import net.minecraft.world.Explosion;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
 
-public class BlockConcrete extends Block16Fluid{
+public class BlockREConcrete extends Block16Fluid implements IRebar{
 	
 	public static Block instance;
-	public static int resistance = 10;
+	public static int resistance = 100;
 	public static float hardness = 1;
 	static Integer[][] data;
-	
-	public BlockConcrete(int par1) {
-		super(par1, Material.rock);
-		setUnlocalizedName("concrete");
+
+	public BlockREConcrete(int par1) {
+		super(par1,Material.rock);
+		setUnlocalizedName("REconcrete");
 		this.instance = this;
 	}
+	
+	
 	@Override
     public void onBlockAdded(World worldObj, int x, int y, int z) {
 		if(data==null){
 			data = new Integer[][]{
-				{BlockConcrete.instance.blockID},
+				{BlockREConcrete.instance.blockID},
 				{},
 				{null,0,15,null}
 			};
 			fluid16Blocks.put(this.blockID,data);
 			}
     }
-	
 	@Override
 	public void setBlockBoundsBasedOnState(IBlockAccess par1IBlockAccess, int par2, int par3, int par4)
     {
@@ -62,12 +66,6 @@ public class BlockConcrete extends Block16Fluid{
         float f = 0.0625F;
         return AxisAlignedBB.getAABBPool().getAABB((double)par2 + this.minX, (double)par3 + this.minY, (double)par4 + this.minZ,
         								(double)par2 + this.maxX, (double)((float)par3 + (float)l * f), (double)par4 + this.maxZ);
-    }
-	
-	@SideOnly(Side.CLIENT)
-    public void registerIcons(IconRegister par1IconRegister)
-    {
-        this.blockIcon = par1IconRegister.registerIcon("concrete:" + this.getUnlocalizedName2());
     }
 	
 	@Override
@@ -96,14 +94,75 @@ public class BlockConcrete extends Block16Fluid{
         return (f*hardness);
 	}
 	
-	 @SideOnly(Side.CLIENT)
-
-	    /**
-	     * Retrieves the block texture to use based on the display side. Args: iBlockAccess, x, y, z, side
-	     */
-	    public Icon getBlockTexture(IBlockAccess par1IBlockAccess, int par2, int par3, int par4, int par5)
-	    {
-	           return this.blockIcon;
-	    }
+	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	@SideOnly(Side.CLIENT)
+	public void registerIcons(IconRegister par1IconRegister)
+	{
+	this.blockIcon = par1IconRegister.registerIcon("thutconcrete:" + BlockConcrete.instance.getUnlocalizedName2());
+	this.theIcon = par1IconRegister.registerIcon("thutconcrete:" + "rebarRusty");
+	}
 	
+	@SideOnly(Side.CLIENT)
+	
+	/**
+	* Returns the texture index of the thin side of the pane.
+	*/
+	public Icon getSideTextureIndex()
+	{
+	return this.theIcon;
+	}
+	
+	@SideOnly(Side.CLIENT)
+	public Icon theIcon;
+	@SideOnly(Side.CLIENT)
+	public Icon blockIcon;
+	
+	@SideOnly(Side.CLIENT)
+	
+	/**
+	* Retrieves the block texture to use based on the display side. Args: iBlockAccess, x, y, z, side
+	*/
+	public Icon getBlockTexture(IBlockAccess par1IBlockAccess, int par2, int par3, int par4, int par5)
+	{
+	return this.blockIcon;
+	}
+
+    /**
+     * The type of render function that is called for this block
+     */
+    @Override
+    public int getRenderType()
+    {
+        return BlockRenderHandler.ID;
+    }
+    
+	public boolean[] sides(IBlockAccess worldObj, int x, int y, int z) {
+		boolean[] side = new boolean[6];
+    	int[][]sides = {{1,0,0},{-1,0,0},{0,0,1},{0,0,-1},{0,1,0},{0,-1,0}};
+		for(int i = 0; i<6; i++){
+			int id = worldObj.getBlockId(x+sides[i][0], y+sides[i][1], z+sides[i][2]);
+			Block block = Block.blocksList[id];
+			side[i] = (block instanceof IRebar);
+		}
+		return side;
+	}
+
+	@Override
+	public boolean[] sides(World worldObj, int x, int y, int z) {
+
+		boolean[] side = new boolean[6];
+    	int[][]sides = {{1,0,0},{-1,0,0},{0,0,1},{0,0,-1},{0,1,0},{0,-1,0}};
+		for(int i = 0; i<6; i++){
+			int id = worldObj.getBlockId(x+sides[i][0], y+sides[i][1], z+sides[i][2]);
+			Block block = Block.blocksList[id];
+			side[i] = (block instanceof IRebar);
+		}
+		return side;
+	}
+
+	@Override
+	public Icon getIcon(Block block) {
+		return this.blockIcon;
+	}
+ 
 }

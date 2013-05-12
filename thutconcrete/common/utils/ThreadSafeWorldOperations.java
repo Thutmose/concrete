@@ -1,4 +1,4 @@
-package concrete.common.utils;
+package thutconcrete.common.utils;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -21,8 +21,8 @@ import net.minecraft.world.chunk.Chunk;
 import net.minecraftforge.liquids.ILiquid;
 import net.minecraftforge.liquids.LiquidContainerRegistry;
 import net.minecraftforge.liquids.LiquidStack;
-import concrete.common.*;
-import concrete.common.ticks.Ticker;
+import thutconcrete.common.*;
+import thutconcrete.common.ticks.Ticker;
 
 public class ThreadSafeWorldOperations extends Ticker
 {
@@ -98,7 +98,7 @@ public class ThreadSafeWorldOperations extends Ticker
 	}
 	
 	public boolean checkAABB(World worldObj,AxisAlignedBB aabb){
-		return worldObj.isAABBNonEmpty(aabb);
+		return worldObj.checkBlockCollision(aabb);
 	}
 	
 	public void safeUpdateBlockRange(World worldObj,double x, double y, double z,double r){

@@ -1,7 +1,7 @@
-package concrete.common;
+package thutconcrete.common;
 
-import concrete.common.BlocksItems.*;
-import concrete.common.ticks.TickHandler;
+import thutconcrete.common.BlocksItems.*;
+import thutconcrete.common.ticks.TickHandler;
 import net.minecraft.block.Block;
 import net.minecraft.entity.Entity;
 import cpw.mods.fml.common.Mod;
@@ -24,7 +24,7 @@ packetHandler = PacketHandler.class)
 
 public class concreteCore {
 
-	@SidedProxy(clientSide = "concrete.client.ClientProxy", serverSide = "concrete.common.CommonProxy")
+	@SidedProxy(clientSide = "thutconcrete.client.ClientProxy", serverSide = "thutconcrete.common.CommonProxy")
 	public static CommonProxy commproxy;
 	public static TickHandler tickHandler = new TickHandler();
 	

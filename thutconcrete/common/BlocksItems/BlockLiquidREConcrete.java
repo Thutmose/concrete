@@ -1,11 +1,11 @@
-package concrete.common.BlocksItems;
+package thutconcrete.common.BlocksItems;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-import concrete.client.BlockRenderHandler;
-import concrete.common.utils.IRebar;
+import thutconcrete.client.BlockRenderHandler;
+import thutconcrete.common.utils.IRebar;
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
 import net.minecraft.block.Block;
@@ -103,8 +103,8 @@ public class BlockLiquidREConcrete extends Block16Fluid implements IRebar{
 	@SideOnly(Side.CLIENT)
     public void registerIcons(IconRegister par1IconRegister)
     {
-        this.blockIcon = par1IconRegister.registerIcon("concrete:concreteLiquid");
-    	this.theIcon = par1IconRegister.registerIcon("concrete:" + "rebar");
+        this.blockIcon = par1IconRegister.registerIcon("thutconcrete:concreteLiquid");
+    	this.theIcon = par1IconRegister.registerIcon("thutconcrete:" + "rebar");
     }
 	
     @SideOnly(Side.CLIENT)

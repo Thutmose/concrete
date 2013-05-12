@@ -1,10 +1,10 @@
-package concrete.common.BlocksItems;
+package thutconcrete.common.BlocksItems;
 
 import java.util.List;
 
-import concrete.client.BlockRenderHandler;
-import concrete.common.concreteCore;
-import concrete.common.utils.IRebar;
+import thutconcrete.client.BlockRenderHandler;
+import thutconcrete.common.concreteCore;
+import thutconcrete.common.utils.IRebar;
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
 import net.minecraft.block.Block;
@@ -118,8 +118,8 @@ public class BlockRebar extends Block implements IRebar{
      */
     public void registerIcons(IconRegister par1IconRegister)
     {
-        this.blockIcon = par1IconRegister.registerIcon("concrete:" + this.getUnlocalizedName2());
-        this.theIcon = par1IconRegister.registerIcon("concrete:" + this.getUnlocalizedName2());
+        this.blockIcon = par1IconRegister.registerIcon("thutconcrete:" + this.getUnlocalizedName2());
+        this.theIcon = par1IconRegister.registerIcon("thutconcrete:" + this.getUnlocalizedName2());
     }
 
 	public boolean[] sides(IBlockAccess worldObj, int x, int y, int z) {

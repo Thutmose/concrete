@@ -1,9 +1,9 @@
-package concrete.common.BlocksItems;
+package thutconcrete.common.BlocksItems;
 
 import java.util.*;
 
-import concrete.common.concreteCore;
-import concrete.common.utils.*;
+import thutconcrete.common.concreteCore;
+import thutconcrete.common.utils.*;
 
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
@@ -569,7 +569,7 @@ public class Block16Fluid extends Block
      */
     public void registerIcons(IconRegister par1IconRegister)
     {
-        this.blockIcon = par1IconRegister.registerIcon("concrete:" + this.getUnlocalizedName2());
+        this.blockIcon = par1IconRegister.registerIcon("thutconcrete:" + this.getUnlocalizedName2());
     }
     
     @SideOnly(Side.CLIENT)

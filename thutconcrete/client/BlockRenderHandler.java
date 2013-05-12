@@ -1,10 +1,10 @@
-package concrete.client;
+package thutconcrete.client;
 
 
 import org.lwjgl.opengl.GL11;
 
-import concrete.common.BlocksItems.*;
-import concrete.common.utils.*;
+import thutconcrete.common.BlocksItems.*;
+import thutconcrete.common.utils.*;
 import net.minecraft.block.Block;
 import net.minecraft.client.renderer.EntityRenderer;
 import net.minecraft.client.renderer.RenderBlocks;

@@ -1,4 +1,4 @@
-package concrete.common;
+package thutconcrete.common;
 
 import cpw.mods.fml.common.registry.GameRegistry;
 

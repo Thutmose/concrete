@@ -1,6 +1,6 @@
-package concrete.client;
+package thutconcrete.client;
 
-import concrete.common.CommonProxy;
+import thutconcrete.common.CommonProxy;
 import cpw.mods.fml.client.registry.ClientRegistry;
 import cpw.mods.fml.client.registry.RenderingRegistry;
 import cpw.mods.fml.common.registry.TickRegistry;
