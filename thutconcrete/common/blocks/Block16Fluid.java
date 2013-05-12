@@ -45,6 +45,9 @@ public class Block16Fluid extends Block
 	private Random r = new Random();
 	private LinearAlgebra vec;
 	private ThreadSafeWorldOperations safe = new ThreadSafeWorldOperations();
+	private boolean opaque = false;
+	
+	public static double ONE_MINUS_SOLIDIFY_CHANCE = 0.9996;
 	
 	public List<Integer> breaks = new ArrayList<Integer>();
 	public static Map<Integer, Integer[][]> fluid16Blocks = new HashMap<Integer, Integer[][]>();
@@ -85,7 +88,7 @@ public class Block16Fluid extends Block
      */
     public boolean isOpaqueCube()
     {
-        return false;
+        return opaque;
     }
  
     /**
@@ -154,7 +157,6 @@ public class Block16Fluid extends Block
     public void onBlockPlacedBy(World worldObj,int x,int y,int z,EntityLiving entity, ItemStack item){
     	
     	this.merge(worldObj, x, y, z, x, y-1, z);
-    	
     	tickSides(worldObj,x,y,z);
     }
     
@@ -169,14 +171,15 @@ public class Block16Fluid extends Block
     	while(fall||spread){
     		fall = this.tryFall(worldObj, x, y, z);
 			spread = this.trySpread(worldObj, x, y, z);
+			
+			 int num = canHarden(worldObj, x, y, z);
+			 for(int i=0;i<num;i++)
+			 if(Math.random()>ONE_MINUS_SOLIDIFY_CHANCE){
+				 worldObj.setBlock(x, y, z, getTurnToID(worldObj.getBlockId(x, y, z)), worldObj.getBlockMetadata(x, y, z), 3);
+			 }
 			tickSides(worldObj,x,y,z);
     	}
     	
-		 int num = canHarden(worldObj, x, y, z);
-		 for(int i=0;i<num;i++)
-		 if(Math.random()>0.999){
-			 worldObj.setBlock(x, y, z, getTurnToID(worldObj.getBlockId(x, y, z)), worldObj.getBlockMetadata(x, y, z), 3);
-		 }
     	
     	
     }
@@ -257,7 +260,13 @@ public class Block16Fluid extends Block
         int meta1 = safe.meta;
         Block block1 = safe.block;
         boolean oneOfUs = (block1 instanceof Block16Fluid);
+        
         boolean canBreak = willBreak(id1);
+        if(canBreak){
+        	safe.safeSet(worldObj, x1, y1, z1, 0, 0);
+        	id1 = 0;
+        	meta1=0;
+        }
         int returnToID = getReturnToID(id);
         boolean changed = false;
         boolean combine = willCombine(id, id1);
@@ -288,7 +297,7 @@ public class Block16Fluid extends Block
         safe.safeLookUp(worldObj,x, y, z);
         int id = safe.ID;
         int meta = safe.meta;
-        if(meta==0||id!=this.blockID){return false;}
+        if(meta==0){return false;}
         safe.safeLookUp(worldObj,x1, y1, z1);
         int id1 = safe.ID;
         int meta1 = safe.meta;
@@ -298,6 +307,14 @@ public class Block16Fluid extends Block
         boolean changed = false;
         boolean oneOfUs = (block1 instanceof Block16Fluid);
         boolean canBreak = willBreak(id1);
+        
+
+        if(canBreak){
+        	safe.safeSet(worldObj, x1, y1, z1, 0, 0);
+        	id1 = 0;
+        	meta1=0;
+        }
+        
         boolean combine = willCombine(id, id1);
         int idCombine = getCombineID(id, id1);
         int returnToID = getReturnToID(id);

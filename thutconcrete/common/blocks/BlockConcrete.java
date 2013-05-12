@@ -72,10 +72,11 @@ public class BlockConcrete extends Block16Fluid{
 	
 	@Override
 	public void updateTick(World worldObj, int x, int y, int z, Random par5Random){
+		int meta = worldObj.getBlockMetadata(x, y, z);
+		if(meta==15)worldObj.setBlock(x, y, z, BlockFullSolidConcrete.instance.blockID, 8, 3);
 	}
 	
 	public void onBlockClicked(World worldObj, int x, int y, int z, EntityPlayer player){
-		System.out.println(this.blockResistance);
 		this.setResistanceByMeta(worldObj.getBlockMetadata(x, y, z));
 	}
 	

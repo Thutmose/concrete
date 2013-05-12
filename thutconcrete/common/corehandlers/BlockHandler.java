@@ -3,12 +3,7 @@ package thutconcrete.common.corehandlers;
 import cpw.mods.fml.common.registry.GameRegistry;
 import cpw.mods.fml.common.registry.LanguageRegistry;
 import net.minecraft.block.Block;
-import thutconcrete.common.blocks.BlockConcrete;
-import thutconcrete.common.blocks.BlockDust;
-import thutconcrete.common.blocks.BlockLiquidConcrete;
-import thutconcrete.common.blocks.BlockLiquidREConcrete;
-import thutconcrete.common.blocks.BlockREConcrete;
-import thutconcrete.common.blocks.BlockRebar;
+import thutconcrete.common.blocks.*;
 
 public class BlockHandler {
 
@@ -33,6 +28,8 @@ public class BlockHandler {
 				new BlockLiquidConcrete(id++),
 				new BlockREConcrete(id++),
 				new BlockLiquidREConcrete(id++),
+				new BlockFullSolidREConcrete(id++),
+				new BlockFullSolidConcrete(id++),
 			};
 
 		registerBlocks();

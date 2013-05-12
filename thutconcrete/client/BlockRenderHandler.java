@@ -233,7 +233,7 @@ public class BlockRenderHandler implements ISimpleBlockRenderingHandler{
 	private void tessAddCuboid(Tessellator tessellator, Icon icon, double xMin, double zMin, double yMin, double xMax, double zMax, double yMax){
 		
         double d0 = (double)icon.getMinU();
-        double d1 = (double)icon.getInterpolatedU(8.0D);
+        double d1 = (double)icon.getInterpolatedU(16.0D);
         double d2 = (double)icon.getMaxU();
         double d3 = (double)icon.getMinV();
         double d4 = (double)icon.getMaxV();
