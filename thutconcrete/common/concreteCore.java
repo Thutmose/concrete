@@ -77,6 +77,7 @@ public class ConcreteCore {
 		blockList = new BlockHandler(config);
 		items = itemList.items;
 		blocks = blockList.blocks;
+		
 	}
 	
 	static int entityID=0;
