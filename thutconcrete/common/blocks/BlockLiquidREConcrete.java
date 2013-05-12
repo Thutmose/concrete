@@ -69,7 +69,7 @@ public class BlockLiquidREConcrete extends Block16Fluid implements IRebar{
 	
 	private void setData(){
 		data = new Integer[][]{
-				{0,0,BlockREConcrete.instance.blockID},
+				{BlockRebar.instance.blockID,0,BlockREConcrete.instance.blockID},
 				{BlockREConcrete.instance.blockID,BlockREConcrete.instance.blockID,BlockREConcrete.instance.blockID,BlockREConcrete.instance.blockID,0},
 				{	
 					BlockLiquidREConcrete.instance.blockID+4096*BlockLiquidREConcrete.instance.blockID,

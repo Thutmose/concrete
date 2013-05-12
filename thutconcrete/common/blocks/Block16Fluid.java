@@ -264,7 +264,6 @@ public class Block16Fluid extends Block
         int idCombine = getCombineID(id, id1);
 
         if(combine){
-        	System.out.println("M Case1");
         	if(!oneOfUs)meta1 = -1;
         	while(meta>=0&&meta1<15){
         		meta--;
@@ -302,18 +301,36 @@ public class Block16Fluid extends Block
         boolean combine = willCombine(id, id1);
         int idCombine = getCombineID(id, id1);
         int returnToID = getReturnToID(id);
+        int idHarden = getTurnToID(worldObj.getBlockId(x, y, z));
+        
 
      
         if(combine){
         	if(!oneOfUs)meta1 = -1;
-        	while(meta>(meta1+spread)&&meta1<15){
-        		meta--;
-        		meta1++;
-        		safe.safeSet(worldObj, x1, y1, z1, idCombine, meta1);
-        		safe.safeSet(worldObj, x, y, z, id, meta);
-        		changed = true;
+        	
+        	if(id1!=idHarden){
+	        	while(meta>(meta1+spread)&&meta1<15){
+	        		meta--;
+	        		meta1++;
+	        		safe.safeSet(worldObj, x1, y1, z1, idCombine, meta1);
+	        		safe.safeSet(worldObj, x, y, z, id, meta);
+	        		changed = true;
+	        	}
+	        	return changed;
+        	}else{
+        		if(meta>(meta1+1+spread)&&meta1<15){
+    	        	while(meta>(meta1+1+spread)&&meta1<15){
+    	        		meta--;
+    	        		meta1++;
+    	        		safe.safeSet(worldObj, x1, y1, z1, idCombine, meta1);
+    	        		safe.safeSet(worldObj, x, y, z, id, meta);
+    	        		changed = true;
+    	        	}
+    	        	return changed;
+        		}
+        		
         	}
-        	return changed;
+        	
         }
         
         return false;
