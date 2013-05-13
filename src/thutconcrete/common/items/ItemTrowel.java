@@ -12,6 +12,8 @@ import net.minecraft.world.World;
 
 import thutconcrete.common.ConcreteCore;
 import thutconcrete.common.blocks.Block16Fluid;
+import thutconcrete.common.blocks.BlockConcrete;
+import thutconcrete.common.blocks.BlockREConcrete;
 import thutconcrete.common.items.ItemConcreteDust;
 import thutconcrete.common.corehandlers.ItemHandler;
 
@@ -89,13 +91,26 @@ public class ItemTrowel extends Item {
 	            	{
 	            		par3World.setBlockMetadataWithNotify(modifyx, y, modifyz, minmeta, 3);
 	            		par1ItemStack.damageItem(maxmeta - minmeta, par2EntityPlayer);
-	            		totalPieces += maxmeta - minmeta;
+	            		
+	            		blockid = par3World.getBlockId(modifyx, y, modifyz);
+	            		
+	            		if(Block.blocksList[blockid] instanceof BlockConcrete || Block.blocksList[blockid] instanceof BlockREConcrete)
+	            		{
+	            			totalPieces += maxmeta - minmeta;
+	            		}
 	            	}
 	            	else
 	            	{
 	            		par3World.setBlockMetadataWithNotify(modifyx, y, modifyz, MAX_USES - par1ItemStack.getItemDamage(), 3);
 	            		par1ItemStack.damageItem(MAX_USES - par1ItemStack.getItemDamage() + 1, par2EntityPlayer);
-	            		totalPieces += MAX_USES - par1ItemStack.getItemDamage();
+	            		
+	            		blockid = par3World.getBlockId(modifyx, y, modifyz);
+	            		
+	            		if(Block.blocksList[blockid] instanceof BlockConcrete || Block.blocksList[blockid] instanceof BlockREConcrete)
+	            		{
+	            			totalPieces += MAX_USES - par1ItemStack.getItemDamage();
+	            		}
+	            		
 	            		break;
 	            	}
             	}
