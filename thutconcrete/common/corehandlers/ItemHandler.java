@@ -1,6 +1,9 @@
 package thutconcrete.common.corehandlers;
 
+import cpw.mods.fml.common.registry.GameRegistry;
+import cpw.mods.fml.common.registry.LanguageRegistry;
 import net.minecraft.item.Item;
+import thutconcrete.common.items.ItemTrowel;
 
 public class ItemHandler {
 
@@ -20,6 +23,16 @@ public class ItemHandler {
 		int id = config.IDItem;
 		items = new Item[]{
 	//			new ItemRebar(id++),
+				new ItemTrowel(id++),
 		};
+		
+		registerItems();
+	}
+	
+	public void registerItems(){
+		for(Item item : items){
+			GameRegistry.registerItem(item, item.getUnlocalizedName().substring(5));
+			LanguageRegistry.addName(item, item.getUnlocalizedName().substring(5));
+		}
 	}
 }
