@@ -97,9 +97,9 @@ public class BlockLiquidConcrete extends Block16Fluid {
 					BlockLiquidConcrete.instance.blockID+4096*BlockLiquidConcrete.instance.blockID,
 					BlockConcrete.instance.blockID+4096*BlockLiquidConcrete.instance.blockID,
 					4096*BlockLiquidConcrete.instance.blockID,
-					BlockLiquidREConcrete.instance.blockID+4096*BlockLiquidREConcrete.instance.blockID,
-					BlockREConcrete.instance.blockID+4096*BlockLiquidREConcrete.instance.blockID,
-					BlockRebar.instance.blockID+4096*BlockLiquidREConcrete.instance.blockID,
+					BlockLiquidREConcrete.getInstance(0).blockID+4096*BlockLiquidREConcrete.getInstance(0).blockID,
+					BlockREConcrete.instance.blockID+4096*BlockLiquidREConcrete.getInstance(0).blockID,
+					BlockRebar.instance.blockID+4096*BlockLiquidREConcrete.getInstance(0).blockID,
 					
 					}
 			};
