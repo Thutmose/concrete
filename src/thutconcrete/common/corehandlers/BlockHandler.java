@@ -40,10 +40,10 @@ public class BlockHandler {
 		
 		for(int i = 0; i<3; i++){
 			blockList.add(new BlockLava(id++,i));
+			blockList.add(new BlockSolidLava(id++,i));
 		}
-		blockList.add(new BlockSolidLava(id++,0));
+
 		blockList.add(new BlockLavaSpawner(id++));
-		
 		blocks = blockList.toArray(new Block[0]);
 
 		registerBlocks();

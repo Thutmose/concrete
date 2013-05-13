@@ -103,22 +103,27 @@ public class BlockLava extends Block16Fluid {
 			combinationList.add(BlockLava.getInstance(i).blockID+4096*BlockLava.getInstance(typeid).blockID);
 		}
 		
-		combinationList.add(BlockSolidLava.getInstance(0).blockID+4096*BlockLava.getInstance(typeid).blockID);
+		for(int i = 0;i<16;i++){
+			combinationList.add(BlockLiquidConcrete.getInstance(i).blockID+4096*BlockLava.getInstance(typeid).blockID);
+			combinationList.add(BlockConcrete.getInstance(i).blockID+4096*BlockLava.getInstance(typeid).blockID);
+		}
+		
+		combinationList.add(BlockSolidLava.getInstance(typeid).blockID+4096*BlockLava.getInstance(typeid).blockID);
 		
 		desiccantList.add(0+4096);
 		desiccantList.add(Block.waterMoving.blockID+50*4096);
 		desiccantList.add(Block.waterStill.blockID+40*4096);
 		
-		for(int i=0;i<1;i++){
-			desiccantList.add(BlockSolidLava.getInstance(0).blockID+5*4096);//TODO add the rock types here
+		for(int i=0;i<3;i++){
+			desiccantList.add(BlockSolidLava.getInstance(i).blockID+5*4096);//TODO add the rock types here
 		}
 		
 		data = new Integer[][]{
 				{	
 					0,
-					typeid*1,
+					typeid*3,
 					BlockSolidLava.getInstance(0).blockID,
-					1*2,
+					1,
 					10,
 					1,
 				},

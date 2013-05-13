@@ -138,6 +138,10 @@ public class BlockLiquidConcrete extends Block16Fluid {
 			}
 		}
 		
+		for(int i = 0;i<3;i++){
+			combinationList.add(BlockLiquidConcrete.getInstance(colourid).blockID+4096*BlockLava.getInstance(i).blockID);
+		}
+		
 
 		desiccantList.add(0+4096);
 		desiccantList.add(BlockFullSolidConcrete.instance.blockID+4096*100);

@@ -178,9 +178,6 @@ public class Block16Fluid extends Block
 			 }
 			tickSides(worldObj,x,y,z);
     	}
-    	
-    	
-    	
     }
     
     public int tickRate(World par1World)
@@ -201,10 +198,6 @@ public class Block16Fluid extends Block
         boolean moved = false;
         int[][]sides = {
         					{1,0},{-1,0},{0,1},{0,-1},
-        				//	{1,0},{-1,0},{0,1},{0,-1},
-        				//	{1,0},{-1,0},{0,1},{0,-1},
-        				//	{1,1},{-1,1},{1,-1},{-1,-1},
-        					
         };
        
         int n = sides.length;
@@ -221,7 +214,6 @@ public class Block16Fluid extends Block
         		lowestMeta = meta;
         		k=i;
         	}
-        	
         	i = (i+1)%n;
         }
         

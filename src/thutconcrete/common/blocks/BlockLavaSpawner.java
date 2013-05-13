@@ -19,13 +19,15 @@ import net.minecraft.world.World;
 
 public class BlockLavaSpawner extends Block{
 
-    public static BlockLavaSpawner instance;
+
+	public int typeid;
+    public static Block instance;
     int n=0;
     public static Map<Integer, Integer> replaceable = new HashMap<Integer, Integer>();
     
 	public BlockLavaSpawner(int par1) {
 		super(par1, Material.rock);
-		setUnlocalizedName("lavaSpawner");
+		setUnlocalizedName("lavaSpawner"+typeid);
 		this.setTickRandomly(true);
 		this.instance = this;
 		setCreativeTab(ConcreteCore.tabThut);
@@ -48,6 +50,7 @@ public class BlockLavaSpawner extends Block{
 		}//*/
 	}
 	
+	
     public void onBlockPlacedBy(World worldObj,int x,int y,int z,EntityLiving entity, ItemStack item){
     //	System.out.println("derp");
 		this.setTickRandomly(true);
@@ -69,24 +72,24 @@ public class BlockLavaSpawner extends Block{
 		//	System.out.println("inititialized");
 		}
 			
-		if(worldObj.getBlockId(x, y+1, z)!=this.blockID){
+		if(worldObj.getBlockId(x, y+1, z)!=BlockLavaSpawner.instance.blockID){
+			int typeid = worldObj.getBlockMetadata(x, y, z);
 			int[] side = getSide(worldObj, x, y, z);
-			int type = 2;
 			int maxHeight = 100;
 			if(side!=null){
 				if(Block.blocksList[worldObj.getBlockId(x+side[0], y+side[1], z+side[2])] instanceof Block16Fluid
 						&&side[1]!=1
 						&&worldObj.getBlockMetadata(x+side[0], y, z+side[2])!=15){
-					worldObj.setBlock(x+side[0], y+side[1], z+side[2], BlockLava.getInstance(type).blockID, 15, 3);
+					worldObj.setBlock(x+side[0], y+side[1], z+side[2], BlockLava.getInstance(typeid).blockID, 15, 3);
 					n=0;
 				//	System.out.println("Set");
 				}else if(side[1]!=1){
-					worldObj.setBlock(x+side[0], y+side[1], z+side[2], BlockLava.getInstance(type).blockID, 15, 3);
+					worldObj.setBlock(x+side[0], y+side[1], z+side[2], BlockLava.getInstance(typeid).blockID, 15, 3);
 					n=0;
 				//	System.out.println("Set");
 				}else if(checkTop(worldObj, x, y, z)&&y+1<maxHeight&&n%100==0){
 					n=0;
-					worldObj.setBlock(x, y+1, z, this.blockID, 0, 2);
+					worldObj.setBlock(x, y+1, z, BlockLavaSpawner.instance.blockID, typeid, 2);
 				}
 				tickSides(worldObj, x, y, z);
 			}
