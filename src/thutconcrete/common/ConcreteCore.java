@@ -31,7 +31,7 @@ import cpw.mods.fml.common.registry.TickRegistry;
 import cpw.mods.fml.relauncher.Side;
 
 
-@Mod( modid = "ThutConcrete", name="Thut's Concrete", version="0.01")
+@Mod( modid = "ThutConcrete", name="Thut's Concrete", version="0.0.2")
 @NetworkMod(clientSideRequired = false, serverSideRequired = false, 
 channels={"ThutConcrete"},
 packetHandler = PacketHandler.class)
