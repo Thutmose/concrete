@@ -3,6 +3,7 @@ package thutconcrete.common.items;
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.item.EntityItem;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.block.Block;
@@ -11,6 +12,8 @@ import net.minecraft.world.World;
 
 import thutconcrete.common.ConcreteCore;
 import thutconcrete.common.blocks.Block16Fluid;
+import thutconcrete.common.items.ItemConcreteDust;
+import thutconcrete.common.corehandlers.ItemHandler;
 
 public class ItemTrowel extends Item {
 
@@ -54,9 +57,12 @@ public class ItemTrowel extends Item {
         	
         	int modifyx = 0;
         	int modifyz = 0;
+        	boolean found = false;
+        	int totalPieces = 0;
         	
         	for(int i = 0; i < 9; i++)
         	{
+        		found = false;
         		maxmeta = 0;
         		
             	for(int locx = -1; locx < 2; locx++)
@@ -68,6 +74,7 @@ public class ItemTrowel extends Item {
             			{
             				if(par3World.getBlockMetadata(x + locx, y, z + locz) > maxmeta)
             				{
+            					found = true;
             					modifyx = x + locx;
             					modifyz = z + locz;
             					maxmeta = par3World.getBlockMetadata(x + locx, y, z + locz);
@@ -76,17 +83,44 @@ public class ItemTrowel extends Item {
             		}
             	}
             	
-            	if(MAX_USES - par1ItemStack.getItemDamage() >= maxmeta - minmeta)
+            	if(found)
             	{
-            		par3World.setBlockMetadataWithNotify(modifyx, y, modifyz, minmeta, 3);
-            		par1ItemStack.damageItem(maxmeta - minmeta, par2EntityPlayer);
+	            	if(MAX_USES - par1ItemStack.getItemDamage() >= maxmeta - minmeta)
+	            	{
+	            		par3World.setBlockMetadataWithNotify(modifyx, y, modifyz, minmeta, 3);
+	            		par1ItemStack.damageItem(maxmeta - minmeta, par2EntityPlayer);
+	            		totalPieces += maxmeta - minmeta;
+	            	}
+	            	else
+	            	{
+	            		par3World.setBlockMetadataWithNotify(modifyx, y, modifyz, MAX_USES - par1ItemStack.getItemDamage(), 3);
+	            		par1ItemStack.damageItem(MAX_USES - par1ItemStack.getItemDamage() + 1, par2EntityPlayer);
+	            		totalPieces += MAX_USES - par1ItemStack.getItemDamage();
+	            		break;
+	            	}
             	}
-            	else
-            	{
-            		par3World.setBlockMetadataWithNotify(modifyx, y, modifyz, MAX_USES - par1ItemStack.getItemDamage(), 3);
-            		par1ItemStack.damageItem(MAX_USES - par1ItemStack.getItemDamage() + 1, par2EntityPlayer);
-            		return true;
-            	}
+        	}
+        	
+        	int dustid = -1;
+        	
+        	for(Item item : ItemHandler.items)
+        	{
+        		if(item instanceof ItemConcreteDust)
+        		{
+        			dustid = item.itemID;
+        		}
+        	}
+        	
+        	if(dustid == -1)
+        	{
+        		return true;
+        	}
+        	
+        	EntityItem dusts = new EntityItem(par3World, x + hitX, y + hitY, z + hitZ, new ItemStack(dustid, totalPieces, 0));
+        	
+        	if(!par3World.isRemote)
+        	{
+        		par3World.spawnEntityInWorld(dusts);
         	}
         	
         	return true;

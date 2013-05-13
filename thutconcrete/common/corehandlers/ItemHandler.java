@@ -3,7 +3,7 @@ package thutconcrete.common.corehandlers;
 import cpw.mods.fml.common.registry.GameRegistry;
 import cpw.mods.fml.common.registry.LanguageRegistry;
 import net.minecraft.item.Item;
-import thutconcrete.common.items.ItemTrowel;
+import thutconcrete.common.items.*;
 
 public class ItemHandler {
 
@@ -24,6 +24,7 @@ public class ItemHandler {
 		items = new Item[]{
 	//			new ItemRebar(id++),
 				new ItemTrowel(id++),
+				new ItemConcreteDust(id++),
 		};
 		
 		registerItems();
