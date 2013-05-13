@@ -1,5 +1,8 @@
 package thutconcrete.common.corehandlers;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import cpw.mods.fml.common.registry.GameRegistry;
 import cpw.mods.fml.common.registry.LanguageRegistry;
 import net.minecraft.block.Block;
@@ -12,6 +15,7 @@ public class BlockHandler {
 	
 	
 	public static Block[] blocks;
+	private static List<Block> blockList = new ArrayList<Block>();
 
 	public BlockHandler(ConfigHandler configHandler){
 		config = configHandler;
@@ -21,16 +25,20 @@ public class BlockHandler {
 	public void initBlocks(){
 		
 		int id = config.IDBlock;
-		blocks = new Block[]{
-				new BlockDust(id++),
-				new BlockRebar(id++),
-				new BlockConcrete(id++),
-				new BlockLiquidConcrete(id++),
-				new BlockREConcrete(id++),
-				new BlockLiquidREConcrete(id++),
-				new BlockFullSolidREConcrete(id++),
-				new BlockFullSolidConcrete(id++),
-			};
+		
+		blockList.add(new BlockDust(id++));
+		blockList.add(new BlockRebar(id++));
+		blockList.add(new BlockFullSolidREConcrete(id++));
+		blockList.add(new BlockFullSolidConcrete(id++));
+		
+		for(int i = 0; i<16; i++){
+			blockList.add(new BlockREConcrete(id++,i));
+			blockList.add(new BlockLiquidREConcrete(id++,i));
+			blockList.add(new BlockConcrete(id++,i));
+			blockList.add(new BlockLiquidConcrete(id++,i));
+		}
+		
+		blocks = blockList.toArray(new Block[0]);
 
 		registerBlocks();
 	}

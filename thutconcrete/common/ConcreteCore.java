@@ -1,5 +1,7 @@
 package thutconcrete.common;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.logging.Logger;
 
 import thutconcrete.common.blocks.*;
@@ -73,6 +75,8 @@ public class ConcreteCore {
 		
 		GameRegistry.registerWorldGenerator(new TrassWorldGen());
 
+		populateMap();
+		
 		itemList = new ItemHandler(config);
 		blockList = new BlockHandler(config);
 		items = itemList.items;
@@ -87,6 +91,38 @@ public class ConcreteCore {
 	}
 	public static void registerEntity(Class<? extends Entity> clas, String name){
 		registerEntity(clas, name, 1);
+	}
+	
+	
+	public static Map<Integer, Integer> colourMap = new HashMap<Integer, Integer>();
+	
+	void populateMap(){
+		
+		//White gives
+		colourMap.put(0 + 14 * 16, 6);
+		colourMap.put(0 + 15 * 16, 7);
+		colourMap.put(0 + 13 * 16, 5);
+		colourMap.put(0 + 11 * 16, 3);
+		colourMap.put(0 + 7 * 16, 8);
+		
+		// Pink Gives:
+		colourMap.put(6 + 10 * 16, 2);
+		
+		//Yellow gives
+		colourMap.put(4 + 14 * 16, 1);
+		colourMap.put(4 + 11 * 16, 13);
+		
+		//Light Blue gives
+		colourMap.put(3 + 4 * 16, 5);
+
+		//Dark Blue gives
+		colourMap.put(11 + 14 * 16, 10);
+		colourMap.put(11 + 13 * 16, 9);
+		
+		//Dark green gives
+		colourMap.put(13 + 14 * 16, 12);
+		
+		
 	}
 	
 }

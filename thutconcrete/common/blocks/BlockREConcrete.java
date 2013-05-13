@@ -21,27 +21,38 @@ import net.minecraft.world.World;
 
 public class BlockREConcrete extends Block16Fluid implements IRebar{
 	
-	public static Block instance;
+	public static Block[] instances = new BlockREConcrete[16];
+	public Block instance;
+	public int colourid;
 	public static int resistance = 100;
 	public static float hardness = 1;
-	static Integer[][] data;
+	Integer[][] data;
 
-	public BlockREConcrete(int par1) {
+	public BlockREConcrete(int par1, int par2) {
 		super(par1,Material.rock);
-		setUnlocalizedName("REconcrete");
+		colourid = par2;
+		setUnlocalizedName("REconcrete" + colourid);
 		this.instance = this;
+		this.instances[colourid] = this;
 	}
 	
+
+	public static Block getInstance(int colorid)
+	{
+		return BlockREConcrete.instances[colorid];
+	}
 	
 	@Override
     public void onBlockAdded(World worldObj, int x, int y, int z) {
+		
 		if(data==null){
 			data = new Integer[][]{
 					{0,15,null},
 					{},
-					{BlockREConcrete.instance.blockID+4096*BlockREConcrete.instance.blockID}
+					{BlockREConcrete.getInstance(colourid).blockID+4096*BlockREConcrete.getInstance(colourid).blockID}
 			};
-			fluid16Blocks.put(this.blockID,data);
+			fluid16Blocks.put(BlockREConcrete.getInstance(colourid).blockID,data);
+			
 			}
     }
 	@Override
@@ -70,8 +81,18 @@ public class BlockREConcrete extends Block16Fluid implements IRebar{
 	
 	@Override
 	public void updateTick(World worldObj, int x, int y, int z, Random par5Random){
+		
+		
 		int meta = worldObj.getBlockMetadata(x, y, z);
-		if(meta==15)worldObj.setBlock(x, y, z, BlockFullSolidREConcrete.instance.blockID, 8, 3);
+		
+		if(meta<10)
+			for(int i=0;i<10-meta;i++)
+		if(Math.random()>(1-SOLIDIFY_CHANCE)){
+			 worldObj.setBlock(x, y, z, 0, 0, 3);
+		 }
+		
+		if(meta==15)worldObj.setBlock(x, y, z, BlockFullSolidREConcrete.instance.blockID, colourid, 2);
+		
 	}
 	
 	public void onBlockClicked(World worldObj, int x, int y, int z, EntityPlayer player){
@@ -99,8 +120,8 @@ public class BlockREConcrete extends Block16Fluid implements IRebar{
 	@SideOnly(Side.CLIENT)
 	public void registerIcons(IconRegister par1IconRegister)
 	{
-	this.blockIcon = par1IconRegister.registerIcon("thutconcrete:" + BlockConcrete.instance.getUnlocalizedName2());
-	this.theIcon = par1IconRegister.registerIcon("thutconcrete:" + "rebarRusty");
+		this.blockIcon = par1IconRegister.registerIcon("thutconcrete:dryConcrete_"+colourid);
+		this.theIcon = par1IconRegister.registerIcon("thutconcrete:" + "rebarRusty");
 	}
 	
 	@SideOnly(Side.CLIENT)
@@ -163,5 +184,7 @@ public class BlockREConcrete extends Block16Fluid implements IRebar{
 	public Icon getIcon(Block block) {
 		return this.blockIcon;
 	}
+	
+	
  
 }

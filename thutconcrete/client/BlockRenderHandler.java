@@ -22,7 +22,7 @@ public class BlockRenderHandler implements ISimpleBlockRenderingHandler{
 	public void renderREConcrete(Block parblock, double x, double y, double z, int meta, boolean[] sides)
     {
         Tessellator tessellator = Tessellator.instance;
-        float f = 1.0F;
+        float f = 0.9F;
         Icon icon = parblock.getIcon(0, 0);
         Icon icon1 = parblock.getIcon(0, 0);
         boolean concrete = false;

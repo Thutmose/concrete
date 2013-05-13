@@ -5,6 +5,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 
+import thutconcrete.common.ConcreteCore;
+
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
 import net.minecraft.block.Block;
@@ -22,18 +24,26 @@ import net.minecraft.world.World;
 
 public class BlockLiquidConcrete extends Block16Fluid {
 
-	public static Block instance;
+	public static Block[] instances = new BlockLiquidConcrete[16];
+	public Block instance;
+	public int colourid;
 	static Material wetConcrete = (new Material(MapColor.stoneColor));
-	static Integer[][] data;
+	Integer[][] data;
 	
-	public BlockLiquidConcrete(int par1) {
+	public BlockLiquidConcrete(int par1, int par2) {
 		super(par1, wetConcrete);
-		setUnlocalizedName("concreteLiquid");
+		colourid = par2;
+		setUnlocalizedName("concreteLiquid" + colourid);
 		this.setResistance((float) 0.0);
 		this.instance = this;
+		this.instances[colourid] = this;
 	}
 	
-	
+
+	public static Block getInstance(int colorid)
+	{
+		return BlockLiquidConcrete.instances[colorid];
+	}
 	/////////////////////////////////////////Block Bounds Stuff//////////////////////////////////////////////////////////
 	
 	
@@ -90,26 +100,59 @@ public class BlockLiquidConcrete extends Block16Fluid {
 	}
 	
 	private void setData(){
+		
+		List<Integer> combinationList = new ArrayList<Integer>();
+		
+		//Rebar to make this colour.
+		combinationList.add(BlockRebar.instance.blockID+4096*BlockLiquidREConcrete.getInstance(colourid).blockID);
+		//Air to make this colour.
+		combinationList.add(4096*BlockLiquidConcrete.getInstance(colourid).blockID);
+		
+		//Normal Concrete to make this colour
+		combinationList.add(BlockLiquidConcrete.getInstance(colourid).blockID+4096*BlockLiquidConcrete.getInstance(colourid).blockID);
+		combinationList.add(BlockConcrete.getInstance(colourid).blockID+4096*BlockLiquidConcrete.getInstance(colourid).blockID);
+		//RE Concrete to make this colour
+		combinationList.add(BlockLiquidREConcrete.getInstance(colourid).blockID+4096*BlockLiquidREConcrete.getInstance(colourid).blockID);
+		combinationList.add(BlockREConcrete.getInstance(colourid).blockID+4096*BlockLiquidREConcrete.getInstance(colourid).blockID);
+		
+		
+		for(int i = 0;i<16;i++){
+			int key = Math.max(colourid, i)*16+Math.min(colourid, i);
+			int colour = i;
+			if(ConcreteCore.colourMap.containsKey(key)){
+				colour = ConcreteCore.colourMap.get(key);
+				//Normal Concrete Mix
+				combinationList.add(BlockLiquidConcrete.getInstance(i).blockID+4096*BlockLiquidConcrete.getInstance(colour).blockID);
+				combinationList.add(BlockConcrete.getInstance(i).blockID+4096*BlockLiquidConcrete.getInstance(colour).blockID);
+				//RE Concrete Mix
+				combinationList.add(BlockLiquidREConcrete.getInstance(i).blockID+4096*BlockLiquidREConcrete.getInstance(colour).blockID);
+				combinationList.add(BlockREConcrete.getInstance(i).blockID+4096*BlockLiquidREConcrete.getInstance(colour).blockID);
+			}else{
+				//Normal Concrete Mix
+				combinationList.add(BlockLiquidConcrete.getInstance(colour).blockID+4096*BlockLiquidConcrete.getInstance(colour).blockID);
+				combinationList.add(BlockConcrete.getInstance(colour).blockID+4096*BlockLiquidConcrete.getInstance(colour).blockID);
+				//RE Concrete Mix
+				combinationList.add(BlockLiquidREConcrete.getInstance(colour).blockID+4096*BlockLiquidREConcrete.getInstance(colour).blockID);
+				combinationList.add(BlockREConcrete.getInstance(colour).blockID+4096*BlockLiquidREConcrete.getInstance(colour).blockID);
+			}
+		}
+		
 		data = new Integer[][]{
-				{0,0,BlockConcrete.instance.blockID},
-				{BlockConcrete.instance.blockID,BlockConcrete.instance.blockID,BlockConcrete.instance.blockID,BlockConcrete.instance.blockID,0},
-				{	
-					BlockLiquidConcrete.instance.blockID+4096*BlockLiquidConcrete.instance.blockID,
-					BlockConcrete.instance.blockID+4096*BlockLiquidConcrete.instance.blockID,
-					4096*BlockLiquidConcrete.instance.blockID,
-					BlockLiquidREConcrete.instance.blockID+4096*BlockLiquidREConcrete.instance.blockID,
-					BlockREConcrete.instance.blockID+4096*BlockLiquidREConcrete.instance.blockID,
-					BlockRebar.instance.blockID+4096*BlockLiquidREConcrete.instance.blockID,
+				{0,0,BlockConcrete.getInstance(colourid).blockID},
+				
+				{
+					BlockConcrete.getInstance(colourid).blockID+4096*4,BlockREConcrete.getInstance(colourid).blockID+4096*4,0+4096,
+					BlockFullSolidConcrete.instance.blockID+4096*100,BlockFullSolidREConcrete.instance.blockID+4096*100},
 					
-					}
+				combinationList.toArray(new Integer[0]),
 			};
-			fluid16Blocks.put(BlockLiquidConcrete.instance.blockID,data);
+			fluid16Blocks.put(BlockLiquidConcrete.getInstance(colourid).blockID,data);
 	}
 	
 	@SideOnly(Side.CLIENT)
     public void registerIcons(IconRegister par1IconRegister)
     {
-        this.blockIcon = par1IconRegister.registerIcon("thutconcrete:" + this.getUnlocalizedName2());
+        this.blockIcon = par1IconRegister.registerIcon("thutconcrete:wetConcrete_"+colourid);
     }
 	
 	

@@ -47,7 +47,7 @@ public class Block16Fluid extends Block
 	private ThreadSafeWorldOperations safe = new ThreadSafeWorldOperations();
 	private boolean opaque = false;
 	
-	public static double ONE_MINUS_SOLIDIFY_CHANCE = 0.9996;
+	public static double SOLIDIFY_CHANCE = 0.0004;
 	
 	public List<Integer> breaks = new ArrayList<Integer>();
 	public static Map<Integer, Integer[][]> fluid16Blocks = new HashMap<Integer, Integer[][]>();
@@ -141,17 +141,7 @@ public class Block16Fluid extends Block
     {
         super.harvestBlock(par1World, par2EntityPlayer, par3, par4, par5, par6);
     }
-    public void onEntityCollidedWithBlock(World worldObj,int x,int y, int z, Entity entity){
-    	if(!(entity instanceof EntityLiving)){return;}
-    	worldObj.scheduleBlockUpdate(x,y,z,this.blockID,2);
-    	int duration = getRadiation(worldObj,x,y,z)*100+500;
-    	int intensity = getRadiation(worldObj,x,y,z);
-    	if(intensity==0){return;}
-    	EntityLiving e = (EntityLiving) entity;
-    	if(e!=null&&duration!=0){
-    		e.addPotionEffect(new PotionEffect(Potion.poison.id, duration, intensity*intensity/64, true));
-    	}
-    }
+    public void onEntityCollidedWithBlock(World worldObj,int x,int y, int z, Entity entity){}
     
     
     public void onBlockPlacedBy(World worldObj,int x,int y,int z,EntityLiving entity, ItemStack item){
@@ -173,8 +163,7 @@ public class Block16Fluid extends Block
 			spread = this.trySpread(worldObj, x, y, z);
 			
 			 int num = canHarden(worldObj, x, y, z);
-			 for(int i=0;i<num;i++)
-			 if(Math.random()>ONE_MINUS_SOLIDIFY_CHANCE){
+			 if(Math.random()>(1-(SOLIDIFY_CHANCE*num))){
 				 worldObj.setBlock(x, y, z, getTurnToID(worldObj.getBlockId(x, y, z)), worldObj.getBlockMetadata(x, y, z), 3);
 			 }
 			tickSides(worldObj,x,y,z);
@@ -253,7 +242,6 @@ public class Block16Fluid extends Block
         safe.safeLookUp(worldObj,x, y, z);
         int id = safe.ID;
         int meta = safe.meta;
-        int rad = this.getRadiation(worldObj, x, y, z);
         
         safe.safeLookUp(worldObj,x1, y1, z1);
         int id1 = safe.ID;
@@ -362,7 +350,8 @@ public class Block16Fluid extends Block
     	if(fluid16Blocks.get(idFrom)==null)return false;
     	Integer[][] blockData = fluid16Blocks.get(idFrom);
     	for(Integer i : blockData[1]){
-    		if(idTo == i){
+    		int j = i&4095;
+    		if(idTo == j){		
     			return true;
     		}
     	}
@@ -411,18 +400,20 @@ public class Block16Fluid extends Block
     	return idFrom;
     }
     
+    private int getHardenRate(int idFrom, int idTo){
+    	if(fluid16Blocks.get(idFrom)==null)return idFrom;
+    	Integer[][] blockData = fluid16Blocks.get(idFrom);
+    	for(Integer i : blockData[1]){
+    		int j = i&4095;
+    		if(idTo == j){
+    			return i>>12;
+    		}
+    	}
+    	return idFrom;
+    }
+    
     
     ////////////////////////////////////////Fluid Block Logic Above Here, Radiation Below///////////////////////////////////////////
-    
-  //*  
-    public int getRadiation(World worldObj, int x, int y, int z) {
-		return 0;//effectTracker.getTrackedEffect(Integer.toString(x)+Integer.toString(y)+Integer.toString(z));
-	}
-    
-    public void setRadiation(World worldObj, int x, int y, int z, int radiation) {
-  //  	effectTracker.setTrackedEffect(Integer.toString(x)+Integer.toString(y)+Integer.toString(z), radiation);
-    }
- 
     
     public void tickSides(World worldObj, int x, int y, int z){
     	 int[][]sides = {{0,0,0}, {1,0,0},{-1,0,0},{0,0,1},{0,0,-1},{0,1,0},{0,-1,0}};
@@ -444,12 +435,16 @@ public class Block16Fluid extends Block
     public byte canHarden(World worldObj, int x, int y, int z){
     	byte num = 0;
     	int id = worldObj.getBlockId(x, y, z);
+    	int val;
     	if(fluid16Blocks.get(id)==null)return 0;
     	if(fluid16Blocks.get(id)[1]==null)return 0;
     	for(Integer i:fluid16Blocks.get(id)[1]){
-    		num += countSides(worldObj, x, y, z, i);
+    		int j = i&4095;
+    		val = 1 + i>>12;
+        	System.out.println("val: "+val+" id: "+j+" "+BlockFullSolidConcrete.instance.blockID);
+    		num += val*countSides(worldObj, x, y, z, j);
     	}
-    	
+    	System.out.println("num "+num);
     	return num;
     }
     

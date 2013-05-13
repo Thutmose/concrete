@@ -18,25 +18,36 @@ import net.minecraft.world.World;
 
 public class BlockConcrete extends Block16Fluid{
 	
-	public static Block instance;
+	public static Block[] instances = new BlockConcrete[16];
+	public Block instance;
+	public int colourid;
 	public static int resistance = 10;
 	public static float hardness = 1;
-	static Integer[][] data;
+	Integer[][] data;
 	
-	public BlockConcrete(int par1) {
-		super(par1, Material.rock);
-		setUnlocalizedName("concrete");
+	public BlockConcrete(int par1, int par2) {
+		super(par1,Material.rock);
+		colourid = par2;
+		setUnlocalizedName("concrete" + colourid);
 		this.instance = this;
+		this.instances[colourid] = this;
 	}
+
+	public static Block getInstance(int colorid)
+	{
+		return BlockConcrete.instances[colorid];
+	}
+	
 	@Override
     public void onBlockAdded(World worldObj, int x, int y, int z) {
 		if(data==null){
 			data = new Integer[][]{
-				{0,15,null},
-				{},
-				{BlockConcrete.instance.blockID+4096*BlockConcrete.instance.blockID}
+					{0,15,null},
+					{},
+					{BlockConcrete.getInstance(colourid).blockID+4096*BlockConcrete.getInstance(colourid).blockID}
 			};
-			fluid16Blocks.put(this.blockID,data);
+			fluid16Blocks.put(BlockConcrete.getInstance(colourid).blockID,data);
+			
 			}
     }
 	
@@ -67,13 +78,13 @@ public class BlockConcrete extends Block16Fluid{
 	@SideOnly(Side.CLIENT)
     public void registerIcons(IconRegister par1IconRegister)
     {
-        this.blockIcon = par1IconRegister.registerIcon("thutconcrete:" + this.getUnlocalizedName2());
+		this.blockIcon = par1IconRegister.registerIcon("thutconcrete:dryConcrete_"+colourid);
     }
 	
 	@Override
 	public void updateTick(World worldObj, int x, int y, int z, Random par5Random){
 		int meta = worldObj.getBlockMetadata(x, y, z);
-		if(meta==15)worldObj.setBlock(x, y, z, BlockFullSolidConcrete.instance.blockID, 8, 3);
+		if(meta==15)worldObj.setBlock(x, y, z, BlockFullSolidConcrete.instance.blockID, colourid, 2);
 	}
 	
 	public void onBlockClicked(World worldObj, int x, int y, int z, EntityPlayer player){
