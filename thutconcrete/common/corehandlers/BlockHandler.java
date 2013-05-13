@@ -27,7 +27,8 @@ public class BlockHandler {
 				new BlockConcrete(id++),
 				new BlockLiquidConcrete(id++),
 				new BlockREConcrete(id++),
-				new BlockLiquidREConcrete(id++),
+				new BlockLiquidREConcrete(id++, 0),
+				new BlockLiquidREConcrete(id++, 1),
 				new BlockFullSolidREConcrete(id++),
 				new BlockFullSolidConcrete(id++),
 			};

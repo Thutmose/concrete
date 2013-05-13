@@ -27,15 +27,24 @@ import net.minecraft.world.World;
 
 public class BlockLiquidREConcrete extends Block16Fluid implements IRebar{
 	
-	public static Block instance;
+	public static Block[] instances = new BlockLiquidREConcrete[16];
+	public Block instance;
+	public int colorid;
 	static Material wetConcrete = (new Material(MapColor.stoneColor));
-	static Integer[][] data;
+	Integer[][] data;
 	
-	public BlockLiquidREConcrete(int par1) {
+	public BlockLiquidREConcrete(int par1, int par2) {
 		super(par1, wetConcrete);
-		setUnlocalizedName("REconcreteLiquid");
+		colorid = par2;
+		setUnlocalizedName("REconcreteLiquid" + colorid);
 		this.setResistance((float) 0.0);
 		this.instance = this;
+		this.instances[colorid] = this;
+	}
+	
+	public static Block getInstance(int colorid)
+	{
+		return BlockLiquidREConcrete.instances[colorid];
 	}
 	
 	@Override
@@ -72,13 +81,13 @@ public class BlockLiquidREConcrete extends Block16Fluid implements IRebar{
 				{BlockRebar.instance.blockID,0,BlockREConcrete.instance.blockID},
 				{BlockREConcrete.instance.blockID,BlockREConcrete.instance.blockID,BlockREConcrete.instance.blockID,BlockREConcrete.instance.blockID,0},
 				{	
-					BlockLiquidREConcrete.instance.blockID+4096*BlockLiquidREConcrete.instance.blockID,
-					BlockREConcrete.instance.blockID+4096*BlockLiquidREConcrete.instance.blockID,
-					BlockRebar.instance.blockID+4096*BlockLiquidREConcrete.instance.blockID,
+					BlockLiquidREConcrete.getInstance(colorid).blockID+4096*BlockLiquidREConcrete.getInstance(colorid).blockID,
+					BlockREConcrete.instance.blockID+4096*BlockLiquidREConcrete.getInstance(colorid).blockID,
+					BlockRebar.instance.blockID+4096*BlockLiquidREConcrete.getInstance(colorid).blockID,
 					
 					}
 			};
-			fluid16Blocks.put(BlockLiquidREConcrete.instance.blockID,data);
+			fluid16Blocks.put(BlockLiquidREConcrete.getInstance(colorid).blockID,data);
 	}
 	
 
