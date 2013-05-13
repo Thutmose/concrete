@@ -27,6 +27,7 @@ public class BlockRenderHandler implements ISimpleBlockRenderingHandler{
         Icon icon1 = parblock.getIcon(0, 0);
         boolean concrete = false;
         boolean rebar = false;
+        boolean animated = false;
         if(parblock instanceof BlockLiquidREConcrete){
         	BlockLiquidREConcrete block = (BlockLiquidREConcrete)parblock;
         	icon = block.getIcon(0, 0);
@@ -46,7 +47,6 @@ public class BlockRenderHandler implements ISimpleBlockRenderingHandler{
         	icon = block.getIcon(0, 0);
         	icon1 = block.getIcon(0, 0);
         	rebar = true;
-        	
         }
         
         tessellator.setColorOpaque_F(f, f, f);
@@ -233,7 +233,106 @@ public class BlockRenderHandler implements ISimpleBlockRenderingHandler{
 	private void tessAddCuboid(Tessellator tessellator, Icon icon, double xMin, double zMin, double yMin, double xMax, double zMax, double yMax){
 		
         double d0 = (double)icon.getMinU();
-        double d1 = (double)icon.getInterpolatedU(16.0D);
+        double d1 = (double)icon.getMaxU();
+        double d2 = (double)icon.getMaxU();
+        double d3 = (double)icon.getMinV();
+        double d4 = (double)icon.getMaxV();
+
+        double d5 = (double)icon.getInterpolatedU(7.0D);
+        double d6 = (double)icon.getInterpolatedU(9.0D);
+        double d7 = (double)icon.getMinV();
+        double d8 = (double)icon.getInterpolatedV(8.0D);
+        double d9 = (double)icon.getMaxV();
+        ///////////////side1///////////////
+        tessellator.addVertexWithUV(xMin, yMax, zMax, d0, d3);
+        tessellator.addVertexWithUV(xMin, yMin, zMax, d0, d4);
+        
+        tessellator.addVertexWithUV(xMax, yMin, zMax, d1, d4);
+        tessellator.addVertexWithUV(xMax, yMax, zMax, d1, d3);
+        
+        tessellator.addVertexWithUV(xMax, yMax, zMax, d0, d3);
+        tessellator.addVertexWithUV(xMax, yMin, zMax, d0, d4);
+        
+        tessellator.addVertexWithUV(xMin, yMin, zMax, d1, d4);
+        tessellator.addVertexWithUV(xMin, yMax, zMax, d1, d3);
+		////////////////////////////////////////* /
+        ///////////////side2///////////////
+        tessellator.addVertexWithUV(xMax, yMax, zMin, d0, d3);
+        tessellator.addVertexWithUV(xMax, yMin, zMin, d0, d4);
+        
+        tessellator.addVertexWithUV(xMax, yMin, zMax, d1, d4);
+        tessellator.addVertexWithUV(xMax, yMax, zMax, d1, d3);
+        
+        tessellator.addVertexWithUV(xMax, yMax, zMax, d0, d3);
+        tessellator.addVertexWithUV(xMax, yMin, zMax, d0, d4);
+        
+        tessellator.addVertexWithUV(xMax, yMin, zMin, d1, d4);
+        tessellator.addVertexWithUV(xMax, yMax, zMin, d1, d3);
+		////////////////////////////////////////* /
+        ///////////////side3///////////////
+        tessellator.addVertexWithUV(xMin, yMax, zMax, d0, d3);
+        tessellator.addVertexWithUV(xMin, yMin, zMax, d0, d4);
+        
+        tessellator.addVertexWithUV(xMin, yMin, zMin, d1, d4);
+        tessellator.addVertexWithUV(xMin, yMax, zMin, d1, d3);
+        
+        tessellator.addVertexWithUV(xMin, yMax, zMin, d0, d3);
+        tessellator.addVertexWithUV(xMin, yMin, zMin, d0, d4);
+        
+        tessellator.addVertexWithUV(xMin, yMin, zMax, d1, d4);
+        tessellator.addVertexWithUV(xMin, yMax, zMax, d1, d3);
+		////////////////////////////////////////*/
+        ///////////////side4///////////////
+        tessellator.addVertexWithUV(xMax, yMax, zMin, d0, d3);
+        tessellator.addVertexWithUV(xMax, yMin, zMin, d0, d4);
+        
+        tessellator.addVertexWithUV(xMin, yMin, zMin, d1, d4);
+        tessellator.addVertexWithUV(xMin, yMax, zMin, d1, d3);
+        
+        tessellator.addVertexWithUV(xMin, yMax, zMin, d0, d3);
+        tessellator.addVertexWithUV(xMin, yMin, zMin, d0, d4);
+        
+        tessellator.addVertexWithUV(xMax, yMin, zMin, d1, d4);
+        tessellator.addVertexWithUV(xMax, yMax, zMin, d1, d3);
+		////////////////////////////////////////*/
+        ///////////////side5///////////////
+        
+        tessellator.addVertexWithUV(xMax, yMin, zMax, d0, d3);
+        tessellator.addVertexWithUV(xMax, yMin, zMin, d0, d4);
+        
+        tessellator.addVertexWithUV(xMin, yMin, zMin, d1, d4);
+        tessellator.addVertexWithUV(xMin, yMin, zMax, d1, d3);
+       //* 
+        
+        tessellator.addVertexWithUV(xMin, yMin, zMax, d1, d4);
+        tessellator.addVertexWithUV(xMin, yMin, zMin, d1, d3);
+        
+        tessellator.addVertexWithUV(xMax, yMin, zMin, d0, d3);
+        tessellator.addVertexWithUV(xMax, yMin, zMax, d0, d4);
+       
+		////////////////////////////////////////*/       
+        ///////////////side6///////////////
+        
+        tessellator.addVertexWithUV(xMax, yMax, zMax, d0, d3);
+        tessellator.addVertexWithUV(xMax, yMax, zMin, d0, d4);
+        
+        tessellator.addVertexWithUV(xMin, yMax, zMin, d1, d4);
+        tessellator.addVertexWithUV(xMin, yMax, zMax, d1, d3);
+       //* 
+        
+        tessellator.addVertexWithUV(xMin, yMax, zMax, d1, d4);
+        tessellator.addVertexWithUV(xMin, yMax, zMin, d1, d3);
+        
+        tessellator.addVertexWithUV(xMax, yMax, zMin, d0, d3);
+        tessellator.addVertexWithUV(xMax, yMax, zMax, d0, d4);
+       
+		////////////////////////////////////////*/          
+	}
+	
+private void tessAddCuboidWithIconIndex(Tessellator tessellator, Icon icon, double xMin, double zMin, double yMin, double xMax, double zMax, double yMax, double minU, double minV){
+		
+        double d0 = (double)icon.getMinU();
+        double d1 = (double)icon.getMaxU();
         double d2 = (double)icon.getMaxU();
         double d3 = (double)icon.getMinV();
         double d4 = (double)icon.getMaxV();

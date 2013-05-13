@@ -102,6 +102,7 @@ public class BlockLiquidConcrete extends Block16Fluid {
 	private void setData(){
 		
 		List<Integer> combinationList = new ArrayList<Integer>();
+		List<Integer> desiccantList = new ArrayList<Integer>();
 		
 		//Rebar to make this colour.
 		combinationList.add(BlockRebar.instance.blockID+4096*BlockLiquidREConcrete.getInstance(colourid).blockID);
@@ -137,13 +138,25 @@ public class BlockLiquidConcrete extends Block16Fluid {
 			}
 		}
 		
+
+		desiccantList.add(0+4096);
+		desiccantList.add(BlockFullSolidConcrete.instance.blockID+4096*100);
+		desiccantList.add(BlockFullSolidREConcrete.instance.blockID+4096*100);
+		
+		for(int i=0;i<16;i++){
+			desiccantList.add(BlockREConcrete.getInstance(i).blockID+4096*4);
+			desiccantList.add(BlockConcrete.getInstance(i).blockID+4096*4);
+		}
+		
 		data = new Integer[][]{
-				{0,0,BlockConcrete.getInstance(colourid).blockID},
-				
-				{
-					BlockConcrete.getInstance(colourid).blockID+4096*4,BlockREConcrete.getInstance(colourid).blockID+4096*4,0+4096,
-					BlockFullSolidConcrete.instance.blockID+4096*100,BlockFullSolidREConcrete.instance.blockID+4096*100},
-					
+				{	
+					0,
+					0,
+					BlockConcrete.getInstance(colourid).blockID,
+					1,
+					0,
+				},
+				desiccantList.toArray(new Integer[0]),
 				combinationList.toArray(new Integer[0]),
 			};
 			fluid16Blocks.put(BlockLiquidConcrete.getInstance(colourid).blockID,data);

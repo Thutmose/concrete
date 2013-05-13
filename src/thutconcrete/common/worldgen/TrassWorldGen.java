@@ -4,6 +4,8 @@ import java.util.Random;
 
 import thutconcrete.common.ConcreteCore;
 import thutconcrete.common.blocks.BlockDust;
+import thutconcrete.common.blocks.BlockFullSolidConcrete;
+import thutconcrete.common.blocks.BlockLiquidConcrete;
 
 import net.minecraft.world.World;
 import net.minecraft.world.chunk.IChunkProvider;
@@ -21,7 +23,7 @@ public class TrassWorldGen implements IWorldGenerator
 			int y = chunkZ*16 + random.nextInt(16);
 			int z = 20;
 			//TODO 
-		//	  (new WorldGen(BlockDust.instance.blockID, 2048)).generateSheet(world, random, x, z, y,1,10);
+			  (new WorldGen(BlockFullSolidConcrete.instance.blockID,5, 2048)).generateSheet(world, random, x, z, y,1,10);
 			}
 		}
 

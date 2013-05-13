@@ -74,7 +74,12 @@ public class BlockDust extends Block16Fluid
 	
 	private void setData(){
 		data = new Integer[][]{
-				{0,3,this.thisID},
+				{
+					0,
+					2,
+					this.thisID,
+					1,
+				},
 				{},
 				{
 

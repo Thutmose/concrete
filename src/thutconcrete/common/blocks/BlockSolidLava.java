@@ -16,37 +16,37 @@ import net.minecraft.world.Explosion;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
 
-public class BlockConcrete extends Block16Fluid{
+public class BlockSolidLava extends Block16Fluid{
 	
-	public static Block[] instances = new BlockConcrete[16];
+	public static Block[] instances = new BlockSolidLava[16];
 	public Block instance;
-	public int colourid;
+	public int typeid;
 	public static int resistance = 10;
 	public static float hardness = 1;
 	Integer[][] data;
 	
-	public BlockConcrete(int par1, int par2) {
+	public BlockSolidLava(int par1, int par2) {
 		super(par1,Material.rock);
-		colourid = par2;
-		setUnlocalizedName("concrete" + colourid);
+		typeid = par2;
+		setUnlocalizedName("solidLava" + typeid);
 		this.instance = this;
-		this.instances[colourid] = this;
+		this.instances[typeid] = this;
 	}
 
 	public static Block getInstance(int colorid)
 	{
-		return BlockConcrete.instances[colorid];
+		return BlockSolidLava.instances[colorid];
 	}
 	
 	@Override
     public void onBlockAdded(World worldObj, int x, int y, int z) {
 		if(data==null){
 			data = new Integer[][]{
-					{0,15,null,null,0},
+					{0,15,null,null,null},
 					{},
-					{BlockConcrete.getInstance(colourid).blockID+4096*BlockConcrete.getInstance(colourid).blockID}
+					{BlockSolidLava.getInstance(typeid).blockID+4096*BlockSolidLava.getInstance(typeid).blockID}
 			};
-			fluid16Blocks.put(BlockConcrete.getInstance(colourid).blockID,data);
+			fluid16Blocks.put(BlockSolidLava.getInstance(typeid).blockID,data);
 			
 			}
     }
@@ -78,13 +78,13 @@ public class BlockConcrete extends Block16Fluid{
 	@SideOnly(Side.CLIENT)
     public void registerIcons(IconRegister par1IconRegister)
     {
-		this.blockIcon = par1IconRegister.registerIcon("thutconcrete:dryConcrete_"+colourid);
+		this.blockIcon = par1IconRegister.registerIcon("thutconcrete:dryConcrete_"+8);
     }
 	
 	@Override
 	public void updateTick(World worldObj, int x, int y, int z, Random par5Random){
 		int meta = worldObj.getBlockMetadata(x, y, z);
-		if(meta==15)worldObj.setBlock(x, y, z, BlockFullSolidConcrete.instance.blockID, colourid, 2);
+		if(meta==15)worldObj.setBlock(x, y, z, BlockFullSolidConcrete.instance.blockID, 8, 2);
 	}
 	
 	public void onBlockClicked(World worldObj, int x, int y, int z, EntityPlayer player){

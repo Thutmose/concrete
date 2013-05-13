@@ -47,12 +47,11 @@ public class BlockREConcrete extends Block16Fluid implements IRebar{
 		
 		if(data==null){
 			data = new Integer[][]{
-					{0,15,null},
+					{0,15,null,null,0},
 					{},
 					{BlockREConcrete.getInstance(colourid).blockID+4096*BlockREConcrete.getInstance(colourid).blockID}
 			};
 			fluid16Blocks.put(BlockREConcrete.getInstance(colourid).blockID,data);
-			
 			}
     }
 	@Override
@@ -72,7 +71,7 @@ public class BlockREConcrete extends Block16Fluid implements IRebar{
     public AxisAlignedBB getCollisionBoundingBoxFromPool(World par1World, int par2, int par3, int par4)
     {
     	int meta = par1World.getBlockMetadata(par2, par3, par4);
-    	
+    	EntityPlayer player;
         int l = par1World.getBlockMetadata(par2, par3, par4) & 15;
         float f = 0.0625F;
         return AxisAlignedBB.getAABBPool().getAABB((double)par2 + this.minX, (double)par3 + this.minY, (double)par4 + this.minZ,

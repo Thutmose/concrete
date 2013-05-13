@@ -110,7 +110,6 @@ public class BlockRebar extends Block implements IRebar{
     {
         this.blockIcon = par1IconRegister.registerIcon("thutconcrete:" + this.getUnlocalizedName2());
         this.theIcon = par1IconRegister.registerIcon("thutconcrete:" + this.getUnlocalizedName2());
-        this.itemIcon = par1IconRegister.registerIcon("thutconcrete:" + "concrete");
     }
 
 	public boolean[] sides(IBlockAccess worldObj, int x, int y, int z) {

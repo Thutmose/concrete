@@ -18,7 +18,7 @@ public class BlockFullSolidConcrete extends Block{
     @SideOnly(Side.CLIENT)
     private Icon[] iconArray;
 	
-    static BlockFullSolidConcrete instance;
+    public static BlockFullSolidConcrete instance;
 	
 	public BlockFullSolidConcrete(int par1) {
 		super(par1, Material.rock);

@@ -36,9 +36,15 @@ public class Block16Fluid extends Block
 	* 
 	* 
 			data = new Integer[][]{
-				{ID that this returns when meta hits -1, the viscosity factor,  a secondary ID that this can turn into used for hardening}
-				{IDs that it can harden next to}
-				{IDs combined for special cases of merging in the form IDtarget + (4096*IDturnTo)}
+				{
+					ID that this returns when meta hits -1, 
+					the viscosity factor,  
+					a secondary ID that this can turn into used for hardening,
+					The hardening differential that prevents things staying liquid forever.,
+					a randomness coefficient, this is multiplied by a random 0-10 then added to the hardening differential and viscosity.
+				}
+				{Array of desiccants, format: id+4096*efficiency}
+				{Array of combination targets format: IDtarget + (4096*IDturnTo)}
 			};
 	*		
 	*/
@@ -48,6 +54,8 @@ public class Block16Fluid extends Block
 	private boolean opaque = false;
 	
 	public static double SOLIDIFY_CHANCE = 0.0004;
+	
+	public static Block16Fluid instance;
 	
 	public List<Integer> breaks = new ArrayList<Integer>();
 	public static Map<Integer, Integer[][]> fluid16Blocks = new HashMap<Integer, Integer[][]>();
@@ -62,6 +70,7 @@ public class Block16Fluid extends Block
 		breaks.add(38);
 		breaks.add(37);
 		breaks.add(31);
+		instance = this;
     }
     @Override
     public boolean canCreatureSpawn(EnumCreatureType type,World worldObj, int x, int y, int z){
@@ -189,13 +198,13 @@ public class Block16Fluid extends Block
      */
     public boolean trySpread(World worldObj, int x, int y, int z){
         boolean moved = false;
-        int[][]sides = {{1,0},{-1,0},{0,1},{0,-1}};
+        int[][]sides = {{1,0},{-1,0},{0,1},{0,-1},{1,0},{-1,0},{0,1},{0,-1},{1,1},{-1,1},{1,-1},{-1,-1}};
        
-        int i = r.nextInt(4);
+        int i = r.nextInt(12);
        
-        for(int j = 0; j<4; j++){
+        for(int j = 0; j<12; j++){
                 moved = moved || equalize(worldObj, x,y,z,x+sides[i][0], y, z+sides[i][1]);
-                i = (i+1)%4;
+                i = (i+1)%12;
         }
         return moved;
     }
@@ -217,11 +226,11 @@ public class Block16Fluid extends Block
             fell = merge(worldObj,x, y, z, x, (int)below[1]+1, z);
         
         if(DFWater){
-            int[][]sides = {{1,0},{-1,0},{0,1},{0,-1}};
+        	int[][]sides = {{1,0},{-1,0},{0,1},{0,-1},{1,0},{-1,0},{0,1},{0,-1},{1,1},{-1,1},{1,-1},{-1,-1}};
            
-            int i = r.nextInt(4);
+            int i = r.nextInt(12);
            
-            for(int j = 0; j<4; j++){
+            for(int j = 0; j<12; j++){
                     safe.safeLookUp(worldObj,x+sides[i][0], y, z+sides[i][1]);
                     int idSide = safe.ID;
                     safe.safeLookUp(worldObj,x+sides[i][0], y-1, z+sides[i][1]);
@@ -229,7 +238,7 @@ public class Block16Fluid extends Block
                     int metaSideDown = safe.meta;
                     if(metaSideDown!=15&&idSide == 0&&(willCombine(id, idSideDown)))
                     fell = merge(worldObj, x,y,z,x+sides[i][0], y, z+sides[i][1]);
-                    i = (i+1)%4;
+                    i = (i+1)%12;
             }
         }
         
@@ -291,6 +300,7 @@ public class Block16Fluid extends Block
         int meta1 = safe.meta;
         Block block1 = safe.block;
         int spread = viscosity(id);
+        int diff = hardenDifferential(id) + spread;
 
         boolean changed = false;
         boolean oneOfUs = (block1 instanceof Block16Fluid);
@@ -308,33 +318,17 @@ public class Block16Fluid extends Block
         int returnToID = getReturnToID(id);
         int idHarden = getTurnToID(worldObj.getBlockId(x, y, z));
         
-
-     
         if(combine){
         	if(!oneOfUs)meta1 = -1;
         	
-        	if(id1!=idHarden){
-	        	while(meta>(meta1+spread)&&meta1<15){
-	        		meta--;
-	        		meta1++;
-	        		safe.safeSet(worldObj, x1, y1, z1, idCombine, meta1);
-	        		safe.safeSet(worldObj, x, y, z, id, meta);
-	        		changed = true;
-	        	}
-	        	return changed;
-        	}else{
-        		if(meta>(meta1+1+spread)&&meta1<15){
-    	        	while(meta>(meta1+1+spread)&&meta1<15){
-    	        		meta--;
-    	        		meta1++;
-    	        		safe.safeSet(worldObj, x1, y1, z1, idCombine, meta1);
-    	        		safe.safeSet(worldObj, x, y, z, id, meta);
-    	        		changed = true;
-    	        	}
-    	        	return changed;
-        		}
-        		
+        	while(meta>((id1==idHarden)?meta1+diff:meta1+spread)&&meta1<15){
+        		meta--;
+        		meta1++;
+        		safe.safeSet(worldObj, x1, y1, z1, idCombine, meta1);
+        		safe.safeSet(worldObj, x, y, z, id, meta);
+        		changed = true;
         	}
+        	return changed;
         	
         }
         
@@ -381,11 +375,22 @@ public class Block16Fluid extends Block
     	if(fluid16Blocks.get(id)[0][2]==null) return 0;
     	return fluid16Blocks.get(id)[0][2];
     }
-    
+
     private int viscosity(int id){
+    	Random r = new Random();
     	if(fluid16Blocks.get(id)==null) return 0;
     	if(fluid16Blocks.get(id)[0][1]==null) return 0;
-    	return fluid16Blocks.get(id)[0][1];
+    	if(fluid16Blocks.get(id)[0][4]==null) return 0;
+    	int v = fluid16Blocks.get(id)[0][1];
+    	int dv = (int) (fluid16Blocks.get(id)[0][4]*Math.random());
+    	return Math.min(v+dv,15);
+    }
+    private int hardenDifferential(int id){
+    	Random r = new Random();
+    	if(fluid16Blocks.get(id)==null) return 0;
+    	if(fluid16Blocks.get(id)[0][3]==null) return 0;
+    	int dv = (int) (fluid16Blocks.get(id)[0][4]*Math.random());
+    	return Math.min(fluid16Blocks.get(id)[0][3]+dv,15);
     }
     
     private int getCombineID(int idFrom, int idTo){
@@ -441,10 +446,10 @@ public class Block16Fluid extends Block
     	for(Integer i:fluid16Blocks.get(id)[1]){
     		int j = i&4095;
     		val = 1 + i>>12;
-        	System.out.println("val: "+val+" id: "+j+" "+BlockFullSolidConcrete.instance.blockID);
+   //     	System.out.println("val: "+val+" id: "+j+" "+BlockFullSolidConcrete.instance.blockID);
     		num += val*countSides(worldObj, x, y, z, j);
     	}
-    	System.out.println("num "+num);
+    //	System.out.println("num "+num);
     	return num;
     }
     

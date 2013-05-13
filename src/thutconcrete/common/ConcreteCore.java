@@ -96,6 +96,8 @@ public class ConcreteCore {
 	
 	public static Map<Integer, Integer> colourMap = new HashMap<Integer, Integer>();
 	
+	public static Map<String, Integer> volcanoMap = new HashMap<String, Integer>();
+	
 	void populateMap(){
 		
 		//White gives
