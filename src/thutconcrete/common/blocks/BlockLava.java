@@ -116,10 +116,11 @@ public class BlockLava extends Block16Fluid {
 		data = new Integer[][]{
 				{	
 					0,
-					typeid*2,
+					typeid*1,
 					BlockSolidLava.getInstance(0).blockID,
 					1*2,
 					10,
+					1,
 				},
 				desiccantList.toArray(new Integer[0]),
 				combinationList.toArray(new Integer[0]),

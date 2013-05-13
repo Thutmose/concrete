@@ -41,7 +41,8 @@ public class Block16Fluid extends Block
 					the viscosity factor,  
 					a secondary ID that this can turn into used for hardening,
 					The hardening differential that prevents things staying liquid forever.,
-					a randomness coefficient, this is multiplied by a random 0-10 then added to the hardening differential and viscosity.
+					a randomness coefficient, this is multiplied by a random 0-10 then added to the hardening differential and viscosity.,
+					The will fall of edges factor, this is 0 or 1,
 				}
 				{Array of desiccants, format: id+4096*efficiency}
 				{Array of combination targets format: IDtarget + (4096*IDturnTo)}
@@ -198,14 +199,35 @@ public class Block16Fluid extends Block
      */
     public boolean trySpread(World worldObj, int x, int y, int z){
         boolean moved = false;
-        int[][]sides = {{1,0},{-1,0},{0,1},{0,-1},{1,0},{-1,0},{0,1},{0,-1},{1,1},{-1,1},{1,-1},{-1,-1}};
+        int[][]sides = {
+        					{1,0},{-1,0},{0,1},{0,-1},
+        				//	{1,0},{-1,0},{0,1},{0,-1},
+        				//	{1,0},{-1,0},{0,1},{0,-1},
+        				//	{1,1},{-1,1},{1,-1},{-1,-1},
+        					
+        };
        
-        int i = r.nextInt(12);
-       
-        for(int j = 0; j<12; j++){
-                moved = moved || equalize(worldObj, x,y,z,x+sides[i][0], y, z+sides[i][1]);
-                i = (i+1)%12;
+        int n = sides.length;
+        int i = r.nextInt(n);
+        int lowestMeta = 15;
+        int k = 0;
+        for(int j = 0; j<n; j++){
+            int id = worldObj.getBlockId(x+sides[i][0], y, z+sides[i][1]);
+            int meta = worldObj.getBlockMetadata(x+sides[i][0], y, z+sides[i][1]);
+        	Block block = Block.blocksList[id];
+        	if(!(block instanceof Block16Fluid))
+        		moved = moved || equalize(worldObj, x,y,z,x+sides[i][0], y, z+sides[i][1]);
+        	else if (meta < lowestMeta){
+        		lowestMeta = meta;
+        		k=i;
+        	}
+        	
+        	i = (i+1)%n;
         }
+        
+        if(lowestMeta!=15)
+        moved = moved || equalize(worldObj, x,y,z,x+sides[k][0], y, z+sides[k][1]);
+        
         return moved;
     }
  
@@ -216,8 +238,7 @@ public class Block16Fluid extends Block
     	safe.safeLookUp(worldObj,x, y-1, z);
         boolean fell = false;
         if(merge(worldObj,x, y, z, x, y-1, z))return true;
-        boolean DFWater = false;
-        if(viscosity(id)==0) DFWater = true;
+        boolean DFWater = willFallOffEdges(id);
         
     	double[] below = vec.findNextSolidBlock(worldObj, new double[] {x, y-1, z}, new double[] {0,-1,0}, y);
 	
@@ -226,11 +247,11 @@ public class Block16Fluid extends Block
             fell = merge(worldObj,x, y, z, x, (int)below[1]+1, z);
         
         if(DFWater){
-        	int[][]sides = {{1,0},{-1,0},{0,1},{0,-1},{1,0},{-1,0},{0,1},{0,-1},{1,1},{-1,1},{1,-1},{-1,-1}};
+        	int[][]sides = {{1,0},{-1,0},{0,1},{0,-1},{1,1},{-1,1},{1,-1},{-1,-1}};
            
-            int i = r.nextInt(12);
+            int i = r.nextInt(8);
            
-            for(int j = 0; j<12; j++){
+            for(int j = 0; j<8; j++){
                     safe.safeLookUp(worldObj,x+sides[i][0], y, z+sides[i][1]);
                     int idSide = safe.ID;
                     safe.safeLookUp(worldObj,x+sides[i][0], y-1, z+sides[i][1]);
@@ -238,7 +259,7 @@ public class Block16Fluid extends Block
                     int metaSideDown = safe.meta;
                     if(metaSideDown!=15&&idSide == 0&&(willCombine(id, idSideDown)))
                     fell = merge(worldObj, x,y,z,x+sides[i][0], y, z+sides[i][1]);
-                    i = (i+1)%12;
+                    i = (i+1)%8;
             }
         }
         
@@ -368,6 +389,12 @@ public class Block16Fluid extends Block
     	if(fluid16Blocks.get(id)==null) return 0;
     	if(fluid16Blocks.get(id)[0][0]==null) return 0;
     	return fluid16Blocks.get(id)[0][0];
+    }
+    
+    private boolean willFallOffEdges(int id){
+    	if(fluid16Blocks.get(id)==null) return false;
+    	if(fluid16Blocks.get(id)[0][5]==null) return false;
+    	return (fluid16Blocks.get(id)[0][5]>0?true:false);
     }
     
     private int getTurnToID(int id){

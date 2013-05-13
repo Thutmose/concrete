@@ -120,6 +120,7 @@ public class BlockLiquidREConcrete extends Block16Fluid implements IRebar{
 					BlockREConcrete.getInstance(colourid).blockID,
 					1,
 					0,
+					1,
 				},
 				desiccantList.toArray(new Integer[0]),
 				combinationList.toArray(new Integer[0]),

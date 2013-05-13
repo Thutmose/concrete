@@ -155,6 +155,7 @@ public class BlockLiquidConcrete extends Block16Fluid {
 					BlockConcrete.getInstance(colourid).blockID,
 					1,
 					0,
+					1,
 				},
 				desiccantList.toArray(new Integer[0]),
 				combinationList.toArray(new Integer[0]),

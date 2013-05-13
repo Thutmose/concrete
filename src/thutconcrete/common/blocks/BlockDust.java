@@ -79,6 +79,7 @@ public class BlockDust extends Block16Fluid
 					2,
 					this.thisID,
 					1,
+					0,
 				},
 				{},
 				{

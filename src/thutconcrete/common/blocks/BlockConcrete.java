@@ -42,7 +42,7 @@ public class BlockConcrete extends Block16Fluid{
     public void onBlockAdded(World worldObj, int x, int y, int z) {
 		if(data==null){
 			data = new Integer[][]{
-					{0,15,null,null,0},
+					{0,15,null,null,0,0},
 					{},
 					{BlockConcrete.getInstance(colourid).blockID+4096*BlockConcrete.getInstance(colourid).blockID}
 			};

@@ -47,7 +47,7 @@ public class BlockREConcrete extends Block16Fluid implements IRebar{
 		
 		if(data==null){
 			data = new Integer[][]{
-					{0,15,null,null,0},
+					{0,15,null,null,0,0},
 					{},
 					{BlockREConcrete.getInstance(colourid).blockID+4096*BlockREConcrete.getInstance(colourid).blockID}
 			};
