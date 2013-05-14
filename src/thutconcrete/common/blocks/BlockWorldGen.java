@@ -2,6 +2,7 @@ package thutconcrete.common.blocks;
 
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
@@ -13,13 +14,20 @@ import thutconcrete.common.blocks.*;
 import net.minecraft.block.Block;
 import net.minecraft.block.material.Material;
 import net.minecraft.client.renderer.texture.IconRegister;
+import net.minecraft.creativetab.CreativeTabs;
+import net.minecraft.enchantment.EnchantmentHelper;
 import net.minecraft.entity.EntityLiving;
+import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
+import net.minecraft.stats.StatList;
+import net.minecraft.util.Icon;
 import net.minecraft.world.World;
 import net.minecraft.world.chunk.Chunk;
 
 public class BlockWorldGen extends Block{
 
+    @SideOnly(Side.CLIENT)
+    private Icon[] iconArray;
 
 	public int typeid;
     public static Block instance;
@@ -29,11 +37,10 @@ public class BlockWorldGen extends Block{
     
 	public BlockWorldGen(int par1) {
 		super(par1, Material.rock);
-		setUnlocalizedName("lavaSpawner"+typeid);
+		setUnlocalizedName("lavaSpawner");
 		this.setTickRandomly(true);
 		this.instance = this;
 
-		this.setLightValue(1);
 		setCreativeTab(ConcreteCore.tabThut);
 		//*
 		if(replaceable.size()==0){
@@ -55,23 +62,32 @@ public class BlockWorldGen extends Block{
     @Override
     public void onBlockAdded(World worldObj, int x, int y, int z) {
 		this.setTickRandomly(true);
+
+		this.setLightValue(worldObj.getBlockMetadata(x,y,z)==0?1:0);
 		worldObj.scheduleBlockUpdate(x, y+1, z, BlockLava.getInstance(typeid).blockID, 5);
 		worldObj.scheduleBlockUpdate(x, y, z, this.blockID, 5);
     }
     public void onBlockPlacedBy(World worldObj,int x,int y,int z,EntityLiving entity, ItemStack item){
     //	System.out.println("derp");
+    	worldObj.setBlockMetadataWithNotify(x,y,z,item.getItemDamage(),3);
+
+		this.setLightValue(worldObj.getBlockMetadata(x,y,z)==0?1:0);
+    	
 		worldObj.scheduleBlockUpdate(x, y+1, z, BlockLava.getInstance(typeid).blockID, 5);
 		worldObj.scheduleBlockUpdate(x, y, z, this.blockID, 5);
 		this.setTickRandomly(true);
     }
+    
+	public void onBlockClicked(World worldObj, int x, int y, int z, EntityPlayer player){
+		System.out.println(worldObj.getBlockMetadata(x, y, z));
+	}
 	
 	@Override
 	public void updateTick(World worldObj, int x, int y, int z, Random par5Random){
 		
-		if(worldObj.getBlockMetadata(x,y,z)==0&&worldObj.doChunksNearChunkExist(x, y, z, 10)){
+		if(worldObj.getBlockMetadata(x,y,z)==16&&worldObj.doChunksNearChunkExist(x, y, z, 10)){
 			
 			int id = worldObj.getBlockId(x, y+1, z);
-			
 			if(!lava.containsKey(BlockLava.getInstance(0).blockID)){
 
 				for(Block block:Block.blocksList){
@@ -133,12 +149,91 @@ public class BlockWorldGen extends Block{
     //*
    
   //*/ 
-   
-	@SideOnly(Side.CLIENT)
+   ////////////////////////////////////////////////////////////////////////////////////////////////
+    
+    @SideOnly(Side.CLIENT)
+
+    /**
+     * returns a list of blocks with the same ID, but different meta (eg: wood returns 4 blocks)
+     */
+    public void getSubBlocks(int par1, CreativeTabs par2CreativeTabs, List par3List)
+    {
+        for (int j = 0; j < 16; j++)
+        {
+            par3List.add(new ItemStack(this.blockID, 1, j));
+        }
+    }
+
+    @SideOnly(Side.CLIENT)
+
+    /**
+     * When this method is called, your block should register all the icons it needs with the given IconRegister. This
+     * is the only chance you get to register icons.
+     */
     public void registerIcons(IconRegister par1IconRegister)
     {
-        this.blockIcon = par1IconRegister.registerIcon("thutconcrete:lava");
+        this.iconArray = new Icon[16];
+
+        for (int i = 0; i < this.iconArray.length; i++)
+        {
+            this.iconArray[i] = par1IconRegister.registerIcon("thutconcrete:" + "worldGen_"+i);
+        }
     }
    
+    /**
+     * Determines the damage on the item the block drops. Used in cloth and wood.
+     */
+    public int damageDropped(int par1)
+    {
+        return par1;
+    }
+
+    /**
+     * Returns the quantity of items to drop on block destruction.
+     */
+    public int quantityDropped(Random par1Random)
+    {
+        return 1;
+    }
+    
+    /**
+     * Returns the ID of the items to drop on destruction.
+     */
+    public int idDropped(int par1, Random par2Random, int par3)
+    {
+        return this.blockID;
+    }
+    
+
+    @SideOnly(Side.CLIENT)
+    /**
+     * From the specified side and block metadata retrieves the blocks texture. Args: side, metadata
+     */
+    public Icon getIcon(int par1, int par2)
+    {
+        return this.iconArray[par2 % this.iconArray.length];
+    }
+
+    /**
+     * Called when the player destroys a block with an item that can harvest it. (i, j, k) are the coordinates of the
+     * block and l is the block's subtype/damage.
+     */
+    public void harvestBlock(World par1World, EntityPlayer par2EntityPlayer, int par3, int par4, int par5, int par6)
+    {
+        par2EntityPlayer.addStat(StatList.mineBlockStatArray[this.blockID], 1);
+        par2EntityPlayer.addExhaustion(0.025F);
+
+        ItemStack itemstack = this.createStackedBlock(par6);
+
+        if (itemstack != null)
+        {
+            this.dropBlockAsItem_do(par1World, par3, par4, par5, itemstack);
+        }
+    }
+    
+    protected ItemStack createStackedBlock(int par1)
+    {
+        return new ItemStack(this.blockID, 1, par1);
+    }
    
 }

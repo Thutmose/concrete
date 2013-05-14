@@ -192,7 +192,6 @@ public class BlockLava extends Block16Fluid {
 		desiccantList.add(Block.grass.blockID+4096);
 		desiccantList.add(Block.stone.blockID+4096);
 		desiccantList.add(Block.waterMoving.blockID+2000*4096);
-	//	desiccantList.add(Block.stone.blockID+2000*4096);
 		desiccantList.add(Block.waterStill.blockID+2000*4096);
 		
 		for(int i=0;i<3;i++){
