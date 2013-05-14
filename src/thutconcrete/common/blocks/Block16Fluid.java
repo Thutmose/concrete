@@ -110,6 +110,10 @@ public class Block16Fluid extends Block
     }
     
  
+    @Override
+    public void onBlockAdded(World par1World, int x, int y, int z) {
+    	tickSides(par1World,x,y,z);
+    }
     /**
      * Sets the block's bounds for rendering it as an item
      */
@@ -141,7 +145,7 @@ public class Block16Fluid extends Block
      */
     public void onNeighborBlockChange(World worldObj, int x, int y, int z, int par5)
     {
-    	tickSides(worldObj,x,y,z);
+    	//tickSides(worldObj,x,y,z);
     }
     
     public void breakBlock(World worldObj, int x, int y, int z, int par5, int par6) {}
@@ -176,8 +180,12 @@ public class Block16Fluid extends Block
 			 if(Math.random()>(1-(SOLIDIFY_CHANCE*num))){
 				 worldObj.setBlock(x, y, z, getTurnToID(worldObj.getBlockId(x, y, z)), worldObj.getBlockMetadata(x, y, z), 3);
 			 }
-			tickSides(worldObj,x,y,z);
+				tickSides(worldObj,x,y,z);
     	}
+    	
+
+	//	tickSides(worldObj,x,y,z);
+    	
     }
     
     public int tickRate(World par1World)
@@ -230,14 +238,17 @@ public class Block16Fluid extends Block
     	safe.safeLookUp(worldObj,x, y-1, z);
         boolean fell = false;
         if(merge(worldObj,x, y, z, x, y-1, z))return true;
-        boolean DFWater = willFallOffEdges(id);
+        
+        /*
         
     	double[] below = vec.findNextSolidBlock(worldObj, new double[] {x, y-1, z}, new double[] {0,-1,0}, y);
 	
         if(( (int)below[1]>=y)){return false;}
         
             fell = merge(worldObj,x, y, z, x, (int)below[1]+1, z);
-        
+        //*/
+            
+            boolean DFWater = willFallOffEdges(id);
         if(DFWater){
         	int[][]sides = {{1,0},{-1,0},{0,1},{0,-1},{1,1},{-1,1},{1,-1},{-1,-1}};
            
@@ -277,13 +288,20 @@ public class Block16Fluid extends Block
         	id1 = 0;
         	meta1=0;
         }
-        int returnToID = getReturnToID(id);
         boolean changed = false;
         boolean combine = willCombine(id, id1);
         int idCombine = getCombineID(id, id1);
+        int returnToID = getReturnToID(id);
+        int idHarden = getTurnToID(worldObj.getBlockId(x, y, z));
 
         if(combine){
         	if(!oneOfUs)meta1 = -1;
+        	
+        	if(id1==0){
+        		safe.safeSet(worldObj, x1, y1, z1, idCombine, meta);
+        		safe.safeSet(worldObj, x, y, z, returnToID, 0);
+        	}else
+        	
         	while(meta>=0&&meta1<15){
         		meta--;
         		meta1++;
@@ -296,6 +314,9 @@ public class Block16Fluid extends Block
         		}
         		changed = true;
         	}
+        	
+        	
+        	
         	return changed;
         }
         

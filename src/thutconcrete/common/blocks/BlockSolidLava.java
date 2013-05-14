@@ -82,10 +82,7 @@ public class BlockSolidLava extends Block16Fluid{
     }
 	
 	@Override
-	public void updateTick(World worldObj, int x, int y, int z, Random par5Random){
-		int meta = worldObj.getBlockMetadata(x, y, z);
-		if(meta==15)worldObj.setBlock(x, y, z, BlockFullSolidConcrete.instance.blockID, 8, 2);
-	}
+	public void updateTick(World worldObj, int x, int y, int z, Random par5Random){}
 	
 	public void onBlockClicked(World worldObj, int x, int y, int z, EntityPlayer player){
 		this.setResistanceByMeta(worldObj.getBlockMetadata(x, y, z));

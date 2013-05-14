@@ -105,7 +105,6 @@ public class BlockLiquidREConcrete extends Block16Fluid implements IRebar{
 		}
 		
 		desiccantList.add(0+4096);
-		desiccantList.add(BlockFullSolidConcrete.instance.blockID+4096*100);
 		desiccantList.add(BlockFullSolidREConcrete.instance.blockID+4096*100);
 		
 		for(int i=0;i<16;i++){

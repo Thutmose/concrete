@@ -29,7 +29,6 @@ public class BlockHandler {
 		blockList.add(new BlockDust(id++));
 		blockList.add(new BlockRebar(id++));
 		blockList.add(new BlockFullSolidREConcrete(id++));
-		blockList.add(new BlockFullSolidConcrete(id++));
 		
 		for(int i = 0; i<16; i++){
 			blockList.add(new BlockREConcrete(id++,i));
@@ -43,7 +42,7 @@ public class BlockHandler {
 			blockList.add(new BlockSolidLava(id++,i));
 		}
 
-		blockList.add(new BlockLavaSpawner(id++));
+		blockList.add(new BlockWorldGen(id++));
 		blocks = blockList.toArray(new Block[0]);
 
 		registerBlocks();

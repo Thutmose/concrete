@@ -2,6 +2,7 @@ package thutconcrete.common;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Random;
 import java.util.logging.Logger;
 
 import thutconcrete.common.blocks.*;
@@ -11,6 +12,7 @@ import thutconcrete.common.corehandlers.ItemHandler;
 import thutconcrete.common.corehandlers.PacketHandler;
 import thutconcrete.common.ticks.TickHandler;
 import thutconcrete.common.worldgen.TrassWorldGen;
+import thutconcrete.common.worldgen.VolcanoWorldGen;
 import net.minecraft.block.Block;
 import net.minecraft.entity.Entity;
 import net.minecraft.item.Item;
@@ -74,7 +76,8 @@ public class ConcreteCore {
 		TickRegistry.registerTickHandler(tickHandler, Side.SERVER);
 		
 		GameRegistry.registerWorldGenerator(new TrassWorldGen());
-
+		GameRegistry.registerWorldGenerator(new VolcanoWorldGen());
+		
 		populateMap();
 		
 		itemList = new ItemHandler(config);
@@ -96,7 +99,7 @@ public class ConcreteCore {
 	
 	public static Map<Integer, Integer> colourMap = new HashMap<Integer, Integer>();
 	
-	public static Map<String, Integer> volcanoMap = new HashMap<String, Integer>();
+	public static Map<Integer,Map<Integer,Byte>> volcanoMap = new HashMap<Integer,Map<Integer,Byte>>();
 	
 	void populateMap(){
 		
@@ -125,6 +128,22 @@ public class ConcreteCore {
 		colourMap.put(13 + 14 * 16, 12);
 		
 		
+	}
+	
+	public static int getVolcano(int x, int z){
+		if(!(volcanoMap.containsKey(x)&&volcanoMap.get(x).containsKey(z))){
+			addVolcano(x,z);
+		}
+		return volcanoMap.get(x).get(z);
+	}
+	
+	public static void addVolcano(int x, int z){
+		Random rX = new Random(x);
+		Random rZ = new Random(z);
+		Byte Height = (byte) (rX.nextInt(45)+rZ.nextInt(45));
+		Map<Integer,Byte> tempMap = new HashMap<Integer,Byte>();
+		tempMap.put(z, Height);
+		volcanoMap.put(x, tempMap);
 	}
 	
 }
