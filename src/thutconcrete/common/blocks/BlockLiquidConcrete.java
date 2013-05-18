@@ -31,23 +31,23 @@ import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.IWorldAccess;
 import net.minecraft.world.World;
 import net.minecraft.item.*;
+import net.minecraftforge.liquids.IBlockLiquid;
+import net.minecraftforge.liquids.ILiquid;
 
-public class BlockLiquidConcrete extends Block16Fluid implements ISaveable {
+public class BlockLiquidConcrete extends Block16Fluid implements ILiquid
+{
 
 	public static Block instance;
-	static Material wetConcrete = (new Material(MapColor.stoneColor));
+	static Material wetConcrete = (new WetConcrete(MapColor.stoneColor));
 	Integer[][] data;
     @SideOnly(Side.CLIENT)
     private Icon[] iconArray;
-    public static ConcurrentHashMap<String, Byte> metaData = new ConcurrentHashMap<String, Byte>();
 	public BlockLiquidConcrete(int par1) {
 		super(par1, wetConcrete);
 		setUnlocalizedName("concreteLiquid");
 		this.setResistance((float) 0.0);
+		this.setTickRandomly(true);
 		this.instance = this;
-		ConcreteCore.instance.saveList.addSavedData(this);
-
-		superMetaData.put(par1, metaData);
 	}
 	
 	/////////////////////////////////////////Block Bounds Stuff//////////////////////////////////////////////////////////
@@ -68,18 +68,7 @@ public class BlockLiquidConcrete extends Block16Fluid implements ISaveable {
     {
         return 10;
     }
-    /**
-     * Called upon block activation (right click on the block.)
-     */
-    /*
-    public boolean onBlockActivated(World worldObj, int x, int y, int z, EntityPlayer player, int side, float par7, float par8, float par9)
-    {
-		System.out.println("Paint Attmept");
-		int colour = (this.getMetaData(worldObj, x, y, z)+1)%16;
-		this.setColourMetaData(worldObj, x, y, z, (byte) colour);
-		worldObj.markBlockForRenderUpdate(x, y, z);
-        return true;
-    }
+
     //*/
     
 	@Override
@@ -145,7 +134,6 @@ public class BlockLiquidConcrete extends Block16Fluid implements ISaveable {
 
 
 		desiccantList.add(0+4096);
-		desiccantList.add(BlockFullSolidREConcrete.instance.blockID+4096*100);
 
 		desiccantList.add(BlockREConcrete.instance.blockID+4096*4);
 		
@@ -168,6 +156,13 @@ public class BlockLiquidConcrete extends Block16Fluid implements ISaveable {
 
 	}
 	
+    @Override
+    public int quantityDropped(int meta, int fortune, Random random)
+    {
+        return 0;
+    }
+    
+	
 	@SideOnly(Side.CLIENT)
     public void registerIcons(IconRegister par1IconRegister)
     {
@@ -186,46 +181,25 @@ public class BlockLiquidConcrete extends Block16Fluid implements ISaveable {
 	    /**
 	     * Retrieves the block texture to use based on the display side. Args: iBlockAccess, x, y, z, side
 	     */
-	    public Icon getBlockTexture(IBlockAccess par1IBlockAccess, int par2, int par3, int par4, int par5)
+	    public Icon getBlockTexture(IBlockAccess par1IBlockAccess, int x, int y, int z, int par5)
 	    {
-		 	if(superMetaData.get(this.blockID).containsKey(coordsToString(par2,par3,par4)))
-	           return this.iconArray[superMetaData.get(this.blockID).get(coordsToString(par2,par3,par4))%16];//TODO find why this is not always the case.
-		 	else
-		 	{
-		 		superMetaData.get(this.blockID).put(coordsToString(par2,par3,par4),(byte) 8);
-		 		return this.iconArray[superMetaData.get(this.blockID).get(coordsToString(par2,par3,par4))];
-		 	}
+		 TileEntityBlock16Fluid te = (TileEntityBlock16Fluid) par1IBlockAccess.getBlockTileEntity(x, y, z);
+		 return this.iconArray[te.metaArray[par5]];
+		 	
 	    }
-	
-	
-
-	    @Override
-	    public int quantityDropped(int meta, int fortune, Random random)
-	    {
-	        return 0;
-	    }
+	 
 
 		@Override
-		public void save(NBTTagCompound par1nbtTagCompound) 
-		{
-			if(superMetaData.get(this.blockID).size()>0)
-			{
-				TSaveHandler.saveSBHashMap(par1nbtTagCompound, superMetaData.get(this.blockID));
-			}
+		public int stillLiquidId() {
+			return BlockLiquidConcrete.instance.blockID;
 		}
-
-
 		@Override
-		public void load(NBTTagCompound par1nbtTagCompound) 
-		{
-			metaData = TSaveHandler.readSBHashMap(par1nbtTagCompound);
-			superMetaData.replace(this.blockID, metaData);
+		public boolean isMetaSensitive() {
+			return false;
 		}
-
-		
 		@Override
-		public String getName() 
-		{
-			return "BlockLiquidConcrete";
+		public int stillLiquidMeta() {
+			return 15;
 		}
+	 
 }

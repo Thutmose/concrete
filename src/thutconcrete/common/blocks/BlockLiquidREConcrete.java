@@ -7,6 +7,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import thutconcrete.client.BlockRenderHandler;
 import thutconcrete.common.ConcreteCore;
+import thutconcrete.common.blocks.Block16Fluid.WetConcrete;
 import thutconcrete.common.corehandlers.TSaveHandler;
 import thutconcrete.common.utils.IRebar;
 import thutconcrete.common.utils.ISaveable;
@@ -31,12 +32,12 @@ import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
 import net.minecraftforge.common.ForgeDirection;
 
-public class BlockLiquidREConcrete extends Block16Fluid implements IRebar, ISaveable{
+public class BlockLiquidREConcrete extends Block16Fluid implements IRebar
+{
 	
 	public static Block instance;
 	public int colourid;
-	static Material wetConcrete = (new Material(MapColor.stoneColor));
-	public static ConcurrentHashMap<String, Byte> metaData = new ConcurrentHashMap<String, Byte>();
+	static Material wetConcrete = (new WetConcrete(MapColor.stoneColor));
 	Integer[][] data;
 	boolean[] side = new boolean[6];
 	
@@ -44,10 +45,8 @@ public class BlockLiquidREConcrete extends Block16Fluid implements IRebar, ISave
 		super(par1, wetConcrete);
 		setUnlocalizedName("REconcreteLiquid");
 		this.setResistance((float) 0.0);
+		this.setTickRandomly(true);
 		this.instance = this;
-		ConcreteCore.instance.saveList.addSavedData(this);
-
-		superMetaData.put(par1, metaData);
 	}
 	
 	
@@ -94,7 +93,6 @@ public class BlockLiquidREConcrete extends Block16Fluid implements IRebar, ISave
 		
 		
 		desiccantList.add(0+4096);
-		desiccantList.add(BlockFullSolidREConcrete.instance.blockID+4096*100);
 		
 		desiccantList.add(BlockREConcrete.instance.blockID+4096*4);
 	
@@ -281,22 +279,6 @@ public class BlockLiquidREConcrete extends Block16Fluid implements IRebar, ISave
     @SideOnly(Side.CLIENT)
     public Icon theIcon;
 	
-	 @SideOnly(Side.CLIENT)
-
-	    /**
-	     * Retrieves the block texture to use based on the display side. Args: iBlockAccess, x, y, z, side
-	     */
-	    public Icon getBlockTexture(IBlockAccess par1IBlockAccess, int par2, int par3, int par4, int par5)
-	    {
-		 	if(superMetaData.get(this.blockID).containsKey(coordsToString(par2,par3,par4)))
-	           return this.iconArray[superMetaData.get(this.blockID).get(coordsToString(par2,par3,par4))%16];//TODO find why this is not always the case.
-		 	else
-		 	{
-		 		superMetaData.get(this.blockID).put(coordsToString(par2,par3,par4),(byte) 8);
-		 		return this.iconArray[superMetaData.get(this.blockID).get(coordsToString(par2,par3,par4))];
-		 	}
-	    }
-	
 
 	    @Override
 	    public int quantityDropped(int meta, int fortune, Random random)
@@ -341,25 +323,17 @@ public class BlockLiquidREConcrete extends Block16Fluid implements IRebar, ISave
 			return this.blockIcon;
 		}
 
+		 @SideOnly(Side.CLIENT)
 
-		@Override
-		public void save(NBTTagCompound par1nbtTagCompound) {
-			if(metaData.size()>0)
-			{
-			TSaveHandler.saveSBHashMap(par1nbtTagCompound, metaData);
-			}
-		}
-
-
-		@Override
-		public void load(NBTTagCompound par1nbtTagCompound) {
-			metaData = TSaveHandler.readSBHashMap(par1nbtTagCompound);
-		}
-
-		
-		@Override
-		public String getName() {
-			return "BlockLiquidREConcrete";
-		}
+		    /**
+		     * Retrieves the block texture to use based on the display side. Args: iBlockAccess, x, y, z, side
+		     */
+		    public Icon getBlockTexture(IBlockAccess par1IBlockAccess, int x, int y, int z, int par5)
+		    {
+			 TileEntityBlock16Fluid te = (TileEntityBlock16Fluid) par1IBlockAccess.getBlockTileEntity(x, y, z);
+			 return this.iconArray[te.metaArray[par5]];
+			 	
+		    }
+		 
 		
 }

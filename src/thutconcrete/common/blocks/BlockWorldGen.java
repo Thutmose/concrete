@@ -26,16 +26,17 @@ import net.minecraft.util.Icon;
 import net.minecraft.world.World;
 import net.minecraft.world.chunk.Chunk;
 
-public class BlockWorldGen extends Block implements ISaveable{
+public class BlockWorldGen extends Block
+{
 
     @SideOnly(Side.CLIENT)
 	public Icon[] iconArray;
     
     public static final String[] names = {
-    										"oreChalk",
+    										"Chalk",
 									    	"lava",
-									    	"oreTrass",
-									    	"oreLimestone",
+									    	"Trass",
+									    	"Limestone",
 									    };
 
 	public int typeid;
@@ -50,6 +51,7 @@ public class BlockWorldGen extends Block implements ISaveable{
 		setUnlocalizedName("worldBlock");
 		this.setTickRandomly(true);
 		this.instance = this;
+		this.setCreativeTab(ConcreteCore.tabThut);
 		
 		if(replaceable.size()==0){
 			replaceable.put(0, 0);
@@ -69,8 +71,7 @@ public class BlockWorldGen extends Block implements ISaveable{
 
     @Override
     public void onBlockAdded(World worldObj, int x, int y, int z) {
-		this.setTickRandomly(true);
-		this.setLightValue(worldObj.getBlockMetadata(x,y,z)==0?1:0);
+		this.setLightValue(worldObj.getBlockMetadata(x,y,z)==1?1:0);
 		worldObj.scheduleBlockUpdate(x, y+1, z, BlockLava.getInstance(typeid).blockID, 5);
 		worldObj.scheduleBlockUpdate(x, y, z, this.blockID, 5);
     }
@@ -78,11 +79,10 @@ public class BlockWorldGen extends Block implements ISaveable{
     	
     	worldObj.setBlockMetadataWithNotify(x,y,z,item.getItemDamage(),3);
 
-		this.setLightValue(worldObj.getBlockMetadata(x,y,z)==0?1:0);
+		this.setLightValue(worldObj.getBlockMetadata(x,y,z)==1?1:0);
     	
 		worldObj.scheduleBlockUpdate(x, y+1, z, BlockLava.getInstance(typeid).blockID, 5);
 		worldObj.scheduleBlockUpdate(x, y, z, this.blockID, 5);
-		this.setTickRandomly(true);
     }
     
 	public void onBlockClicked(World worldObj, int x, int y, int z, EntityPlayer player){
@@ -161,7 +161,7 @@ public class BlockWorldGen extends Block implements ISaveable{
     {
         for (int j = 0; j < MAX_META; j++)
         {
-            par3List.add(new ItemStack(this.blockID, 1, j));
+            par3List.add(new ItemStack(par1, 1, j));
         }
     }
 
@@ -179,6 +179,11 @@ public class BlockWorldGen extends Block implements ISaveable{
         {
             this.iconArray[i] = par1IconRegister.registerIcon("thutconcrete:" + names[i]);
         }
+    }
+    
+    protected ItemStack createStackedBlock(int par1)
+    {
+        return new ItemStack(this.blockID, 1, par1);
     }
    
     /**
@@ -232,11 +237,6 @@ public class BlockWorldGen extends Block implements ISaveable{
         }
     }
     
-    protected ItemStack createStackedBlock(int par1)
-    {
-        return new ItemStack(this.blockID, 1, par1);
-    }
-   
     public String getUnlocalizedName(int par1){
     	return names[par1];
     }
@@ -258,25 +258,5 @@ public class BlockWorldGen extends Block implements ISaveable{
     {
         return true;
     }
-
-
-	@Override
-	public void save(NBTTagCompound par1nbtTagCompound) {
-		// TODO Auto-generated method stub
-		
-	}
-
-
-	@Override
-	public void load(NBTTagCompound par1nbtTagCompound) {
-		// TODO Auto-generated method stub
-		
-	}
-
-
-	@Override
-	public String getName() {
-		return "WorldGenBlock";
-	}
     
 }

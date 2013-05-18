@@ -26,7 +26,8 @@ import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
 import net.minecraftforge.common.ForgeDirection;
 
-public class BlockREConcrete extends Block16Fluid implements IRebar, ISaveable{
+public class BlockREConcrete extends Block16Fluid implements IRebar
+{
 	
 	public static Block instance;
 	public int colourid;
@@ -39,10 +40,9 @@ public class BlockREConcrete extends Block16Fluid implements IRebar, ISaveable{
 	public BlockREConcrete(int par1) {
 		super(par1,Material.rock);
 		setUnlocalizedName("REconcrete");
+		this.setTickRandomly(true);
+		this.rate = 1;
 		this.instance = this;
-		ConcreteCore.instance.saveList.addSavedData(this);
-
-		superMetaData.put(par1, metaData);
 	}
 	
 	
@@ -100,16 +100,6 @@ public class BlockREConcrete extends Block16Fluid implements IRebar, ISaveable{
 
     	this.setBoundsByMeta(par1IBlockAccess.getBlockMetadata(x, y, z));
     	this.setResistanceByMeta(par1IBlockAccess.getBlockMetadata(x, y, z));
-		/*/
-    	int n = 5;
-	   	 for (ForgeDirection fside : ForgeDirection.VALID_DIRECTIONS)
-	     {
-	   		 if(side[n])
-	          setBlockBoundsForSide(x, y, z, fside);
-	          
-	          n--;
-	     }
-//*/
     }
 
     public AxisAlignedBB getBoundingBoxForSide(ForgeDirection fside)
@@ -222,12 +212,15 @@ public class BlockREConcrete extends Block16Fluid implements IRebar, ISaveable{
 		int meta = worldObj.getBlockMetadata(x, y, z);
 		
 		if(meta<10)
+		{
 			for(int i=0;i<10-meta;i++)
-		if(Math.random()>(1-SOLIDIFY_CHANCE*100)){
-			 worldObj.setBlock(x, y, z, 0, 0, 3);
-		 }
-		
-		if(meta==15)worldObj.setBlock(x, y, z, BlockFullSolidREConcrete.instance.blockID, this.getMetaData(worldObj, x, y, z), 2);
+			{
+				if(Math.random()>(1-SOLIDIFY_CHANCE*100))
+				{
+					 worldObj.setBlock(x, y, z, 0, 0, 3);
+				}
+			}
+		}
 		
 	}
 	
@@ -282,21 +275,7 @@ public class BlockREConcrete extends Block16Fluid implements IRebar, ISaveable{
 	@SideOnly(Side.CLIENT)
 	public Icon theIcon;
 	
-	 @SideOnly(Side.CLIENT)
 
-	    /**
-	     * Retrieves the block texture to use based on the display side. Args: iBlockAccess, x, y, z, side
-	     */
-	    public Icon getBlockTexture(IBlockAccess par1IBlockAccess, int par2, int par3, int par4, int par5)
-	    {
-		 	if(superMetaData.get(this.blockID).containsKey(coordsToString(par2,par3,par4)))
-	           return this.iconArray[superMetaData.get(this.blockID).get(coordsToString(par2,par3,par4))%16];//TODO find why this is not always the case.
-		 	else
-		 	{
-		 		superMetaData.get(this.blockID).put(coordsToString(par2,par3,par4),(byte) 8);
-		 		return this.iconArray[superMetaData.get(this.blockID).get(coordsToString(par2,par3,par4))];
-		 	}
-	    }
 	
 
     /**
@@ -338,24 +317,68 @@ public class BlockREConcrete extends Block16Fluid implements IRebar, ISaveable{
 	}
 	
 
-	@Override
-	public void save(NBTTagCompound par1nbtTagCompound) {
-		if(metaData.size()>0)
-		{
-		TSaveHandler.saveSBHashMap(par1nbtTagCompound, metaData);
-		}
-	}
+	 @SideOnly(Side.CLIENT)
 
+	    /**
+	     * Retrieves the block texture to use based on the display side. Args: iBlockAccess, x, y, z, side
+	     */
+	    public Icon getBlockTexture(IBlockAccess par1IBlockAccess, int x, int y, int z, int par5)
+	    {
+		 TileEntityBlock16Fluid te = (TileEntityBlock16Fluid) par1IBlockAccess.getBlockTileEntity(x, y, z);
+		 return this.iconArray[te.metaArray[par5]];
+		 	
+	    }
+	 
 
-	@Override
-	public void load(NBTTagCompound par1nbtTagCompound) {
-		metaData = TSaveHandler.readSBHashMap(par1nbtTagCompound);
-	}
-
-	
-	@Override
-	public String getName() {
-		return "BlockREConcrete";
-	}
+	 
+	 
+	 
+	    /**
+	     * Checks if the block is a solid face on the given side, used by placement logic.
+	     *
+	     * @param world The current world
+	     * @param x X Position
+	     * @param y Y position
+	     * @param z Z position
+	     * @param side The side to check
+	     * @return True if the block is solid on the specified side.
+	     */
+	    public boolean isBlockSolidOnSide(World world, int x, int y, int z, ForgeDirection side)
+	    {
+	        int meta = world.getBlockMetadata(x, y, z);
+	        switch (side)
+	        {
+		            case UP:
+		            {
+		                    return (meta==15);
+		            }
+		            case DOWN:
+		            {
+		                    return true;
+		            }
+		            case NORTH:
+		            {
+		            	return (meta==15);
+		            }
+		            case SOUTH:
+		            {
+		            	return (meta==15);
+		            }
+		            case EAST:
+		            {
+		            	return (meta==15);
+		            }
+		            case WEST:
+		            {
+		            	return (meta==15);
+		            }
+		            default:
+		            {
+		            	return (meta==15);
+		            }
+            }
+	    }
+	 
+	 
  
 }

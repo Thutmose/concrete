@@ -21,14 +21,15 @@ import net.minecraft.util.Icon;
 import net.minecraft.world.Explosion;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
+import net.minecraftforge.common.ForgeDirection;
 
-public class BlockConcrete extends Block16Fluid implements ISaveable{
+public class BlockConcrete extends Block16Fluid
+{
 	
 
 	public static Block instance;
 	public static int resistance = 10;
 	public static float hardness = 1;
-	public static ConcurrentHashMap<String, Byte> metaData = new ConcurrentHashMap<String, Byte>();
 	Integer[][] data;
     @SideOnly(Side.CLIENT)
     private Icon[] iconArray;
@@ -36,12 +37,9 @@ public class BlockConcrete extends Block16Fluid implements ISaveable{
 	public BlockConcrete(int par1) {
 		super(par1,Material.rock);
 		setUnlocalizedName("concrete");
+		this.rate = 1;
 		this.instance = this;
-		ConcreteCore.instance.saveList.addSavedData(this);
-
-		superMetaData.put(par1, metaData);
 	}
-
 	
 	@Override
     public void onBlockAdded(World worldObj, int x, int y, int z) {
@@ -91,24 +89,11 @@ public class BlockConcrete extends Block16Fluid implements ISaveable{
             this.iconArray[i] = par1IconRegister.registerIcon("thutconcrete:" + "dryConcrete_"+i);
         }
     }
-    /**
-     * Called upon block activation (right click on the block.)
-     */
-	/*
-    public boolean onBlockActivated(World worldObj, int x, int y, int z, EntityPlayer player, int side, float par7, float par8, float par9)
-    {
-		System.out.println("Paint Attmept");
-		int colour = (this.getMetaData(worldObj, x, y, z)+1)%16;
-		this.setColourMetaData(worldObj, x, y, z, (byte) colour);
-		worldObj.markBlockForRenderUpdate(x, y, z);
-        return true;
-    }
-	//*/
+	
 	@Override
-	public void updateTick(World worldObj, int x, int y, int z, Random par5Random){
+	public void updateTick(World worldObj, int x, int y, int z, Random par5Random)
+	{
 
-		 if(worldObj.getTotalWorldTime()%10000==1)
-			 cleanUp(worldObj, this.blockID);
 	}
 	
 	public void onBlockClicked(World worldObj, int x, int y, int z, EntityPlayer player){
@@ -137,37 +122,60 @@ public class BlockConcrete extends Block16Fluid implements ISaveable{
 	    /**
 	     * Retrieves the block texture to use based on the display side. Args: iBlockAccess, x, y, z, side
 	     */
-	    public Icon getBlockTexture(IBlockAccess par1IBlockAccess, int par2, int par3, int par4, int par5)
+	    public Icon getBlockTexture(IBlockAccess par1IBlockAccess, int x, int y, int z, int par5)
 	    {
-		 	if(superMetaData.get(this.blockID).containsKey(coordsToString(par2,par3,par4)))
-	           return this.iconArray[superMetaData.get(this.blockID).get(coordsToString(par2,par3,par4))%16];//TODO find why this is not always the case.
-		 	else
-		 	{
-		 		superMetaData.get(this.blockID).put(coordsToString(par2,par3,par4),(byte) 8);
-		 		return this.iconArray[superMetaData.get(this.blockID).get(coordsToString(par2,par3,par4))];
-		 	}
+		 TileEntityBlock16Fluid te = (TileEntityBlock16Fluid) par1IBlockAccess.getBlockTileEntity(x, y, z);
+		 return this.iconArray[te.metaArray[par5]];
+		 	
+	    }
+	
+	 
+	    /**
+	     * Checks if the block is a solid face on the given side, used by placement logic.
+	     *
+	     * @param world The current world
+	     * @param x X Position
+	     * @param y Y position
+	     * @param z Z position
+	     * @param side The side to check
+	     * @return True if the block is solid on the specified side.
+	     */
+	    public boolean isBlockSolidOnSide(World world, int x, int y, int z, ForgeDirection side)
+	    {
+	        int meta = world.getBlockMetadata(x, y, z);
+	        switch (side)
+	        {
+		            case UP:
+		            {
+		                    return (meta==15);
+		            }
+		            case DOWN:
+		            {
+		                    return true;
+		            }
+		            case NORTH:
+		            {
+		            	return (meta==15);
+		            }
+		            case SOUTH:
+		            {
+		            	return (meta==15);
+		            }
+		            case EAST:
+		            {
+		            	return (meta==15);
+		            }
+		            case WEST:
+		            {
+		            	return (meta==15);
+		            }
+		            default:
+		            {
+		            	return (meta==15);
+		            }
+         }
 	    }
 	 
-
-		@Override
-		public void save(NBTTagCompound par1nbtTagCompound) {
-			if(superMetaData.get(this.blockID).size()>0)
-			{
-				TSaveHandler.saveSBHashMap(par1nbtTagCompound, superMetaData.get(this.blockID));
-			}
-		}
-
-
-		@Override
-		public void load(NBTTagCompound par1nbtTagCompound) {
-			metaData = TSaveHandler.readSBHashMap(par1nbtTagCompound);
-			superMetaData.replace(this.blockID, metaData);
-		}
-
-		
-		@Override
-		public String getName() {
-			return "BlockConcrete";
-		}
+	 
 	
 }

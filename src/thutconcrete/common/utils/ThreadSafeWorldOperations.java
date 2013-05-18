@@ -126,10 +126,12 @@ public class ThreadSafeWorldOperations extends Ticker
 		return false;
 	}
 	public void safeSet(World worldObj,double x, double y, double z, int ID, int Meta){
+		if(!worldObj.isRemote)
 		worldObj.setBlock((int)x, (int)y, (int)z, ID, Meta, 2);
 		
 	}
 	public  void safeSetMeta(World worldObj,double x, double y, double z, int Meta){
+		if(!worldObj.isRemote)
 		worldObj.setBlockMetadataWithNotify((int)x, (int)y, (int)z, Meta, 2);
 		
 	}

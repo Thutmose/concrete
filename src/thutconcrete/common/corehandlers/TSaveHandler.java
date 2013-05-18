@@ -129,7 +129,7 @@ public class TSaveHandler {
 	{
 	}
 	
-	public static void saveSBHashMap(NBTTagCompound cmpnd, ConcurrentHashMap<String, Byte> map)
+	public static void saveIBHashMap(NBTTagCompound cmpnd, ConcurrentHashMap<String, Byte> map)
 	{
 		int n = 0;
 		for(String i : map.keySet())
@@ -144,7 +144,7 @@ public class TSaveHandler {
 		cmpnd.setInteger("size", n);
 	}
 	
-	public static ConcurrentHashMap readSBHashMap(NBTTagCompound cmpnd)
+	public static ConcurrentHashMap readIBHashMap(NBTTagCompound cmpnd)
 	{
 		ConcurrentHashMap map = new ConcurrentHashMap<String, Byte>();
 		int n = cmpnd.getInteger("size");

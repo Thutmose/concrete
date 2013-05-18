@@ -16,11 +16,13 @@ public class ConfigHandler {
     private int blockWorldRange = 252;
     private int biomeID = 252;
     private int itemRange = 7000;
+    private int liquidID = 10;
 
 	// Blocks
 	public int IDBlock;
 	public int IDWorldBlock;
 	public int IDBiome;
+	public int IDLiquid;
 	// Items
 	public int IDItem;
 	// Misc
@@ -41,8 +43,11 @@ public class ConfigHandler {
 			Property blockWorld = conf.getTerrainBlock("BlockWorld", "Block", blockWorldRange, "the Block ID for Worldgen blocks");
 			IDWorldBlock = blockWorld.getInt();
 
-			Property biome = conf.get("biomeID", "biomeID", biomeID,"the initial Block ID");
+			Property biome = conf.get("biomeID", "biomeID", biomeID,"the initial biome ID");
 			IDBiome = biome.getInt();
+			
+			Property liquid = conf.get("liquidID", "liquidID", liquidID,"the initial liquid ID");
+			IDLiquid = liquid.getInt();
 			// Load Item Ids
 			Property itemIdea = conf.getItem("Item", itemRange);
 			itemIdea.comment = "The initial Item ID";

@@ -42,8 +42,6 @@ public class BlockLava extends Block16Fluid //implements ISaveable
 	static Material wetConcrete = (new Material(MapColor.stoneColor));
 	Integer[][] data;
 
-    public static ConcurrentHashMap<String, Byte> metaData = new ConcurrentHashMap<String, Byte>();
-
 	@SideOnly(Side.CLIENT)
 	private Icon iconFloating;
 	
@@ -54,10 +52,8 @@ public class BlockLava extends Block16Fluid //implements ISaveable
 		setUnlocalizedName("Lava" + typeid);
 		this.setResistance((float) 0.0);
 		this.instance = this;
+		this.rate = 0.95;
 		this.instances[typeid] = this;
-
-	//	ConcreteCore.instance.saveList.addSavedData(this);
-		superMetaData.put(par1, metaData);
 	}
 	
 
@@ -85,7 +81,6 @@ public class BlockLava extends Block16Fluid //implements ISaveable
 		if(data==null){
 			setData();
 			}
-		
     	this.setTickRandomly(true);
     }
 	
@@ -179,7 +174,7 @@ public class BlockLava extends Block16Fluid //implements ISaveable
 		
 		for(int i = 0;i<3;i++){
 			combinationList.add(BlockLava.getInstance(i).blockID+4096*BlockLava.getInstance(typeid).blockID);
-			combinationList.add(BlockSolidLava.getInstance(i).blockID+4096*BlockLava.getInstance(typeid).blockID);
+			combinationList.add(BlockSolidLava.getInstance(i).blockID+4096*BlockSolidLava.getInstance(typeid).blockID);
 		}
 
 		combinationList.add(BlockConcrete.instance.blockID+4096*BlockLava.getInstance(typeid).blockID);

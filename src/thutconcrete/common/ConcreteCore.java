@@ -1,7 +1,9 @@
 package thutconcrete.common;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.logging.Logger;
@@ -12,7 +14,7 @@ import thutconcrete.common.blocks.*;
 import thutconcrete.common.corehandlers.BlockHandler;
 import thutconcrete.common.corehandlers.ConfigHandler;
 import thutconcrete.common.corehandlers.ItemHandler;
-import thutconcrete.common.corehandlers.PacketHandler;
+import thutconcrete.common.corehandlers.LiquidHandler;
 import thutconcrete.common.corehandlers.TSaveHandler;
 import thutconcrete.common.ticks.TickHandler;
 import thutconcrete.common.worldgen.ChalkWorldGen;
@@ -42,10 +44,11 @@ import cpw.mods.fml.common.registry.LanguageRegistry;
 import cpw.mods.fml.common.registry.TickRegistry;
 import cpw.mods.fml.relauncher.Side;
 
+import thutconcrete.common.network.*;
 
-@Mod( modid = "ThutConcrete", name="Thut's Concrete", version="0.0.2")
+@Mod( modid = "ThutConcrete", name="Thut's Concrete", version="0.1.0")
 @NetworkMod(clientSideRequired = false, serverSideRequired = false, 
-channels={"ThutConcrete"},
+channels={"TC"},
 packetHandler = PacketHandler.class)
 
 public class ConcreteCore {
@@ -66,8 +69,16 @@ public class ConcreteCore {
 	public static Block[] blocks;
 	public static Item[] items;
 	
-	public TSaveHandler saveList;
+    private static final String[] colourNames = { "White",
+        "Orange", "Magenta", "Light Blue",
+        "Yellow", "Light Green", "Pink",
+        "Dark Grey", "Light Grey", "Cyan",
+        "Purple", "Blue", "Brown", "Green",
+        "Red", "Black" };
 	
+	
+	public TSaveHandler saveList;
+	public LiquidHandler liquidHndlr;
 	public BlockHandler blockList;
 	public ItemHandler itemList;
 
@@ -88,14 +99,18 @@ public class ConcreteCore {
 	public void load(FMLInitializationEvent evt){
 		new PacketHandler();
 		commproxy.initClient();
+		
+		liquidHndlr = new LiquidHandler();
+		MinecraftForge.EVENT_BUS.register(liquidHndlr);
+		
 		TickRegistry.registerTickHandler(tickHandler, Side.SERVER);
 
 		GameRegistry.registerWorldGenerator(new TrassWorldGen());
 		GameRegistry.registerWorldGenerator(new VolcanoWorldGen());
 		GameRegistry.registerWorldGenerator(new LimestoneWorldGen());
-		
+		GameRegistry.registerTileEntity(TileEntityBlock16Fluid.class, "Fluid16BlockTE");
 		populateMap();
-
+		
 		blockList = new BlockHandler(config);
 		itemList = new ItemHandler(config);
 		items = itemList.items;

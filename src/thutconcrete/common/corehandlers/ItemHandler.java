@@ -8,6 +8,7 @@ import cpw.mods.fml.common.registry.LanguageRegistry;
 import net.minecraft.block.Block;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.item.crafting.FurnaceRecipes;
 import net.minecraftforge.oredict.OreDictionary;
 import thutconcrete.common.blocks.BlockLiquidConcrete;
 import thutconcrete.common.blocks.BlockLiquidREConcrete;
@@ -23,6 +24,28 @@ public class ItemHandler {
 	// Empty fields for holding items
 	public static Item[] items;
 	public static List<Item> itemList = new ArrayList<Item>();
+	
+	public static final String[] names = 
+		{
+			"Grinder",
+			"Concrete Dust",
+			"Quick Lime",
+			"Calcium Carbonate",
+			"Trass Dust",
+			"Cement",
+			"Bucket of Concrete",
+			"Chalk",
+	    	"lava",
+	    	"Trass",
+	    	"Limestone",
+		};
+	
+	private final static String[] genNames = {
+		"Chalk",
+    	"lava",
+    	"Trass",
+    	"Limestone",
+    };
 
 	public ItemHandler(ConfigHandler handler){
 		config = handler;
@@ -32,30 +55,41 @@ public class ItemHandler {
 
 	public void initItems(){
 		int id = config.IDItem;
-	//	itemList.add(new ItemWorldGenBlock(id++));
+		
 		itemList.add(new ItemTrowel(id++));
 		itemList.add(new ItemConcreteDust(id++));
 		itemList.add(new ItemQuickLimeDust(id++));
 		itemList.add(new ItemCalciumCarbonateDust(id++));
 		itemList.add(new ItemTrassDust(id++));
 		itemList.add(new ItemCement(id++));
+		itemList.add(new ItemBucketConcrete(id++));
 		
 		items = itemList.toArray(new Item[0]);
 
-		Item item = new ItemWorldGenBlock(id++);
-		
-		for(int i = 0; i<BlockWorldGen.MAX_META; i++){
-			ItemStack stack = new ItemStack(item,1,i);
-			LanguageRegistry.addName(stack, item.getUnlocalizedName(stack));
-		}
 		registerItems();
+		registerNames();
+		
+		Item item = new ItemWorldGenBlock(BlockWorldGen.instance.blockID-256);
+		
+		for(int i = 0;i<4;i++)
+		{
+			ItemStack stack = new ItemStack(item, 1, i);
+			LanguageRegistry.addName(stack, genNames[i]);
+		}
+		
 		registerRecipes();
 	}
 	
 	public void registerItems(){
 		for(Item item: items){
 			GameRegistry.registerItem(item, item.getUnlocalizedName().substring(5));
-			LanguageRegistry.addName(item, item.getUnlocalizedName().substring(5));
+		}
+	}
+	public void registerNames(){
+		int n = 0;
+		for(Item item: items){
+			LanguageRegistry.addName(item, names[n]);
+			n++;
 		}
 	}
 	
@@ -87,9 +121,8 @@ public class ItemHandler {
 		GameRegistry.addShapelessRecipe(cement, lime, trass);
 		GameRegistry.addShapelessRecipe(cement, lime, dust, dust, dust, dust, dust, dust, dust, dust);
 
-		GameRegistry.addSmelting(items[3].itemID, lime, 0);
-
 		GameRegistry.addShapelessRecipe(trass, trassOre);
+		
 		GameRegistry.addShapelessRecipe(carbonate, chalkOre);
 		GameRegistry.addShapelessRecipe(carbonate, limestoneOre);
 		GameRegistry.addShapelessRecipe(carbonate, boneMeal);
@@ -97,6 +130,12 @@ public class ItemHandler {
 		GameRegistry.addShapelessRecipe(new ItemStack(BlockLiquidREConcrete.instance), liquidConcrete, rebar);
 		
 		GameRegistry.addRecipe(rebar,"x  "," x ","  x", 'x', Item.ingotIron);
+		
+		
+		
+		GameRegistry.addSmelting(items[3].itemID, lime, 0);
+	//	FurnaceRecipes.smelting().addSmelting(items[3].itemID, lime, 0);
+		
 		
 	}
 }

@@ -1,6 +1,7 @@
 package thutconcrete.common.blocks;
 
 import java.util.Random;
+import java.util.concurrent.ConcurrentHashMap;
 
 import thutconcrete.common.items.ItemConcreteDust;
 
@@ -32,6 +33,7 @@ public class BlockSolidLava extends Block16Fluid{
 		typeid = par2;
 		setUnlocalizedName("solidLava" + typeid);
 		this.instance = this;
+		this.rate = 1;
 		this.instances[typeid] = this;
 	}
 
@@ -44,7 +46,7 @@ public class BlockSolidLava extends Block16Fluid{
     public void onBlockAdded(World worldObj, int x, int y, int z) {
 		if(data==null){
 			data = new Integer[][]{
-					{0,15,null,null,null,0},
+					{0,15,null,null,null,0,1},
 					{},
 					{BlockSolidLava.getInstance(typeid).blockID+4096*BlockSolidLava.getInstance(typeid).blockID}
 			};
@@ -84,7 +86,13 @@ public class BlockSolidLava extends Block16Fluid{
     }
 	
 	@Override
-	public void updateTick(World worldObj, int x, int y, int z, Random par5Random){}
+	public void updateTick(World worldObj, int x, int y, int z, Random par5Random)
+	{
+		if(worldObj.getBlockMetadata(x, y, z)==15)
+		{
+			worldObj.removeBlockTileEntity(x, y, z);
+		}
+	}
 	
 	public void onBlockClicked(World worldObj, int x, int y, int z, EntityPlayer player){
 		this.setResistanceByMeta(worldObj.getBlockMetadata(x, y, z));

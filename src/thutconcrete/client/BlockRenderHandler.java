@@ -19,7 +19,7 @@ public class BlockRenderHandler implements ISimpleBlockRenderingHandler{
 
 	public static final int ID = RenderingRegistry.getNextAvailableRenderId();
 
-	public void renderREConcrete(Block parblock, double x, double y, double z, int meta, boolean[] sides, Icon icon, Icon icon1, boolean rebar, boolean concrete)
+	public void renderREConcrete(Block parblock, double x, double y, double z, int meta, boolean[] sides, Icon icon, Icon icon1, boolean rebar, boolean concrete, Icon[] icons)
     {
         Tessellator tessellator = Tessellator.instance;
         float f = 0.9F;
@@ -37,7 +37,8 @@ public class BlockRenderHandler implements ISimpleBlockRenderingHandler{
         	tessAddRebar(parblock,tessellator, icon1, x,y,z, sides);
         }
         if(concrete)
-        	tessAddCuboid(tessellator, icon, xCCmin, zCCmin, yCCmin, xCCmax, zCCmax, yCCmax);
+        	new RenderCuboid(tessellator, icons, xCCmin, zCCmin, yCCmin, xCCmax, zCCmax, yCCmax);
+        //	tessAddCuboid(tessellator, icon, xCCmin, zCCmin, yCCmin, xCCmax, zCCmax, yCCmax);
         
     }
 	
@@ -429,16 +430,21 @@ private void tessAddCuboidWithIconIndex(Tessellator tessellator, Icon icon, doub
 		boolean[] sides = null;
 		Icon icon = parblock.getIcon(0, 0);
 		Icon icon1 = parblock.getIcon(0, 0);
-		
+		Icon[] icons = new Icon[6];
 		if(parblock instanceof IRebar){
 			IRebar temp = (IRebar) parblock;
 			sides = temp.sides(world, x, y, z);
 		}
-		
 		if(parblock instanceof BlockLiquidREConcrete){
         	BlockLiquidREConcrete block = (BlockLiquidREConcrete)parblock;
         	icon = block.getBlockTexture(world, x, y, z, 0);
         	icon1 = block.theIcon;
+        	
+        	for(int i = 0;i<6;i++)
+        	{
+        		icons[i]=block.getBlockTexture(world, x, y, z, i);
+        	}
+        	
         	concrete = true;
         	rebar = true;
         }
@@ -447,6 +453,12 @@ private void tessAddCuboidWithIconIndex(Tessellator tessellator, Icon icon, doub
         	BlockREConcrete block = (BlockREConcrete)parblock;
         	icon = block.getBlockTexture(world, x, y, z, 0);
         	icon1 = block.theIcon;
+        	
+        	for(int i = 0;i<6;i++)
+        	{
+        		icons[i]=block.getBlockTexture(world, x, y, z, i);
+        	}
+        	
         	concrete = true;
         	rebar = true;
         }
@@ -458,7 +470,7 @@ private void tessAddCuboidWithIconIndex(Tessellator tessellator, Icon icon, doub
         	rebar = true;
         }
         
-		renderREConcrete(parblock, x, y, z, meta, sides,icon, icon1,rebar,concrete);
+		renderREConcrete(parblock, x, y, z, meta, sides,icon, icon1,rebar,concrete, icons);
 		return true;
 	}
 
