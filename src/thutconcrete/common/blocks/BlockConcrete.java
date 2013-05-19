@@ -45,7 +45,15 @@ public class BlockConcrete extends Block16Fluid
     public void onBlockAdded(World worldObj, int x, int y, int z) {
 		if(data==null){
 			data = new Integer[][]{
-					{0,15,null,null,0,0,1},
+					{
+						0,//ID that this returns when meta hits -1, 
+						15,//the viscosity factor,
+						null,//a secondary ID that this can turn into used for hardening,
+						null,//The hardening differential that prevents things staying liquid forever.,
+						null,//a randomness coefficient, this is multiplied by a random 0-10 then added to the hardening differential and viscosity.,
+						0,//The will fall of edges factor, this is 0 or 1,
+						1,//0 = not colourable, 1 = colourable.
+					},
 					{},
 					{BlockConcrete.instance.blockID+4096*BlockConcrete.instance.blockID}
 			};

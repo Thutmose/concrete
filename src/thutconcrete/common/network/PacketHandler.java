@@ -61,7 +61,7 @@ public class PacketHandler implements IPacketHandler {
         TileEntityBlock16Fluid teb16f = (TileEntityBlock16Fluid) te;
         int[] items = teb16f.metaArray;
         
-    //    if(isSame(items))
+        if(!isSame(items))
 	        {
         	
 		 	ByteArrayOutputStream bos = new ByteArrayOutputStream(12+(4*items.length));
@@ -89,7 +89,7 @@ public class PacketHandler implements IPacketHandler {
 	        pkt.isChunkDataPacket = true;
 	        return pkt;
         }
-    //    return null;
+        return null;
     }
 	 
 	 public static boolean isSame(int[] array)

@@ -140,14 +140,14 @@ public class BlockLiquidConcrete extends Block16Fluid implements ILiquid
 		desiccantList.add(BlockConcrete.instance.blockID+4096*4);
 
 		data = new Integer[][]{
-				{	
-					0,
-					0,
-					BlockConcrete.instance.blockID,
-					1,
-					0,
-					1,
-					1,
+				{
+					0,//ID that this returns when meta hits -1, 
+					0,//the viscosity factor,
+					BlockConcrete.instance.blockID,//a secondary ID that this can turn into used for hardening,
+					1,//The hardening differential that prevents things staying liquid forever.,
+					0,//a randomness coefficient, this is multiplied by a random 0-10 then added to the hardening differential and viscosity.,
+					1,//The will fall of edges factor, this is 0 or 1,
+					1,//0 = not colourable, 1 = colourable.
 				},
 				desiccantList.toArray(new Integer[0]),
 				combinationList.toArray(new Integer[0]),

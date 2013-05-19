@@ -4,7 +4,6 @@ import java.util.Arrays;
 import java.util.Random;
 
 import thutconcrete.common.network.PacketHandler;
-import thutconcrete.common.network.PacketTEB16F;
 
 import net.minecraft.block.Block;
 import net.minecraft.nbt.NBTTagCompound;
@@ -36,8 +35,6 @@ public class TileEntityBlock16Fluid extends TileEntity{
 		    			tryFalls++;
 		    		}
 		    		
-		    		
-		    		
 		    		if(!Block16Fluid.instance.trySpread(worldObj, xCoord, yCoord, zCoord))
 		    		{
 		    			trySpreads++;
@@ -46,6 +43,12 @@ public class TileEntityBlock16Fluid extends TileEntity{
 					
 					int num = Block16Fluid.instance.canHarden(worldObj, xCoord, yCoord, zCoord);
 						
+					if(num>0)
+					{
+					      tryFalls = 0;
+					      trySpreads = 0;
+					}
+					
 					 if(Math.random()>(1-(Block16Fluid.instance.SOLIDIFY_CHANCE*num)))
 					 {
 						 int metai = Block16Fluid.instance.getMetaData(worldObj,xCoord, yCoord, zCoord);

@@ -78,12 +78,13 @@ public class BlockDust extends Block16Fluid
 	private void setData(){
 		data = new Integer[][]{
 				{
-					0,
-					2,
-					this.thisID,
-					1,
-					0,
-					0,
+					0,//ID that this returns when meta hits -1, 
+					2,//the viscosity factor,
+					this.thisID,//a secondary ID that this can turn into used for hardening,
+					1,//The hardening differential that prevents things staying liquid forever.,
+					0,//a randomness coefficient, this is multiplied by a random 0-10 then added to the hardening differential and viscosity.,
+					0,//The will fall of edges factor, this is 0 or 1,
+					0,//0 = not colourable, 1 = colourable.
 				},
 				{},
 				{

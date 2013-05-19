@@ -49,6 +49,7 @@ public class Block16Fluid extends Block implements ITileEntityProvider
 					The hardening differential that prevents things staying liquid forever.,
 					a randomness coefficient, this is multiplied by a random 0-10 then added to the hardening differential and viscosity.,
 					The will fall of edges factor, this is 0 or 1,
+					0 = not colourable, 1 = colourable.
 				}
 				{Array of desiccants, format: id+4096*efficiency}
 				{Array of combination targets format: IDtarget + (4096*IDturnTo)}
@@ -58,14 +59,14 @@ public class Block16Fluid extends Block implements ITileEntityProvider
 	private Random r = new Random();
 	private LinearAlgebra vec;
 	private ThreadSafeWorldOperations safe = new ThreadSafeWorldOperations();
-	private boolean opaque = false;
+	
 	public double rate = 0.9;
 	
 	public static double SOLIDIFY_CHANCE = 0.0004;
 	
 	public static Block16Fluid instance;
 	
-	public List<Integer> breaks = new ArrayList<Integer>();
+	public static List<Integer> breaks = new ArrayList<Integer>();
 	public static Map<Integer, Integer[][]> fluid16Blocks = new HashMap<Integer, Integer[][]>();
 
     public Block16Fluid(int par1, Material par2)
@@ -73,7 +74,6 @@ public class Block16Fluid extends Block implements ITileEntityProvider
     	super(par1, par2);
         this.setBlockBounds(0.0F, 0.0F, 0.0F, 1.0F, 0.0625F, 1.0F);
 		setCreativeTab(ConcreteCore.tabThut);
-		//this.setTickRandomly(true);
 		breaks.add(78);
 		breaks.add(38);
 		breaks.add(37);
@@ -105,7 +105,7 @@ public class Block16Fluid extends Block implements ITileEntityProvider
      */
     public boolean isOpaqueCube()
     {
-        return opaque;
+        return false;
     }
  
     /**
@@ -119,7 +119,7 @@ public class Block16Fluid extends Block implements ITileEntityProvider
  
     @Override
     public void onBlockAdded(World par1World, int x, int y, int z) {
-    	tickSides(par1World,x,y,z);
+    	setTEUpdate(par1World, x, y, z);
     }
     /**
      * Sets the block's bounds for rendering it as an item
@@ -152,12 +152,12 @@ public class Block16Fluid extends Block implements ITileEntityProvider
      */
     public void onNeighborBlockChange(World worldObj, int x, int y, int z, int par5)
     { 
-    	getTE(worldObj, x, y, z).shouldUpdate=true;
+    	setTEUpdate(worldObj, x, y, z);
     }
     
     public void breakBlock(World worldObj, int x, int y, int z, int par5, int par6) 
     {
-    	
+    	super.breakBlock(worldObj, x, y, z, par5, par6);
     }
   
     
@@ -167,27 +167,26 @@ public class Block16Fluid extends Block implements ITileEntityProvider
     }
     public void onEntityCollidedWithBlock(World worldObj,int x,int y, int z, Entity entity)
     {
-    	getTE(worldObj, x, y, z).shouldUpdate=true;
+    	setTEUpdate(worldObj, x, y, z);
     }
     
     
     public void onBlockPlacedBy(World worldObj,int x,int y,int z,EntityLiving entity, ItemStack item)
     {
-    	this.merge(worldObj, x, y, z, x, y-1, z);
-    	tickSides(worldObj,x,y,z);
+    	setTEUpdate(worldObj, x, y, z);
     }
     
     public boolean onBlockActivated(World worldObj, int x, int y, int z, EntityPlayer player, int side, float par7, float par8, float par9)
     {
     	ItemStack item = player.getHeldItem();
     	int meta = worldObj.getBlockMetadata(x,y,z);
-    	getTE(worldObj, x, y, z).shouldUpdate=true;
-    	if(item!=null&&item.getItem() instanceof ItemDye)
+    	if(canColour(worldObj.getBlockId(x, y, z))&&item!=null&&item.getItem() instanceof ItemDye)
     	{
 	    	int meta1 = (15-item.getItemDamage());
 	    	if(meta!=meta1)
 	    	{
 	    		this.setColourMetaData(worldObj, x, y, z, (byte) (meta1),side);
+	    		setTEUpdate(worldObj, x, y, z);
 	    		if(!player.capabilities.isCreativeMode)
 	    			item.splitStack(1);
 	    	}
@@ -200,7 +199,7 @@ public class Block16Fluid extends Block implements ITileEntityProvider
     ////////////////////////////////////////Fluid Block Logic Below Here////////////////////////////////////////////////////
     
     /**
-     * Checks if the block should spread to the side.  This is a very loose powder, and is likely do to so.
+     * Checks if the block should spread to the side
      * @param par1World
      * @param x
      * @param y
@@ -235,6 +234,13 @@ public class Block16Fluid extends Block implements ITileEntityProvider
         return moved;
     }
  
+    /**
+     * Checks if the block should fall down
+     * @param par1World
+     * @param x
+     * @param y
+     * @param z
+     */
     public boolean tryFall(World worldObj, int x, int y, int z){
     	
     	safe.safeLookUp(worldObj,x, y, z);
@@ -280,11 +286,13 @@ public class Block16Fluid extends Block implements ITileEntityProvider
         boolean oneOfUs = (block1 instanceof Block16Fluid);
         boolean additionalMeta = true;
         boolean canBreak = willBreak(id1);
+        boolean willColour = canColour(id1);
         if(canBreak){
         	safe.safeSet(worldObj, x1, y1, z1, 0, 0);
         	id1 = 0;
         	meta1=0;
         }
+        int newColour = 8;
         boolean changed = false;
         boolean combine = willCombine(id, id1);
         int idCombine = getCombineID(worldObj,x,y,z, x1, y1, z1);
@@ -293,9 +301,10 @@ public class Block16Fluid extends Block implements ITileEntityProvider
 
         if(combine){
         	if(!oneOfUs)meta1 = -1;
-
-        	int newColour = getNewColour(worldObj, x, y, z, x1, y1, z1);
-        	
+           	if(willColour)
+        	{
+        		newColour = getNewColour(worldObj, x, y, z, x1, y1, z1);
+        	}
         	if(id1==0){
         		safe.safeSet(worldObj, x1, y1, z1, idCombine, meta);
         		safe.safeSet(worldObj, x, y, z, returnToID, 0);
@@ -313,9 +322,10 @@ public class Block16Fluid extends Block implements ITileEntityProvider
         		}
         		changed = true;
         	}
-
-        	setColourMetaData(worldObj, x1, y1, z1, (byte) newColour);
-        	
+        	if(willColour)
+        	{
+        		setColourMetaData(worldObj, x1, y1, z1, (byte) newColour);
+        	}
         	return changed;
         }
 
@@ -340,14 +350,14 @@ public class Block16Fluid extends Block implements ITileEntityProvider
         boolean changed = false;
         boolean oneOfUs = (block1 instanceof Block16Fluid);
         boolean canBreak = willBreak(id1);
-        
+        boolean willColour = canColour(id1);
 
         if(canBreak){
         	safe.safeSet(worldObj, x1, y1, z1, 0, 0);
         	id1 = 0;
         	meta1=0;
         }
-        
+        int newColour = 8;
         boolean combine = willCombine(id, id1);
         int idCombine = getCombineID(worldObj,x,y,z, x1, y1, z1);
         int returnToID = getReturnToID(id);
@@ -355,8 +365,11 @@ public class Block16Fluid extends Block implements ITileEntityProvider
         
         if(combine){
         	if(!oneOfUs)meta1 = -1;
-
-        	int newColour = getNewColour(worldObj, x, y, z, x1, y1, z1);
+        	
+        	if(willColour)
+        	{
+        		newColour = getNewColour(worldObj, x, y, z, x1, y1, z1);
+        	}
         	
         	while(meta>((id1==idHarden)?meta1+diff:meta1+spread)&&meta1<15){
         		meta--;
@@ -366,7 +379,10 @@ public class Block16Fluid extends Block implements ITileEntityProvider
         		changed = true;
         	}
         	
-        	setColourMetaData(worldObj, x1, y1, z1, (byte) newColour);
+        	if(willColour)
+        	{
+        		setColourMetaData(worldObj, x1, y1, z1, (byte) newColour);
+        	}
         	
         	return changed;
         	
@@ -374,6 +390,9 @@ public class Block16Fluid extends Block implements ITileEntityProvider
         return false;
     }
     
+    
+    
+    /////////////////////////////////////////////////Checks used in the fluid code////////////////////////////////////////////////////
     
     private boolean willBreak(int id){
     	return breaks.contains(id);
@@ -456,62 +475,14 @@ public class Block16Fluid extends Block implements ITileEntityProvider
     	return combineID;
     }
     
-    private void colourChange(World worldObj, int x, int y, int z, int x1, int y1, int z1){
-    	int idFrom = worldObj.getBlockId(x, y, z);
-    	int idTo = worldObj.getBlockId(x1,y1,z1);
-    	int dimID = worldObj.provider.dimensionId;
-    	Block block = Block.blocksList[idFrom];
-
-		 if(fluid16Blocks.get(idFrom)==null||fluid16Blocks.get(idFrom)[0]==null||fluid16Blocks.get(idFrom)[0][5]==null) return;
-		 if(fluid16Blocks.get(idFrom)[0][5]==0) return;
-    	if(block instanceof Block16Fluid)
-    	{
-    		int colourfrom = instance.getMetaData(worldObj,x, y, z);
-    		int colourto = instance.getMetaData(worldObj,x1, y1, z1);
-    		int i = Math.min(instance.getMetaData(worldObj,x, y, z), ((Block16Fluid)block).instance.getMetaData(worldObj,x1, y1, z1));
-    		int j = Math.max(instance.getMetaData(worldObj,x, y, z), ((Block16Fluid)block).instance.getMetaData(worldObj,x1, y1, z1));
-    		
-    		setColourMetaData(worldObj, x1, y1, z1, (byte) (ConcreteCore.colourMap.get(i+16*j)==null?colourfrom:(byte)ConcreteCore.colourMap.get(i+16*j)));
-    	}
+    ////////////////////////////////////////Fluid Block Logic Above Here, special data Below///////////////////////////////////////////
+    
+    private boolean canColour(int id){
+    	if(fluid16Blocks.get(id)==null) return false;
+    	if(fluid16Blocks.get(id)[0][6]==null) return false;
+    	return (fluid16Blocks.get(id)[0][6]>0?true:false);
     }
     
-    private int getNewColour(World worldObj, int x, int y, int z, int x1, int y1, int z1){
-    	int idFrom = worldObj.getBlockId(x, y, z);
-    	int idTo = worldObj.getBlockId(x1,y1,z1);
-    	int dimID = worldObj.provider.dimensionId;
-    	Block block = Block.blocksList[idFrom];
-
-		 if(fluid16Blocks.get(idFrom)==null||fluid16Blocks.get(idFrom)[0]==null||fluid16Blocks.get(idFrom)[0][5]==null) return 8;
-		 if(fluid16Blocks.get(idFrom)[0][5]==0) return 8;
-    	if(block instanceof Block16Fluid)
-    	{
-    		int colourfrom = instance.getMetaData(worldObj,x, y, z);
-    		int colourto = instance.getMetaData(worldObj,x1, y1, z1);
-    		int i = Math.min(instance.getMetaData(worldObj,x, y, z), ((Block16Fluid)block).instance.getMetaData(worldObj,x1, y1, z1));
-    		int j = Math.max(instance.getMetaData(worldObj,x, y, z), ((Block16Fluid)block).instance.getMetaData(worldObj,x1, y1, z1));
-    		
-    		return (ConcreteCore.colourMap.get(i+16*j)==null?colourfrom:(byte)ConcreteCore.colourMap.get(i+16*j));
-    	}
-    	
-    	return 8;
-    }
-    
-    private int getHardenRate(int idFrom, int idTo){
-    	if(fluid16Blocks.get(idFrom)==null)return idFrom;
-    	Integer[][] blockData = fluid16Blocks.get(idFrom);
-    	for(Integer i : blockData[1]){
-    		int j = i&4095;
-    		if(idTo == j){
-    			return i>>12;
-    		}
-    	}
-    	return idFrom;
-    }
-    
-    
-    
-    
-    ////////////////////////////////////////Fluid Block Logic Above Here, Radiation Below///////////////////////////////////////////
     
     public void tickSides(World worldObj, int x, int y, int z){
     	 int[][]sides = {{0,0,0}, {1,0,0},{-1,0,0},{0,0,1},{0,0,-1},{0,1,0},{0,-1,0}};
@@ -544,7 +515,59 @@ public class Block16Fluid extends Block implements ITileEntityProvider
     	return num;
     }
     
-    ///////////////////////////////////////////////////////////////////Block Ticking Stuff Above Here///////////////////////////////////////
+    private int getHardenRate(int idFrom, int idTo){
+    	if(fluid16Blocks.get(idFrom)==null)return idFrom;
+    	Integer[][] blockData = fluid16Blocks.get(idFrom);
+    	for(Integer i : blockData[1]){
+    		int j = i&4095;
+    		if(idTo == j){
+    			return i>>12;
+    		}
+    	}
+    	return idFrom;
+    }
+    
+    private int getNewColour(World worldObj, int x, int y, int z, int x1, int y1, int z1){
+    	int idFrom = worldObj.getBlockId(x, y, z);
+    	int idTo = worldObj.getBlockId(x1,y1,z1);
+    	int dimID = worldObj.provider.dimensionId;
+    	Block block = Block.blocksList[idFrom];
+
+		 if(fluid16Blocks.get(idFrom)==null||fluid16Blocks.get(idFrom)[0]==null||fluid16Blocks.get(idFrom)[0][6]==null) return 8;
+		 if(fluid16Blocks.get(idFrom)[0][6]==0) return 8;
+    	if(block instanceof Block16Fluid)
+    	{
+    		int colourfrom = instance.getMetaData(worldObj,x, y, z);
+    		int colourto = instance.getMetaData(worldObj,x1, y1, z1);
+    		int i = Math.min(instance.getMetaData(worldObj,x, y, z), ((Block16Fluid)block).instance.getMetaData(worldObj,x1, y1, z1));
+    		int j = Math.max(instance.getMetaData(worldObj,x, y, z), ((Block16Fluid)block).instance.getMetaData(worldObj,x1, y1, z1));
+    		
+    		return (ConcreteCore.colourMap.get(i+16*j)==null?colourfrom:(byte)ConcreteCore.colourMap.get(i+16*j));
+    	}
+    	
+    	return 8;
+    }
+    
+    public void colourChange(World worldObj, int x, int y, int z, int x1, int y1, int z1){
+    	int idFrom = worldObj.getBlockId(x, y, z);
+    	int idTo = worldObj.getBlockId(x1,y1,z1);
+    	int dimID = worldObj.provider.dimensionId;
+    	Block block = Block.blocksList[idFrom];
+
+    	
+		if(fluid16Blocks.get(idFrom)==null||fluid16Blocks.get(idFrom)[0]==null||fluid16Blocks.get(idFrom)[0][6]==null) return;
+		if(fluid16Blocks.get(idFrom)[0][6]==0) return;
+    	if(block instanceof Block16Fluid)
+    	{
+    		int colourfrom = instance.getMetaData(worldObj,x, y, z);
+    		int colourto = instance.getMetaData(worldObj,x1, y1, z1);
+    		int i = Math.min(instance.getMetaData(worldObj,x, y, z), ((Block16Fluid)block).instance.getMetaData(worldObj,x1, y1, z1));
+    		int j = Math.max(instance.getMetaData(worldObj,x, y, z), ((Block16Fluid)block).instance.getMetaData(worldObj,x1, y1, z1));
+    		
+    		setColourMetaData(worldObj, x1, y1, z1, (byte) (ConcreteCore.colourMap.get(i+16*j)==null?colourfrom:(byte)ConcreteCore.colourMap.get(i+16*j)));
+    	}
+    }
+    ///////////////////////////////////////////////////////////////////Block effects/ticking Stuff Above Here///////////////////////////////////////
     @SideOnly(Side.CLIENT)
 
     /**
@@ -582,13 +605,15 @@ public class Block16Fluid extends Block implements ITileEntityProvider
     {
         return (meta & 15) + 1;
     }
+    
 	 public int getMetaData(World worldObj, int x, int y, int z, int side)
 	 {
 		 TileEntityBlock16Fluid te = (TileEntityBlock16Fluid) worldObj.getBlockTileEntity(x, y, z);
 		 if(te!=null)
-		 return te.metaArray[side];
+			 return te.metaArray[side];
 		 else return 8;
 	 }
+	 
 	 public int getMetaData(World worldObj, int x, int y, int z)
 	 {
 		 TileEntityBlock16Fluid te = (TileEntityBlock16Fluid) worldObj.getBlockTileEntity(x, y, z);
@@ -602,24 +627,33 @@ public class Block16Fluid extends Block implements ITileEntityProvider
 	 public void setColourMetaData(World worldObj, int x, int y, int z, byte meta, int side)
 	 {
 		 TileEntityBlock16Fluid te = (TileEntityBlock16Fluid) worldObj.getBlockTileEntity(x, y, z);
-		 if(te!=null)
+		 if(te!=null&&meta!=te.metaArray[side])
 		 {
 			 te.metaArray[side] = meta;
 			 te.sendUpdate();
-		 
 		 }
 	 }
 	 
 	 public void setColourMetaData(World worldObj, int x, int y, int z, byte meta)
 	 {
 		 TileEntityBlock16Fluid te = (TileEntityBlock16Fluid) worldObj.getBlockTileEntity(x, y, z);
-		 if(te!=null)
+		 if(te!=null&&
+				 (
+						  meta!=te.metaArray[0]
+						||meta!=te.metaArray[1]
+						||meta!=te.metaArray[2]
+						||meta!=te.metaArray[3]
+						||meta!=te.metaArray[4]
+						||meta!=te.metaArray[5])
+						
+				 )
 		 {
 			 te.metaArray = new int[] {meta,meta,meta,meta,meta,meta};
 			 te.sendUpdate();
-		 
 		 }
 	 }
+	 
+	 ///////////////////////////////////////////////TE Specific stuff//////////////////////////////////////////////
 	 
 	 public TileEntity createNewTileEntity(World world)
 	 {
@@ -632,16 +666,19 @@ public class Block16Fluid extends Block implements ITileEntityProvider
 		 return (TileEntityBlock16Fluid)worldObj.getBlockTileEntity(x, y, z);
 	 }
 	 
+	 public void setTEUpdate(World worldObj, int x, int y, int z)
+	 {
+		 TileEntity TE = worldObj.getBlockTileEntity(x, y, z);
+		 if(TE!=null&&TE instanceof TileEntityBlock16Fluid)
+		 {
+			 TileEntityBlock16Fluid te = (TileEntityBlock16Fluid)TE;
+			 te.shouldUpdate = true;
+		 }
+	 }
 	 
 	 
 	 
-	 
-	 
-	 
-	 
-	 
-	 
-	 
+	 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	 
 	 
 	 public static class WetConcrete extends Material
