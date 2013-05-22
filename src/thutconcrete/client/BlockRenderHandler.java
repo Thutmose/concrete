@@ -22,11 +22,11 @@ public class BlockRenderHandler implements ISimpleBlockRenderingHandler{
 	public void renderREConcrete(Block parblock, double x, double y, double z, int meta, boolean[] sides, Icon icon, Icon icon1, boolean rebar, boolean concrete, Icon[] icons)
     {
         Tessellator tessellator = Tessellator.instance;
-        float f = 0.9F;
+        float f = 0.95F;
         boolean animated = false;
         
-        
-      //  tessellator.setColorOpaque_F(f, f, f);
+        tessellator.setBrightness(1000000);
+        tessellator.setColorOpaque_F(f, f, f);
         
         int j = meta & 15;
         double yCCmax =y+ ((1 + j)) / 16.0F;

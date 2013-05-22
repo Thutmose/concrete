@@ -19,11 +19,11 @@ import thutconcrete.common.blocks.BlockREConcrete;
 import thutconcrete.common.items.ItemConcreteDust;
 import thutconcrete.common.corehandlers.ItemHandler;
 
-public class ItemTrowel extends Item {
+public class ItemGrinder extends Item {
 
 	public static final int MAX_USES = 128;
 	
-	public ItemTrowel(int par1) {
+	public ItemGrinder(int par1) {
 		super(par1);
 		this.maxStackSize = 1;
 		this.setMaxDamage(MAX_USES);
@@ -33,6 +33,8 @@ public class ItemTrowel extends Item {
 
     public boolean onItemUse(ItemStack par1ItemStack, EntityPlayer par2EntityPlayer, World par3World, int x, int y, int z, int side, float hitX, float hitY, float hitZ)
     {
+    	
+    	
         if (!par2EntityPlayer.canPlayerEdit(x, y, z, side, par1ItemStack))
         {
             return false;
@@ -138,12 +140,16 @@ public class ItemTrowel extends Item {
 
             	Random rdusts = new Random();
             	EntityItem dusts = new EntityItem(par3World, x + hitX, y + hitY, z + hitZ, new ItemStack(dustid, rdusts.nextInt(totalPieces+1), 0));
-            	
-        		par3World.spawnEntityInWorld(dusts);
+            	if(totalPieces>0)
+            	{
+            		par3World.spawnEntityInWorld(dusts);
+            	}
         	}
         	
         	return true;
         }
+        
+        
     }
     
 	@SideOnly(Side.CLIENT)

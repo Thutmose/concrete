@@ -17,6 +17,7 @@ public class TileEntityVolcano extends TileEntity
 	
 	public int typeid = 10;
 	public int height = 0;
+	public int z;
     int n=0;
     public static List<Integer> replaceable =new ArrayList<Integer>();
     public static List<Integer> lava = new ArrayList<Integer>();
@@ -34,34 +35,38 @@ public class TileEntityVolcano extends TileEntity
 			
 		if(typeid>2)
 		{
-			typeid = (new Random()).nextInt(3);
-			height = (typeid+1)*(new Random()).nextInt(30);
+			height = ConcreteCore.getVolcano(xCoord, z);
+			typeid = height>60?2:height>30?1:0;
 		}
 		
 		if(Math.random()>0.85)
 		{
 			int id;
-			Chunk chunk = worldObj.getChunkFromBlockCoords(xCoord, zCoord);
+			Chunk chunk = worldObj.getChunkFromBlockCoords(xCoord, getZCoord());
 			
-			int maxHeight = 64+ConcreteCore.getVolcano(xCoord, zCoord)-yCoord;
+			int maxHeight = height+64-yCoord;
 			
 			int[][] sides = {{-1,0},{1,0},{0,-1},{0,1}};
 			
-			int meta = worldObj.getBlockId(xCoord, yCoord+1, zCoord);
+			int meta = worldObj.getBlockId(xCoord, yCoord+1, getZCoord());
 				
-			for(int j = 1;j<maxHeight;j++){
-				id = worldObj.getBlockId(xCoord, yCoord+j, zCoord);
-				meta = worldObj.getBlockMetadata(xCoord, yCoord+j, zCoord);
-				if(!(lava.contains(id)||replaceable.contains(id)||solidlava.contains(id)))break;
-				if((lava.contains(id)&&meta!=15)||replaceable.contains(id)){
-					if(Math.random()<0.99995)
+			for(int j = 1;j<maxHeight;j++)
+			{
+				id = worldObj.getBlockId(xCoord, yCoord+j, getZCoord());
+				meta = worldObj.getBlockMetadata(xCoord, yCoord+j, getZCoord());
+				
+				if(!(lava.contains(id)||replaceable.contains(id)||solidlava.contains(id))) break;
+				
+				if((lava.contains(id)&&meta!=15)||replaceable.contains(id))
+				{
+					if(Math.random()<0.9999)
 					{
 						setLava(j);
 					}
 					else
 					{
 						ExplosionCustom boom = new ExplosionCustom();
-				    	boom.doExplosion(worldObj, xCoord, yCoord+j, zCoord, 40*(typeid+1), true);
+				    	boom.doExplosion(worldObj, xCoord, yCoord+j, getZCoord(), 40*(typeid+1), true);
 					}
 					break;
 				}
@@ -111,17 +116,17 @@ public class TileEntityVolcano extends TileEntity
 	{
 		if(!worldObj.isRemote)
 		{
-			worldObj.setBlock(xCoord, yCoord+j, zCoord, BlockLava.getInstance(typeid).blockID, 15, 3);
+			worldObj.setBlock(xCoord, yCoord+j, getZCoord(), BlockLava.getInstance(typeid).blockID, 15, 3);
 			TileEntityBlock16Fluid te = new TileEntityBlock16Fluid();
-			if(worldObj.getBlockTileEntity(xCoord, yCoord+j, zCoord)==null)
+			if(worldObj.getBlockTileEntity(xCoord, yCoord+j, getZCoord())==null)
 			{
 				te = new TileEntityBlock16Fluid();
-				worldObj.setBlockTileEntity(xCoord, yCoord+j, zCoord, te);
+				worldObj.setBlockTileEntity(xCoord, yCoord+j, getZCoord(), te);
 				te.shouldUpdate = true;
 			}
 			else
 			{
-				te = (TileEntityBlock16Fluid)worldObj.getBlockTileEntity(xCoord, yCoord+j, zCoord);
+				te = (TileEntityBlock16Fluid)worldObj.getBlockTileEntity(xCoord, yCoord+j, getZCoord());
 				te.shouldUpdate = true;
 			}
 			
@@ -133,6 +138,7 @@ public class TileEntityVolcano extends TileEntity
 		   super.writeToNBT(par1);
 		   par1.setInteger("type", typeid);
 		   par1.setInteger("h", height);
+		   par1.setInteger("z location", z);
 	   }
 
 	   public void readFromNBT(NBTTagCompound par1)
@@ -140,6 +146,12 @@ public class TileEntityVolcano extends TileEntity
 	      super.readFromNBT(par1);
 	      typeid = par1.getInteger("type");
 	      height = par1.getInteger("h");
+	      z = par1.getInteger("z location");
 	   }
 
+	   public int getZCoord()
+	   {
+		   return z;
+	   }
+	   
 }

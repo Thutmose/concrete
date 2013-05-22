@@ -56,7 +56,7 @@ public class ItemHandler {
 	public void initItems(){
 		int id = config.IDItem;
 		
-		itemList.add(new ItemTrowel(id++));
+		itemList.add(new ItemGrinder(id++));
 		itemList.add(new ItemConcreteDust(id++));
 		itemList.add(new ItemQuickLimeDust(id++));
 		itemList.add(new ItemCalciumCarbonateDust(id++));

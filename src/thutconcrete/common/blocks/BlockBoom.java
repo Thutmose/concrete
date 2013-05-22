@@ -31,6 +31,13 @@ public class BlockBoom extends Block implements ITileEntityProvider
 		this.instance = this;
 		this.setCreativeTab(ConcreteCore.tabThut);
 	}
+	
+	 public void onBlockAdded(World par1World, int par2, int par3, int par4) 
+	 {
+		 ConcreteCore.addVolcano(par2, par4);
+		 TileEntityVolcano te = (TileEntityVolcano)par1World.getBlockTileEntity(par2, par3, par4);
+		 te.z = par4;
+	 }
 
 	@Override
 	public TileEntity createNewTileEntity(World world) {

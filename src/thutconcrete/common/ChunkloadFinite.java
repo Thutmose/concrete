@@ -23,6 +23,7 @@ import net.minecraft.server.management.ServerConfigurationManager;
 import net.minecraft.world.World;
 import net.minecraftforge.common.ForgeDirection;
 import net.minecraftforge.event.ForgeSubscribe;
+import net.minecraftforge.event.entity.living.LivingEvent;
 import net.minecraftforge.event.world.ChunkEvent;
 import net.minecraftforge.event.world.ChunkWatchEvent;
 import net.minecraftforge.event.world.ChunkWatchEvent.Watch;
@@ -42,30 +43,42 @@ public class ChunkloadFinite {
 	}
 	
 	@ForgeSubscribe
-	public void onChunk(Watch watch)
+	public void onLivingUpdate(LivingEvent evt)
 	{
 		
-		EntityPlayerMP player = watch.player;
+		if(!(evt.entityLiving instanceof EntityPlayerMP)) return;
+		
+		EntityPlayerMP player = (EntityPlayerMP) evt.entityLiving;
 		World world = player.worldObj;
-
-		double x = player.lastTickPosX;
-		double y = player.lastTickPosY;
-		double z = player.lastTickPosZ;
-		
-		double x2 = player.posX;
-		double y2 = player.posY;
-		double z2 = player.posZ;
-		
-		double y1 = y;
+		if(!world.provider.terrainType.getWorldTypeName().contentEquals("FINITE")) return;
 
 		int chunkX = player.chunkCoordX;
 		int chunkZ = player.chunkCoordZ;
+		double x = player.lastTickPosX;
 		
-		if(!world.provider.terrainType.getWorldTypeName().contentEquals("FINITE")) return;
-		if(!world.isRemote)//&&(chunkX>chunkSize||chunkX<-chunkSize||chunkZ>chunkSize||chunkZ<-chunkSize))
+		if(!world.isRemote&&(x>(blockSize)||chunkX<-(chunkSize)||chunkZ>chunkSize||chunkZ<-chunkSize))
 		{
-			Entity mount;
-
+		
+			double y = player.lastTickPosY;
+			double z = player.lastTickPosZ;
+			
+			Entity mount = null;
+			
+			double x2 = player.lastTickPosX;
+			double y2 = player.lastTickPosY;
+			double z2 = player.lastTickPosZ;
+			
+			if(player.isRiding())
+			{
+				mount = player.ridingEntity;
+				x2 = mount.lastTickPosX;
+				y2 = mount.lastTickPosY;
+				z2 = mount.lastTickPosZ;
+			}
+			
+			
+			double y1 = y;
+			
 			if(players.containsKey(player.entityId)&&players.get(player.entityId)<=world.getTotalWorldTime())
 			{
 				if(world.getTotalWorldTime()-players.get(player.entityId)>5)
@@ -85,21 +98,16 @@ public class ChunkloadFinite {
 				players.put(player.entityId, world.getTotalWorldTime());
 			}
 			
-			int chunkWarningX = (int)(x/16)-1;
-			int chunkWarningZ = (int)(z/16)-1;
-			
-			
-			if(chunkX>(chunkSize-1)||chunkX<-(chunkSize))
+			if(x>(blockSize)||chunkX<-(chunkSize))
 			{
 				x = x<0?Math.max(-blockSize, x):Math.min(blockSize, x);
 				
 				if(player.isRiding())
 				{
-					mount = player.ridingEntity;
 					if(mount!=null)
 					{
-						mount.setPosition(-x,y1,z);
-						PacketTPMount.sendToClient(PacketTPMount.getPacketMount(player,mount,-x,y1,z),player);
+						mount.setPosition(-x2,y2,z2);
+						PacketTPMount.sendToClient(PacketTPMount.getPacketMount(player,mount,-x2,y2,z2),player);
 					}
 				}
 				else
@@ -122,7 +130,7 @@ public class ChunkloadFinite {
 				}
 				else
 				{
-					watch.player.setPositionAndUpdate(x,y1,-z);
+					player.setPositionAndUpdate(x,y1,-z);
 					if(!player.getCanSpawnHere())
 						TPhere(player);
 				}

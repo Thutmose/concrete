@@ -89,11 +89,11 @@ public class BlockLiquidREConcrete extends Block16Fluid implements IRebar
 		combinationList.add(BlockREConcrete.instance.blockID+4096*BlockLiquidREConcrete.instance.blockID);
 		
 		
-		desiccantList.add(0+4096);
+		desiccantList.add(0+5*4096);
 		
-		desiccantList.add(BlockREConcrete.instance.blockID+4096*4);
+		desiccantList.add(BlockREConcrete.instance.blockID+5*4096*4);
 	
-		desiccantList.add(BlockConcrete.instance.blockID+4096*4);
+		desiccantList.add(BlockConcrete.instance.blockID+5*4096*4);
 		data = new Integer[][]{
 				{	
 					BlockRebar.instance.blockID,//ID that this returns when meta hits -1, 
