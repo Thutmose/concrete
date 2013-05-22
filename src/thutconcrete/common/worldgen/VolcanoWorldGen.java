@@ -2,6 +2,7 @@ package thutconcrete.common.worldgen;
 
 import java.util.Random;
 
+import thutconcrete.common.blocks.BlockBoom;
 import thutconcrete.common.blocks.BlockWorldGen;
 
 import net.minecraft.world.World;
@@ -18,8 +19,7 @@ public class VolcanoWorldGen implements IWorldGenerator{
 			int x = chunkX*16 + random.nextInt(16);
 			int y = chunkZ*16 + random.nextInt(16);
 			int z = 5;
-			  world.setBlock(x, z, y, BlockWorldGen.instance.blockID, 0, 1);
-			  world.scheduleBlockUpdate(x, z, y, BlockWorldGen.instance.blockID, 5);
+			  world.setBlock(x, z, y, BlockBoom.instance.blockID, 0, 3);
 			}
 		}
 		

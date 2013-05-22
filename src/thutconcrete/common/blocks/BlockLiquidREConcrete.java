@@ -44,8 +44,7 @@ public class BlockLiquidREConcrete extends Block16Fluid implements IRebar
 	public BlockLiquidREConcrete(int par1) {
 		super(par1, wetConcrete);
 		setUnlocalizedName("REconcreteLiquid");
-		this.setResistance((float) 0.0);
-		this.setTickRandomly(true);
+		this.setResistance((float) 10.0);
 		this.instance = this;
 	}
 	
@@ -57,7 +56,6 @@ public class BlockLiquidREConcrete extends Block16Fluid implements IRebar
 		if(data==null){
 			setData();
 			}
-    	this.setTickRandomly(true);
     	super.onBlockPlacedBy(worldObj, x, y, z, entity, item);
     }
 	
@@ -66,7 +64,6 @@ public class BlockLiquidREConcrete extends Block16Fluid implements IRebar
 		if(data==null){
 			setData();
 			}
-    	this.setTickRandomly(true);
     }
 	
 	@Override
@@ -79,7 +76,7 @@ public class BlockLiquidREConcrete extends Block16Fluid implements IRebar
 		 
 	}
 	
-	private void setData(){
+	public void setData(){
 		
 		List<Integer> combinationList = new ArrayList<Integer>();
 		List<Integer> desiccantList = new ArrayList<Integer>();
@@ -148,25 +145,17 @@ public class BlockLiquidREConcrete extends Block16Fluid implements IRebar
     }
 
 	
+
 	@Override
 	public void setBlockBoundsBasedOnState(IBlockAccess par1IBlockAccess, int x, int y, int z)
     {
-		
 		side = sides(par1IBlockAccess,x,y,z);
 		
 		if(!(side[0]||side[1]||side[2]||side[3]||side[4]||side[5]))
 			side = new boolean[] {true, true, true, true, false, false};
 		setBlockBounds(0.35F, 0.35F, 0.35F, 0.65F, 0.65F, 0.65F);
-/*/
-    	int n = 5;
-	   	 for (ForgeDirection fside : ForgeDirection.VALID_DIRECTIONS)
-	     {
-	   		 if(side[n])
-	          setBlockBoundsForSide(x, y, z, fside);
-	          
-	          n--;
-	     }
-//*/
+
+    	this.setBoundsByMeta(par1IBlockAccess.getBlockMetadata(x, y, z));
     }
 
     public AxisAlignedBB getBoundingBoxForSide(ForgeDirection fside)
@@ -335,6 +324,14 @@ public class BlockLiquidREConcrete extends Block16Fluid implements IRebar
 			 return this.iconArray[te.metaArray[par5]];
 			 	
 		    }
+
+		    /**
+		     * Sets the block's bounds for rendering it as an item
+		     */
+		    public void setBlockBoundsForItemRender()
+		    {
+		        this.setBoundsByMeta(15);
+		    }
 		 
-		
+		 
 }

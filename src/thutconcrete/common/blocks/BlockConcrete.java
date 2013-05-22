@@ -5,6 +5,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import thutconcrete.common.ConcreteCore;
 import thutconcrete.common.corehandlers.TSaveHandler;
+import thutconcrete.common.items.ItemConcreteDust;
 import thutconcrete.common.utils.ISaveable;
 
 import cpw.mods.fml.relauncher.Side;
@@ -29,7 +30,7 @@ public class BlockConcrete extends Block16Fluid
 
 	public static Block instance;
 	public static int resistance = 10;
-	public static float hardness = 1;
+	public static float hardness = 30;
 	Integer[][] data;
     @SideOnly(Side.CLIENT)
     private Icon[] iconArray;
@@ -37,30 +38,34 @@ public class BlockConcrete extends Block16Fluid
 	public BlockConcrete(int par1) {
 		super(par1,Material.rock);
 		setUnlocalizedName("concrete");
-		this.rate = 1;
+		this.rate = 0.95;
 		this.instance = this;
+		setData();
 	}
 	
 	@Override
-    public void onBlockAdded(World worldObj, int x, int y, int z) {
-		if(data==null){
-			data = new Integer[][]{
+    public void onBlockAdded(World worldObj, int x, int y, int z) { }
+	
+	public void setData(){
+		if(data==null)
+		{
+			data = new Integer[][]
+				{
 					{
 						0,//ID that this returns when meta hits -1, 
 						15,//the viscosity factor,
 						null,//a secondary ID that this can turn into used for hardening,
-						null,//The hardening differential that prevents things staying liquid forever.,
-						null,//a randomness coefficient, this is multiplied by a random 0-10 then added to the hardening differential and viscosity.,
+						15,//The hardening differential that prevents things staying liquid forever.,
+						15,//a randomness coefficient, this is multiplied by a random 0-10 then added to the hardening differential and viscosity.,
 						0,//The will fall of edges factor, this is 0 or 1,
 						1,//0 = not colourable, 1 = colourable.
 					},
 					{},
 					{BlockConcrete.instance.blockID+4096*BlockConcrete.instance.blockID}
-			};
+				};
 			fluid16Blocks.put(BlockConcrete.instance.blockID,data);
-			
 			}
-    }
+	}
 	
 	@Override
 	public void setBlockBoundsBasedOnState(IBlockAccess par1IBlockAccess, int par2, int par3, int par4)
@@ -98,12 +103,6 @@ public class BlockConcrete extends Block16Fluid
         }
     }
 	
-	@Override
-	public void updateTick(World worldObj, int x, int y, int z, Random par5Random)
-	{
-
-	}
-	
 	public void onBlockClicked(World worldObj, int x, int y, int z, EntityPlayer player){
 		this.setResistanceByMeta(worldObj.getBlockMetadata(x, y, z));
 	}
@@ -137,53 +136,19 @@ public class BlockConcrete extends Block16Fluid
 		 	
 	    }
 	
-	 
 	    /**
-	     * Checks if the block is a solid face on the given side, used by placement logic.
-	     *
-	     * @param world The current world
-	     * @param x X Position
-	     * @param y Y position
-	     * @param z Z position
-	     * @param side The side to check
-	     * @return True if the block is solid on the specified side.
+	     * Returns the ID of the items to drop on destruction.
 	     */
-	    public boolean isBlockSolidOnSide(World world, int x, int y, int z, ForgeDirection side)
+	    public int idDropped(int par1, Random par2Random, int par3)
 	    {
-	        int meta = world.getBlockMetadata(x, y, z);
-	        switch (side)
-	        {
-		            case UP:
-		            {
-		                    return (meta==15);
-		            }
-		            case DOWN:
-		            {
-		                    return true;
-		            }
-		            case NORTH:
-		            {
-		            	return (meta==15);
-		            }
-		            case SOUTH:
-		            {
-		            	return (meta==15);
-		            }
-		            case EAST:
-		            {
-		            	return (meta==15);
-		            }
-		            case WEST:
-		            {
-		            	return (meta==15);
-		            }
-		            default:
-		            {
-		            	return (meta==15);
-		            }
-         }
+	        return ItemConcreteDust.instance.itemID;
 	    }
-	 
-	 
-	
+	    
+	    public int quantityDropped(int meta, int fortune, Random random)
+	    {
+	        return (int) ((meta+1)*random.nextDouble());
+	    }
+
+	    
+
 }

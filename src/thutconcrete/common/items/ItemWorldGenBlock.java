@@ -23,7 +23,6 @@ public class ItemWorldGenBlock extends ItemBlock{
 	
 	private final static String[] names = {
 		"Chalk",
-    	"lava",
     	"Trass",
     	"Limestone",
     };
@@ -50,7 +49,7 @@ public class ItemWorldGenBlock extends ItemBlock{
      */
     public String getUnlocalizedName(ItemStack par1ItemStack)
     {
-        int i = MathHelper.clamp_int(par1ItemStack.getItemDamage(), 0, 15);
+        int i = par1ItemStack.getItemDamage()%names.length;
         return super.getUnlocalizedName() + "." + names[i];
     }
     
@@ -61,7 +60,7 @@ public class ItemWorldGenBlock extends ItemBlock{
      */
     public void getSubItems(int par1, CreativeTabs par2CreativeTabs, List par3List)
     {
-        for (int j = 0; j < 4; ++j)
+        for (int j = 0; j < names.length; ++j)
         {
             par3List.add(new ItemStack(par1, 1, j));
         }

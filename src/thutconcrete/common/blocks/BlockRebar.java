@@ -24,7 +24,8 @@ import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
 import net.minecraftforge.common.ForgeDirection;
 
-public class BlockRebar extends Block implements IRebar{
+public class BlockRebar extends Block implements IRebar
+{
 	public static Block instance;
 	@SideOnly(Side.CLIENT)
 	public Icon theIcon;
@@ -85,16 +86,6 @@ public class BlockRebar extends Block implements IRebar{
 		if(!(side[0]||side[1]||side[2]||side[3]||side[4]||side[5]))
 			side = new boolean[] {true, true, true, true, false, false};
 		setBlockBounds(0.35F, 0.35F, 0.35F, 0.65F, 0.65F, 0.65F);
-//*/
-    	int n = 5;
-	   	 for (ForgeDirection fside : ForgeDirection.VALID_DIRECTIONS)
-	     {
-	   		 if(side[n])
-	          setBlockBoundsForSide(x, y, z, fside);
-	          
-	          n--;
-	     }
-//*/
     }
 
     public AxisAlignedBB getBoundingBoxForSide(ForgeDirection fside)

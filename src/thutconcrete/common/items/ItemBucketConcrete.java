@@ -14,11 +14,13 @@ import cpw.mods.fml.relauncher.SideOnly;
 
 public class ItemBucketConcrete extends ItemBucket{
 
+	public static ItemBucketConcrete instance;
 	private int isFull;
 	public ItemBucketConcrete(int par1) {
 		super(par1, BlockLiquidConcrete.instance.blockID);
 		isFull = BlockLiquidConcrete.instance.blockID;
 		this.setCreativeTab(ConcreteCore.tabThut);
+		instance = this;
 	}
 
 	@Override

@@ -32,7 +32,7 @@ public class BlockREConcrete extends Block16Fluid implements IRebar
 	public static Block instance;
 	public int colourid;
 	public static int resistance = 100;
-	public static float hardness = 1;
+	public static float hardness = 30;
 	public static ConcurrentHashMap<String, Byte> metaData = new ConcurrentHashMap<String, Byte>();
 	Integer[][] data;
 	boolean[] side = new boolean[6];
@@ -43,31 +43,29 @@ public class BlockREConcrete extends Block16Fluid implements IRebar
 		this.setTickRandomly(true);
 		this.rate = 1;
 		this.instance = this;
+		setData();
 	}
 	
-	
-	@Override
-    public void onBlockAdded(World worldObj, int x, int y, int z) {
-		
+
+	public void setData()
+	{
 		if(data==null){
 			data = new Integer[][]{
 					{
 						0,//ID that this returns when meta hits -1, 
 						15,//the viscosity factor,
 						null,//a secondary ID that this can turn into used for hardening,
-						null,//The hardening differential that prevents things staying liquid forever.,
-						null,//a randomness coefficient, this is multiplied by a random 0-10 then added to the hardening differential and viscosity.,
+						15,//The hardening differential that prevents things staying liquid forever.,
+						15,//a randomness coefficient, this is multiplied by a random 0-10 then added to the hardening differential and viscosity.,
 						0,//The will fall of edges factor, this is 0 or 1,
 						1,//0 = not colourable, 1 = colourable.
 					},
-					{},
+					{}, //Dessicants are meaningless to solid concrete
 					{BlockREConcrete.instance.blockID+4096*BlockREConcrete.instance.blockID}
 			};
 			fluid16Blocks.put(BlockREConcrete.instance.blockID,data);
 			}
-    }
-	
-	
+	}
 	
 	//*
     /**
@@ -327,66 +325,14 @@ public class BlockREConcrete extends Block16Fluid implements IRebar
 
 	 @SideOnly(Side.CLIENT)
 
-	    /**
-	     * Retrieves the block texture to use based on the display side. Args: iBlockAccess, x, y, z, side
-	     */
-	    public Icon getBlockTexture(IBlockAccess par1IBlockAccess, int x, int y, int z, int par5)
-	    {
-		 TileEntityBlock16Fluid te = (TileEntityBlock16Fluid) par1IBlockAccess.getBlockTileEntity(x, y, z);
-		 return this.iconArray[te.metaArray[par5]];
-		 	
-	    }
+    /**
+     * Retrieves the block texture to use based on the display side. Args: iBlockAccess, x, y, z, side
+     */
+    public Icon getBlockTexture(IBlockAccess par1IBlockAccess, int x, int y, int z, int par5)
+    {
+	 TileEntityBlock16Fluid te = (TileEntityBlock16Fluid) par1IBlockAccess.getBlockTileEntity(x, y, z);
+	 return this.iconArray[te.metaArray[par5]];
+	 	
+    }
 	 
-
-	 
-	 
-	 
-	    /**
-	     * Checks if the block is a solid face on the given side, used by placement logic.
-	     *
-	     * @param world The current world
-	     * @param x X Position
-	     * @param y Y position
-	     * @param z Z position
-	     * @param side The side to check
-	     * @return True if the block is solid on the specified side.
-	     */
-	    public boolean isBlockSolidOnSide(World world, int x, int y, int z, ForgeDirection side)
-	    {
-	        int meta = world.getBlockMetadata(x, y, z);
-	        switch (side)
-	        {
-		            case UP:
-		            {
-		                    return (meta==15);
-		            }
-		            case DOWN:
-		            {
-		                    return true;
-		            }
-		            case NORTH:
-		            {
-		            	return (meta==15);
-		            }
-		            case SOUTH:
-		            {
-		            	return (meta==15);
-		            }
-		            case EAST:
-		            {
-		            	return (meta==15);
-		            }
-		            case WEST:
-		            {
-		            	return (meta==15);
-		            }
-		            default:
-		            {
-		            	return (meta==15);
-		            }
-            }
-	    }
-	 
-	 
- 
 }

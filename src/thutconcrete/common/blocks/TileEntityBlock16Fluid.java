@@ -4,6 +4,7 @@ import java.util.Arrays;
 import java.util.Random;
 
 import thutconcrete.common.network.PacketHandler;
+import thutconcrete.common.network.PacketTEB16F;
 
 import net.minecraft.block.Block;
 import net.minecraft.nbt.NBTTagCompound;
@@ -28,22 +29,19 @@ public class TileEntityBlock16Fluid extends TileEntity{
 			{
 				Block16Fluid blockf = (Block16Fluid) blocki;
 		    	
-				if(blockf!=null&&blockf.rate<Math.random())
+				if(blockf!=null&&(blockf.rate<Math.random()))
 				{
-		    		if(!Block16Fluid.instance.tryFall(worldObj, xCoord, yCoord, zCoord))
-		    		{
-		    			tryFalls++;
-		    		}
-		    		
-		    		if(!Block16Fluid.instance.trySpread(worldObj, xCoord, yCoord, zCoord))
-		    		{
-		    			trySpreads++;
-		    		}
-		    		
+					if(Block16Fluid.instance.trySpread(worldObj, xCoord, yCoord, zCoord))
+						tryFalls = 0;
+		    		if(Block16Fluid.instance.tryFall(worldObj, xCoord, yCoord, zCoord))
+		    			trySpreads=0;
 					
+		    		tryFalls++;
+				    trySpreads++;
+		    		
 					int num = Block16Fluid.instance.canHarden(worldObj, xCoord, yCoord, zCoord);
 						
-					if(num>0)
+					if(Block16Fluid.instance.isHardenable(worldObj,  xCoord, yCoord, zCoord))
 					{
 					      tryFalls = 0;
 					      trySpreads = 0;
@@ -52,13 +50,14 @@ public class TileEntityBlock16Fluid extends TileEntity{
 					 if(Math.random()>(1-(Block16Fluid.instance.SOLIDIFY_CHANCE*num)))
 					 {
 						 int metai = Block16Fluid.instance.getMetaData(worldObj,xCoord, yCoord, zCoord);
+						 if(!worldObj.isRemote)
 						 worldObj.setBlock(xCoord, yCoord, zCoord, Block16Fluid.instance.getTurnToID(worldObj.getBlockId(xCoord, yCoord, zCoord)), worldObj.getBlockMetadata(xCoord, yCoord, zCoord), 3);
 						 Block16Fluid.instance.setColourMetaData(worldObj,xCoord, yCoord, zCoord, (byte) metai);
 					 }
 				}
 			}
 
-			if(tryFalls>100&&trySpreads>100)
+			if(tryFalls>10&&trySpreads>10)
 			{
 				tryFalls = 0;
 			    trySpreads = 0;
@@ -93,7 +92,7 @@ public class TileEntityBlock16Fluid extends TileEntity{
 	    @Override
 	    public Packet getDescriptionPacket()
 	    {
-	        return PacketHandler.getPacket(this);
+	        return PacketTEB16F.getPacket(this);
 	    }
 	   
 	   

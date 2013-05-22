@@ -31,6 +31,7 @@ import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.potion.*;
+import net.minecraftforge.common.ForgeDirection;
 import net.minecraftforge.liquids.IBlockLiquid;
 
 
@@ -74,10 +75,17 @@ public class Block16Fluid extends Block implements ITileEntityProvider
     	super(par1, par2);
         this.setBlockBounds(0.0F, 0.0F, 0.0F, 1.0F, 0.0625F, 1.0F);
 		setCreativeTab(ConcreteCore.tabThut);
+		this.setTickRandomly(true);
 		breaks.add(78);
 		breaks.add(38);
 		breaks.add(37);
 		breaks.add(31);
+		breaks.add(Block.crops.blockID);
+		breaks.add(Block.potato.blockID);
+		breaks.add(Block.carrot.blockID);
+		breaks.add(Block.melonStem.blockID);
+		breaks.add(Block.reed.blockID);
+		breaks.add(Block.leaves.blockID);
 		instance = this;
     }
     @Override
@@ -85,6 +93,11 @@ public class Block16Fluid extends Block implements ITileEntityProvider
     	return false;
     }
 
+    public boolean isBlockNormalCube(World world, int x, int y, int z)
+    {
+        return world.getBlockMetadata(x,y,z)==15;
+    }
+    
     public AxisAlignedBB getCollisionBoundingBoxFromPool(World par1World, int par2, int par3, int par4)
     {
     	int meta = par1World.getBlockMetadata(par2, par3, par4);
@@ -108,6 +121,8 @@ public class Block16Fluid extends Block implements ITileEntityProvider
         return false;
     }
  
+    public void setData(){}
+    
     /**
      * If this block doesn't render as an ordinary block it will return False (examples: signs, buttons, stairs, etc)
      */
@@ -126,7 +141,7 @@ public class Block16Fluid extends Block implements ITileEntityProvider
      */
     public void setBlockBoundsForItemRender()
     {
-        this.setBoundsByMeta(15);
+        this.setBoundsByMeta(0);
     }
  
     /**
@@ -173,6 +188,7 @@ public class Block16Fluid extends Block implements ITileEntityProvider
     
     public void onBlockPlacedBy(World worldObj,int x,int y,int z,EntityLiving entity, ItemStack item)
     {
+    	merge(worldObj, x, y, z, x, y-1, z);
     	setTEUpdate(worldObj, x, y, z);
     }
     
@@ -180,6 +196,7 @@ public class Block16Fluid extends Block implements ITileEntityProvider
     {
     	ItemStack item = player.getHeldItem();
     	int meta = worldObj.getBlockMetadata(x,y,z);
+    	setData();
     	if(canColour(worldObj.getBlockId(x, y, z))&&item!=null&&item.getItem() instanceof ItemDye)
     	{
 	    	int meta1 = (15-item.getItemDamage());
@@ -187,7 +204,7 @@ public class Block16Fluid extends Block implements ITileEntityProvider
 	    	{
 	    		this.setColourMetaData(worldObj, x, y, z, (byte) (meta1),side);
 	    		setTEUpdate(worldObj, x, y, z);
-	    		if(!player.capabilities.isCreativeMode)
+	    		if(!player.capabilities.isCreativeMode&&!worldObj.isRemote)
 	    			item.splitStack(1);
 	    	}
     	}
@@ -196,17 +213,28 @@ public class Block16Fluid extends Block implements ITileEntityProvider
     }
     ///////////////////////////////////////Fluid On Update Stuff////////////////////////////////////////////////////////////
 	public void updateTick(World worldObj, int x, int y, int z, Random par5Random){}
+	
+	public int tickRate(World worldObj)
+	{
+		return 5;
+	}
+	
     ////////////////////////////////////////Fluid Block Logic Below Here////////////////////////////////////////////////////
     
     /**
      * Checks if the block should spread to the side
-     * @param par1World
+     * @param worldObj
      * @param x
      * @param y
      * @param z
      */
     public boolean trySpread(World worldObj, int x, int y, int z){
         boolean moved = false;
+        if(viscosity(worldObj.getBlockId(x, y, z))==15)
+        {
+        	return false;
+        }
+        	
         int[][]sides = {
         					{1,0},{-1,0},{0,1},{0,-1},
         };
@@ -250,22 +278,38 @@ public class Block16Fluid extends Block implements ITileEntityProvider
     	if(willBreak(safe.ID)||willCombine(id, safe.ID))
         fell = merge(worldObj,x, y, z, x, y-1, z);
             
-        boolean DFWater = willFallOffEdges(id);
-        if(DFWater){
+        boolean fallOff = willFallOffEdges(id);
+        boolean flowOff = willFlowOffEdges(id);
+        if(fallOff||flowOff){
         	int[][]sides = {{1,0},{-1,0},{0,1},{0,-1},{1,1},{-1,1},{1,-1},{-1,-1}};
            
-            int i = r.nextInt(8);
+            int i = r.nextInt(sides.length);
            
-            for(int j = 0; j<8; j++){
+            int lowestMeta = 15;
+            int k = 0;
+            
+            for(int j = 0; j<sides.length; j++){
                     safe.safeLookUp(worldObj,x+sides[i][0], y, z+sides[i][1]);
                     int idSide = safe.ID;
                     safe.safeLookUp(worldObj,x+sides[i][0], y-1, z+sides[i][1]);
                     int idSideDown = safe.ID;
                     int metaSideDown = safe.meta;
                     if(metaSideDown!=15&&idSide == 0&&(willCombine(id, idSideDown)))
-                    fell = merge(worldObj, x,y,z,x+sides[i][0], y, z+sides[i][1]);
-                    i = (i+1)%8;
+                    {
+	                    if (metaSideDown < lowestMeta)
+	                    {
+	                		lowestMeta = metaSideDown;
+	                		k=i;
+	                	}
+                    }
+                    i = (i+1)%sides.length;
             }
+            
+            if(lowestMeta!=15)
+            {
+            	fell = fallOff?merge(worldObj, x,y,z,x+sides[k][0], y-1, z+sides[k][1]):equalize(worldObj, x,y,z,x+sides[k][0], y-1, z+sides[k][1]);
+            }
+            
         }
         
         
@@ -431,7 +475,13 @@ public class Block16Fluid extends Block implements ITileEntityProvider
     private boolean willFallOffEdges(int id){
     	if(fluid16Blocks.get(id)==null) return false;
     	if(fluid16Blocks.get(id)[0][5]==null) return false;
-    	return (fluid16Blocks.get(id)[0][5]>0?true:false);
+    	return (fluid16Blocks.get(id)[0][5]==1?true:false);
+    }
+    
+    private boolean willFlowOffEdges(int id){
+    	if(fluid16Blocks.get(id)==null) return false;
+    	if(fluid16Blocks.get(id)[0][5]==null) return false;
+    	return (fluid16Blocks.get(id)[0][5]==2?true:false);
     }
     
     public int getTurnToID(int id){
@@ -483,14 +533,6 @@ public class Block16Fluid extends Block implements ITileEntityProvider
     	return (fluid16Blocks.get(id)[0][6]>0?true:false);
     }
     
-    
-    public void tickSides(World worldObj, int x, int y, int z){
-    	 int[][]sides = {{0,0,0}, {1,0,0},{-1,0,0},{0,0,1},{0,0,-1},{0,1,0},{0,-1,0}};
-         for(int i=0;i<7;i++){
-             worldObj.scheduleBlockUpdate(x+sides[i][0], y+sides[i][1], z+sides[i][2], this.blockID,2);// this.tickRate(worldObj));
-         }
-    }
-    
     public int countSides(World worldObj, int x, int y, int z,int id){
     	int num = 0;
     	int[][]sides = {{1,0,0},{-1,0,0},{0,0,1},{0,0,-1},{0,1,0},{0,-1,0}};
@@ -501,8 +543,8 @@ public class Block16Fluid extends Block implements ITileEntityProvider
         return num;
    }
     
-    public byte canHarden(World worldObj, int x, int y, int z){
-    	byte num = 0;
+    public int canHarden(World worldObj, int x, int y, int z){
+    	int num = 0;
     	int id = worldObj.getBlockId(x, y, z);
     	int val;
     	if(fluid16Blocks.get(id)==null)return 0;
@@ -513,6 +555,14 @@ public class Block16Fluid extends Block implements ITileEntityProvider
     		num += val*countSides(worldObj, x, y, z, j);
     	}
     	return num;
+    }
+    
+    public boolean isHardenable(World worldObj, int x, int y, int z)
+    {
+    	int id = worldObj.getBlockId(x, y, z);
+    	if(fluid16Blocks.get(id)==null)return false;
+    	if(fluid16Blocks.get(id)[0]==null)return false;
+    	return (fluid16Blocks.get(id)[0][2]!=null);
     }
     
     private int getHardenRate(int idFrom, int idTo){
@@ -568,17 +618,7 @@ public class Block16Fluid extends Block implements ITileEntityProvider
     	}
     }
     ///////////////////////////////////////////////////////////////////Block effects/ticking Stuff Above Here///////////////////////////////////////
-    @SideOnly(Side.CLIENT)
 
-    /**
-     * Returns true if the given side of this block type should be rendered, if the adjacent block is at the given
-     * coordinates.  Args: blockAccess, x, y, z, side
-     */
-    public boolean shouldSideBeRendered(IBlockAccess par1IBlockAccess, int par2, int par3, int par4, int par5)
-    {
-        return par5 == 1 ? true : super.shouldSideBeRendered(par1IBlockAccess, par2, par3, par4, par5);
-    }
-    
     @SideOnly(Side.CLIENT)
 
     /**
@@ -644,9 +684,10 @@ public class Block16Fluid extends Block implements ITileEntityProvider
 						||meta!=te.metaArray[2]
 						||meta!=te.metaArray[3]
 						||meta!=te.metaArray[4]
-						||meta!=te.metaArray[5])
-						
+						||meta!=te.metaArray[5]
 				 )
+						
+			)
 		 {
 			 te.metaArray = new int[] {meta,meta,meta,meta,meta,meta};
 			 te.sendUpdate();
@@ -676,6 +717,92 @@ public class Block16Fluid extends Block implements ITileEntityProvider
 		 }
 	 }
 	 
+	 @SideOnly(Side.CLIENT)
+
+	    /**
+	     * Returns true if the given side of this block type should be rendered, if the adjacent block is at the given
+	     * coordinates.  Args: blockAccess, x, y, z, side
+	     */
+	    public boolean shouldSideBeRendered(IBlockAccess par1IBlockAccess, int x, int y, int z, int dir)
+	    {
+
+	    	ForgeDirection side = ForgeDirection.getOrientation(dir);
+	    	
+	    	int id1 = par1IBlockAccess.getBlockId(x, y, z);
+
+	    	int meta = par1IBlockAccess.getBlockMetadata(x-side.offsetX, y-side.offsetX, z-side.offsetX);
+	    	if(side == ForgeDirection.UP && meta !=15)
+	    	{
+	    		return true;
+	    	}
+	    	
+	    	
+	    	if(Block.opaqueCubeLookup[id1]&&meta==15)
+	    	{
+	    		return false;
+	    	}
+	    	
+	    	Block block1 = Block.blocksList[id1];
+	    	
+	    	
+	    	if(block1 instanceof Block16Fluid)
+	    	{
+		    	int meta1 = par1IBlockAccess.getBlockMetadata(x, y, z);
+		    	if(meta==15&&meta1==15)
+		    	{
+		    		return false;
+		    	}
+	    	}
+	        return true;
+	        //*/
+	    }
+	 
+	 
+	    /**
+	     * Checks if the block is a solid face on the given side, used by placement logic.
+	     *
+	     * @param world The current world
+	     * @param x X Position
+	     * @param y Y position
+	     * @param z Z position
+	     * @param side The side to check
+	     * @return True if the block is solid on the specified side.
+	     */
+	    public boolean isBlockSolidOnSide(World world, int x, int y, int z, ForgeDirection side)
+	    {
+	        int meta = world.getBlockMetadata(x, y, z);
+	        switch (side)
+	        {
+		            case UP:
+		            {
+		                    return (meta==15);
+		            }
+		            case DOWN:
+		            {
+		                    return true;
+		            }
+		            case NORTH:
+		            {
+		            	return (meta==15);
+		            }
+		            case SOUTH:
+		            {
+		            	return (meta==15);
+		            }
+		            case EAST:
+		            {
+		            	return (meta==15);
+		            }
+		            case WEST:
+		            {
+		            	return (meta==15);
+		            }
+		            default:
+		            {
+		            	return (meta==15);
+		            }
+      }
+	    }
 	 
 	 
 	 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////

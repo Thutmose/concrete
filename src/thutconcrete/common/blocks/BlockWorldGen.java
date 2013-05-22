@@ -1,5 +1,6 @@
 package thutconcrete.common.blocks;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -11,6 +12,7 @@ import cpw.mods.fml.relauncher.SideOnly;
 
 import thutconcrete.common.ConcreteCore;
 import thutconcrete.common.blocks.*;
+import thutconcrete.common.utils.ExplosionCustom;
 import thutconcrete.common.utils.ISaveable;
 import net.minecraft.block.Block;
 import net.minecraft.block.material.Material;
@@ -34,119 +36,22 @@ public class BlockWorldGen extends Block
     
     public static final String[] names = {
     										"Chalk",
-									    	"lava",
 									    	"Trass",
 									    	"Limestone",
 									    };
 
-	public int typeid;
     public static BlockWorldGen instance;
-    int n=0;
-    public static Map<Integer, Integer> replaceable = new HashMap<Integer, Integer>();
-    public static Map<Integer, Integer> lava = new HashMap<Integer, Integer>();
     public static final int MAX_META = names.length;
     
 	public BlockWorldGen(int par1) {
 		super(par1, Material.rock);
 		setUnlocalizedName("worldBlock");
-		this.setTickRandomly(true);
 		this.instance = this;
 		this.setCreativeTab(ConcreteCore.tabThut);
-		
-		if(replaceable.size()==0){
-			replaceable.put(0, 0);
-			replaceable.put(Block.stone.blockID, 0);
-			replaceable.put(Block.gravel.blockID, 0);
-			replaceable.put(Block.grass.blockID, 0);
-			replaceable.put(Block.waterMoving.blockID, 0);
-			replaceable.put(Block.waterStill.blockID, 0);
-			replaceable.put(Block.lavaMoving.blockID, 0);
-			replaceable.put(Block.lavaStill.blockID, 0);
-			replaceable.put(this.blockID, 0);
-
-			this.setTickRandomly(true);
-		}
+		this.setResistance(10);
+		this.setHardness(1);
 	}
 	
-
-    @Override
-    public void onBlockAdded(World worldObj, int x, int y, int z) {
-		this.setLightValue(worldObj.getBlockMetadata(x,y,z)==1?1:0);
-		worldObj.scheduleBlockUpdate(x, y+1, z, BlockLava.getInstance(typeid).blockID, 5);
-		worldObj.scheduleBlockUpdate(x, y, z, this.blockID, 5);
-    }
-    public void onBlockPlacedBy(World worldObj,int x,int y,int z,EntityLiving entity, ItemStack item){
-    	
-    	worldObj.setBlockMetadataWithNotify(x,y,z,item.getItemDamage(),3);
-
-		this.setLightValue(worldObj.getBlockMetadata(x,y,z)==1?1:0);
-    	
-		worldObj.scheduleBlockUpdate(x, y+1, z, BlockLava.getInstance(typeid).blockID, 5);
-		worldObj.scheduleBlockUpdate(x, y, z, this.blockID, 5);
-    }
-    
-	public void onBlockClicked(World worldObj, int x, int y, int z, EntityPlayer player){
-	//	System.out.println(worldObj.getBlockMetadata(x, y, z));
-	}
-	
-	@Override
-	public void updateTick(World worldObj, int x, int y, int z, Random par5Random){
-		
-		if(worldObj.getBlockMetadata(x,y,z)==1&&worldObj.doChunksNearChunkExist(x, y, z, 10)){
-		//	System.out.println(x+" "+y+" "+z);
-			int id = worldObj.getBlockId(x, y+1, z);
-			if(!lava.containsKey(BlockLava.getInstance(0).blockID)){
-
-				for(Block block:Block.blocksList){
-					if(block!=null){
-					String name = block.getUnlocalizedName();
-					if(block.getUnlocalizedName().toLowerCase().contains("ore")
-							||block.getUnlocalizedName().toLowerCase().contains("dirt")	
-							||block.getUnlocalizedName().toLowerCase().contains("sand")	
-							){
-			//			System.out.println("Adding "+block.getUnlocalizedName());
-						replaceable.put(block.blockID, 0);
-					}}
-				}
-				for(int i=0;i<3;i++){
-					replaceable.put(BlockSolidLava.getInstance(i).blockID,0);
-					lava.put(BlockLava.getInstance(i).blockID,0);
-				}
-	
-			}
-			
-
-			int typeid = 0;
-			Chunk chunk = worldObj.getChunkFromBlockCoords(x, z);
-			
-			int maxHeight = 64+ConcreteCore.getVolcano(x, z)-y;
-			typeid = (ConcreteCore.getVolcano(x, z)<30?0:ConcreteCore.getVolcano(x, z)<60?1:2);
-			
-			int[][] sides = {{-1,0},{1,0},{0,-1},{0,1}};
-			Random r = new Random();
-			
-			int meta = worldObj.getBlockId(x, y+1, z);
-				
-			for(int j = 1;j<maxHeight;j++){
-				id = worldObj.getBlockId(x, y+j, z);
-				meta = worldObj.getBlockMetadata(x, y+j, z);
-				if(!(lava.containsKey(id)||replaceable.containsKey(id)))break;
-				if((lava.containsKey(id)&&meta!=15)||replaceable.containsKey(id)){
-					worldObj.setBlock(x, y+j, z, BlockLava.getInstance(typeid).blockID, 15, 2);
-					worldObj.scheduleBlockUpdate(x, y+j, z, BlockLava.getInstance(typeid).blockID, 5);
-					worldObj.scheduleBlockUpdate(x, y, z, this.blockID, 5);
-					break;
-				}
-			}
-		}
-	}
-	
-
-    public int tickRate(World par1World)
-    {
-        return 5;
-    }
-    
     //*
    
   //*/ 
@@ -217,7 +122,7 @@ public class BlockWorldGen extends Block
      */
     public Icon getIcon(int par1, int par2)
     {
-        return this.iconArray[par2];
+        return this.iconArray[par2%MAX_META];
     }
 
     /**

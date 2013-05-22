@@ -8,6 +8,8 @@ import java.util.Map;
 import cpw.mods.fml.common.registry.GameRegistry;
 import cpw.mods.fml.common.registry.LanguageRegistry;
 import net.minecraft.block.Block;
+import net.minecraft.block.BlockDoor;
+import net.minecraft.block.material.Material;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.ItemBlock;
@@ -34,7 +36,7 @@ public class BlockHandler {
 			"Solid Moderate Viscosity Lava",
 			"High Viscosity Lava",
 			"Solid High Viscosity Lava",
-			"Natural Block",
+			"Boom Block",
 		};
 	
 	
@@ -64,19 +66,20 @@ public class BlockHandler {
 			blockList.add(new BlockLava(id++,i));
 			blockList.add(new BlockSolidLava(id++,i));
 		}
+
+		blockList.add(new BlockBoom(id++));
 		blocks = blockList.toArray(new Block[0]);
 
 		registerBlocks();
 		registerNames();
 		
 		BlockWorldGen block = new BlockWorldGen(idWorld);
-		OreDictionary.registerOre("oreLimestone",new ItemStack(BlockWorldGen.instance,1,3));
-		OreDictionary.registerOre("oreTrass",new ItemStack(BlockWorldGen.instance,1,2));
-		OreDictionary.registerOre("oreChalk",new ItemStack(BlockWorldGen.instance,1,0));
+		
 		blockList.add(block);
 		blocks = blockList.toArray(new Block[0]);
 		
 		registerBlockDrops(block);
+		changeFlamibility();
 	}
 
 	public void registerBlocks(){
@@ -96,6 +99,21 @@ public class BlockHandler {
 		for(Block block : blocks){
 			LanguageRegistry.addName(block, names[n]);
 			n++;
+		}
+	}
+	
+	public void changeFlamibility()
+	{
+		for(Block b:Block.blocksList)
+		{
+			if(b!=null&&b.blockMaterial == Material.wood&&!b.getLocalizedName().toLowerCase().contains("chest"))
+			{
+				b.setBurnProperties(b.blockID, 5, 20);
+			}
+			if(b instanceof BlockDoor && b.blockMaterial != Material.iron)
+			{
+				b.setBurnProperties(b.blockID, 5, 20);
+			}
 		}
 	}
 

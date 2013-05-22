@@ -2,6 +2,7 @@ package thutconcrete.common;
 
 import net.minecraft.world.World;
 import cpw.mods.fml.common.registry.GameRegistry;
+import cpw.mods.fml.server.FMLServerHandler;
 
 public class CommonProxy {
 
@@ -13,4 +14,10 @@ public class CommonProxy {
     {
     	return null;
     }
+    
+    public World getServerWorld()
+    {
+    	return null;
+    }
+    
 }

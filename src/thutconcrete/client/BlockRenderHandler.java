@@ -26,7 +26,7 @@ public class BlockRenderHandler implements ISimpleBlockRenderingHandler{
         boolean animated = false;
         
         
-        tessellator.setColorOpaque_F(f, f, f);
+      //  tessellator.setColorOpaque_F(f, f, f);
         
         int j = meta & 15;
         double yCCmax =y+ ((1 + j)) / 16.0F;
@@ -406,18 +406,25 @@ private void tessAddCuboidWithIconIndex(Tessellator tessellator, Icon icon, doub
 		////////////////////////////////////////*/          
 	}
 	
-	public void renderInventoryREC(Block block, int metadata){
-		boolean[] sides = {false, false, false, false, false, false};
-		double x=0.5,y=0.5,z=0.5;
-	//	renderREConcrete(block, x, y, z, metadata, sides);
-	}
-	
 	
 	@Override
-	public void renderInventoryBlock(Block block, int metadata, int modelID,RenderBlocks renderer) {
+	public void renderInventoryBlock(Block parblock, int meta, int modelID,RenderBlocks renderer) {
 		
-		//renderInventoryREC(block, metadata);
-		renderer.renderBlockAsItem(block, metadata, 1);
+		boolean[] sides = {false, false, false, false, false, false};
+		double x=0.5,y=0.5,z=0.5;
+		
+		 boolean concrete = false;
+	        boolean rebar = false;
+			Icon icon = parblock.getIcon(0, 0);
+			Icon icon1 = parblock.getIcon(0, 0);
+			Icon[] icons = new Icon[6];
+			if(parblock instanceof Block16Fluid){
+				concrete = true;
+			}
+			if(parblock instanceof IRebar){
+				rebar = true;
+			}
+			renderREConcrete(parblock, x, y, z, meta, sides,icon, icon1,rebar,concrete, icons);
 	}
 
 	@Override

@@ -17,12 +17,14 @@ public class ConfigHandler {
     private int biomeID = 252;
     private int itemRange = 7000;
     private int liquidID = 10;
+    private int chunkSize = 1000;
 
 	// Blocks
 	public int IDBlock;
 	public int IDWorldBlock;
 	public int IDBiome;
 	public int IDLiquid;
+	public int ChunkSize;
 	// Items
 	public int IDItem;
 	// Misc
@@ -53,6 +55,8 @@ public class ConfigHandler {
 			itemIdea.comment = "The initial Item ID";
 			IDItem = itemIdea.getInt();
 
+			Property chunksize = conf.get("Chunk Size", "chunksize", chunkSize,"the size of wrapping chunks, If you set this less than 20 it will disabe the wrapping.");
+			ChunkSize = chunksize.getInt();
 
 		}catch(RuntimeException e){
 			ConcreteCore.instance.log.log(Level.INFO, "Config file not found, creating new one");

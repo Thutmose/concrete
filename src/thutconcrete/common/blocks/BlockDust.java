@@ -60,22 +60,9 @@ public class BlockDust extends Block16Fluid
     	if(data==null){
 			setData();
 			}
-    	tickSides(worldObj,x,y,z);
-		this.setTickRandomly(true);
     }
   
-	@Override
-	public void updateTick(World worldObj, int x, int y, int z, Random par5Random){
-		
-		if(data==null){
-			setData();
-			}
-		super.updateTick(worldObj, x, y, z, par5Random);
-	}
-	
-	
-	
-	private void setData(){
+	public void setData(){
 		data = new Integer[][]{
 				{
 					0,//ID that this returns when meta hits -1, 
@@ -138,12 +125,6 @@ public class BlockDust extends Block16Fluid
             Block block = Block.blocksList[id];
             return ((material == Material.air)||(block instanceof Block16Fluid&&meta!=15))? this.iconFloatingDust : this.blockIcon;
 
-    }
-    
-    @Override
-    public int quantityDropped(int meta, int fortune, Random random)
-    {
-        return (meta & 15) + 1;
     }
     
     /**

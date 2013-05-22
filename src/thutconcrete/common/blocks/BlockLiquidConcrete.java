@@ -31,6 +31,7 @@ import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.IWorldAccess;
 import net.minecraft.world.World;
 import net.minecraft.item.*;
+import net.minecraftforge.common.ForgeDirection;
 import net.minecraftforge.liquids.IBlockLiquid;
 import net.minecraftforge.liquids.ILiquid;
 
@@ -38,6 +39,7 @@ public class BlockLiquidConcrete extends Block16Fluid implements ILiquid
 {
 
 	public static Block instance;
+	public static final int rate = 5;
 	static Material wetConcrete = (new WetConcrete(MapColor.stoneColor));
 	Integer[][] data;
     @SideOnly(Side.CLIENT)
@@ -45,13 +47,20 @@ public class BlockLiquidConcrete extends Block16Fluid implements ILiquid
 	public BlockLiquidConcrete(int par1) {
 		super(par1, wetConcrete);
 		setUnlocalizedName("concreteLiquid");
-		this.setResistance((float) 0.0);
-		this.setTickRandomly(true);
+		this.setResistance((float) 10.0);
+		this.setHardness((float) 1.0);
 		this.instance = this;
 	}
 	
 	/////////////////////////////////////////Block Bounds Stuff//////////////////////////////////////////////////////////
-	
+    /**
+     * Sets the block's bounds for rendering it as an item
+     */
+    public void setBlockBoundsForItemRender()
+    {
+        this.setBoundsByMeta(15);
+    }
+    
 	
 	@Override
 	public void setBlockBoundsBasedOnState(IBlockAccess par1IBlockAccess, int par2, int par3, int par4)
@@ -64,10 +73,6 @@ public class BlockLiquidConcrete extends Block16Fluid implements ILiquid
     }
 	
    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    public int tickRate(World par1World)
-    {
-        return 10;
-    }
 
     //*/
     
@@ -78,7 +83,6 @@ public class BlockLiquidConcrete extends Block16Fluid implements ILiquid
 		if(data==null){
 			setData();
 			}
-    	this.setTickRandomly(true);
     	super.onBlockPlacedBy(worldObj, x, y, z, entity, item);
     }
 	
@@ -87,7 +91,6 @@ public class BlockLiquidConcrete extends Block16Fluid implements ILiquid
 		if(data==null){
 			setData();
 			}
-    	this.setTickRandomly(true);
     }
 	
 	@Override
@@ -107,7 +110,7 @@ public class BlockLiquidConcrete extends Block16Fluid implements ILiquid
 		 
 	}
 	
-	private void setData(){
+	public void setData(){
 
 		List<Integer> combinationList = new ArrayList<Integer>();
 		List<Integer> desiccantList = new ArrayList<Integer>();
@@ -133,11 +136,11 @@ public class BlockLiquidConcrete extends Block16Fluid implements ILiquid
 		}
 
 
-		desiccantList.add(0+4096);
+		desiccantList.add(0+rate*4096);
 
-		desiccantList.add(BlockREConcrete.instance.blockID+4096*4);
+		desiccantList.add(BlockREConcrete.instance.blockID+rate*4096*4);
 		
-		desiccantList.add(BlockConcrete.instance.blockID+4096*4);
+		desiccantList.add(BlockConcrete.instance.blockID+rate*4096*4);
 
 		data = new Integer[][]{
 				{
@@ -201,5 +204,20 @@ public class BlockLiquidConcrete extends Block16Fluid implements ILiquid
 		public int stillLiquidMeta() {
 			return 15;
 		}
+		
+	    /**
+	     * Checks if the block is a solid face on the given side, used by placement logic.
+	     *
+	     * @param world The current world
+	     * @param x X Position
+	     * @param y Y position
+	     * @param z Z position
+	     * @param side The side to check
+	     * @return True if the block is solid on the specified side.
+	     */
+	    public boolean isBlockSolidOnSide(World world, int x, int y, int z, ForgeDirection side)
+	    {
+	    	return false;
+	    }
 	 
 }

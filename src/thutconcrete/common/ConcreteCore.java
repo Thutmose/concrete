@@ -16,8 +16,9 @@ import thutconcrete.common.corehandlers.ConfigHandler;
 import thutconcrete.common.corehandlers.ItemHandler;
 import thutconcrete.common.corehandlers.LiquidHandler;
 import thutconcrete.common.corehandlers.TSaveHandler;
+import thutconcrete.common.finiteWorld.WorldTypeCustom;
 import thutconcrete.common.ticks.TickHandler;
-import thutconcrete.common.worldgen.ChalkWorldGen;
+import thutconcrete.common.worldgen.BiomeGenChalk;
 import thutconcrete.common.worldgen.LimestoneWorldGen;
 import thutconcrete.common.worldgen.TrassWorldGen;
 import thutconcrete.common.worldgen.VolcanoWorldGen;
@@ -26,6 +27,7 @@ import net.minecraft.entity.Entity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTBase;
+import net.minecraft.world.WorldType;
 import net.minecraft.world.biome.BiomeGenBase;
 import net.minecraftforge.common.*;
 import net.minecraftforge.oredict.OreDictionary;
@@ -47,9 +49,10 @@ import cpw.mods.fml.relauncher.Side;
 import thutconcrete.common.network.*;
 
 @Mod( modid = "ThutConcrete", name="Thut's Concrete", version="0.1.0")
-@NetworkMod(clientSideRequired = false, serverSideRequired = false, 
-channels={"TC"},
-packetHandler = PacketHandler.class)
+@NetworkMod(clientSideRequired = true, serverSideRequired = true, 
+channels={"Thut's Concrete"},
+packetHandler = PacketHandler.class
+)
 
 public class ConcreteCore {
 
@@ -69,6 +72,8 @@ public class ConcreteCore {
 	public static Block[] blocks;
 	public static Item[] items;
 	
+	public static WorldType customWorldType= new WorldTypeCustom(15, "FINITE");
+	
     private static final String[] colourNames = { "White",
         "Orange", "Magenta", "Light Blue",
         "Yellow", "Light Green", "Pink",
@@ -78,6 +83,9 @@ public class ConcreteCore {
 	
 	
 	public TSaveHandler saveList;
+	
+	public ChunkloadFinite loader;
+	
 	public LiquidHandler liquidHndlr;
 	public BlockHandler blockList;
 	public ItemHandler itemList;
@@ -91,6 +99,12 @@ public class ConcreteCore {
 		
 		saveList = new TSaveHandler();
 		MinecraftForge.EVENT_BUS.register(saveList);
+		
+		if(config.ChunkSize>=20)
+		{
+			loader = new ChunkloadFinite(config.ChunkSize);
+			MinecraftForge.EVENT_BUS.register(loader);
+		}
 	}
 	
 	
@@ -104,11 +118,15 @@ public class ConcreteCore {
 		MinecraftForge.EVENT_BUS.register(liquidHndlr);
 		
 		TickRegistry.registerTickHandler(tickHandler, Side.SERVER);
-
+		
+		LanguageRegistry.instance().addStringLocalization("generator.FINITE", "en_US", "Finite World");
+		
+		
 		GameRegistry.registerWorldGenerator(new TrassWorldGen());
 		GameRegistry.registerWorldGenerator(new VolcanoWorldGen());
 		GameRegistry.registerWorldGenerator(new LimestoneWorldGen());
 		GameRegistry.registerTileEntity(TileEntityBlock16Fluid.class, "Fluid16BlockTE");
+		GameRegistry.registerTileEntity(TileEntityVolcano.class, "VolcanoTE");
 		populateMap();
 		
 		blockList = new BlockHandler(config);
@@ -116,7 +134,7 @@ public class ConcreteCore {
 		items = itemList.items;
 		blocks = blockList.blocks;
 	//*	
-		BiomeGenBase theBiome = new ChalkWorldGen(252);
+		BiomeGenBase theBiome = new BiomeGenChalk(252);
 		GameRegistry.addBiome(theBiome);
 		BiomeDictionary.registerBiomeType(theBiome, Type.PLAINS);
 	

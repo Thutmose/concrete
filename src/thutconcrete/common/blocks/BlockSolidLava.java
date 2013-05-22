@@ -18,14 +18,15 @@ import net.minecraft.util.Icon;
 import net.minecraft.world.Explosion;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
+import net.minecraftforge.common.ForgeDirection;
 
 public class BlockSolidLava extends Block16Fluid{
 	
 	public static Block[] instances = new BlockSolidLava[16];
 	public Block instance;
 	public int typeid;
-	public static int resistance = 10;
-	public static float hardness = 1;
+	public static int resistance = 30;
+	public static float hardness = 10;
 	Integer[][] data;
 	
 	public BlockSolidLava(int par1, int par2) {
@@ -35,6 +36,7 @@ public class BlockSolidLava extends Block16Fluid{
 		this.instance = this;
 		this.rate = 1;
 		this.instances[typeid] = this;
+		setData();
 	}
 
 	public static Block getInstance(int colorid)
@@ -42,18 +44,18 @@ public class BlockSolidLava extends Block16Fluid{
 		return BlockSolidLava.instances[colorid];
 	}
 	
-	@Override
-    public void onBlockAdded(World worldObj, int x, int y, int z) {
+	public void setData()
+	{
 		if(data==null){
 			data = new Integer[][]{
 					{
 						0,//ID that this returns when meta hits -1, 
 						15,//the viscosity factor,
 						null,//a secondary ID that this can turn into used for hardening,
-						null,//The hardening differential that prevents things staying liquid forever.,
-						null,//a randomness coefficient, this is multiplied by a random 0-10 then added to the hardening differential and viscosity.,
+						15,//The hardening differential that prevents things staying liquid forever.,
+						15,//a randomness coefficient, this is multiplied by a random 0-10 then added to the hardening differential and viscosity.,
 						0,//The will fall of edges factor, this is 0 or 1,
-						1,//0 = not colourable, 1 = colourable.
+						0,//0 = not colourable, 1 = colourable.
 					},
 					{},
 					{BlockSolidLava.getInstance(typeid).blockID+4096*BlockSolidLava.getInstance(typeid).blockID}
@@ -61,7 +63,8 @@ public class BlockSolidLava extends Block16Fluid{
 			fluid16Blocks.put(BlockSolidLava.getInstance(typeid).blockID,data);
 			
 			}
-    }
+	}
+	
 	
 	@Override
 	public void setBlockBoundsBasedOnState(IBlockAccess par1IBlockAccess, int par2, int par3, int par4)
@@ -109,13 +112,13 @@ public class BlockSolidLava extends Block16Fluid{
 	protected void setResistanceByMeta(int meta){
 		int j = meta & 15;
         float f = (float)((1 + j)) / 16.0F;
-        this.setResistance(f*resistance);
+        this.setResistance(f*resistance*(1+typeid));
         this.setHardness(f*hardness);
 	}
 	protected float getBlastResistanceByMeta(int meta){
 		int j = meta & 15;
         float f = (float)((1 + j)) / 16.0F;
-        return (f*resistance);
+        return (f*resistance*(1+typeid));
 	}
 	protected float getHardnessByMeta(int meta){
 		int j = meta & 15;
@@ -138,4 +141,5 @@ public class BlockSolidLava extends Block16Fluid{
 	    {
 	        return (meta & 15) + 1;
 	    }
+	    
 }

@@ -21,7 +21,7 @@ public class LimestoneWorldGen implements IWorldGenerator
 			int y = chunkZ*16 + random.nextInt(16);
 			int z = 20+random.nextInt(80);
 			//TODO 
-			  (new WorldGen(BlockWorldGen.instance.blockID,3, 2048)).generateSheet(world, random, x, z, y,1,10);
+			  (new WorldGen(BlockWorldGen.instance.blockID,2, 2048)).generateSheet(world, random, x, z, y,1,10);
 			}
 		}
 
