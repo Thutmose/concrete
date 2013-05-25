@@ -2,10 +2,13 @@ package thutconcrete.common.utils;
 
 import java.util.ArrayList;
 import java.util.BitSet;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.CountDownLatch;
 
+import thutconcrete.common.ConcreteCore;
 import thutconcrete.common.blocks.BlockDust;
 
 import net.minecraft.block.Block;
@@ -20,7 +23,7 @@ public class ExplosionCustom
 	public static double pi = 3.141592653589793D;
 	public static double sqrt2 = Math.sqrt(2.0D);
 	static LinearAlgebra vec;
-	public static final int MAX_RADIUS = 100;
+	public static final int MAX_RADIUS = 128;
 	
 	  public static void doExplosion(World worldObj,double x0, double y0, double z0, double r0, boolean reflect)
 	  {
@@ -33,16 +36,10 @@ public class ExplosionCustom
 		    
 	  }
 
-	  public static void doPlume(final World worldObj,final double r0, final double[] centre, final int n, final List<Integer[]> destroyed)
-	  {
-		  //TODO make volcano plume entities
-	  }
-
 	  public static synchronized void sphericalExplosion(final World worldObj,final double x0,final double y0,final double z0, final double r0,final boolean reflect, final double A, final double B, final int rMax)
 	  {
 	    Thread nextBoom = new Thread(new Runnable() {
 	      public void run() { 
-	    	System.out.println("Starting boom");
 	        final Double[] centreD = { x0, y0, z0 };
 
 	        double[] centre = { x0, y0, z0 };
@@ -50,10 +47,7 @@ public class ExplosionCustom
 	        ThreadSafeWorldOperations safe = new ThreadSafeWorldOperations();
 
 	        Cruncher sorter = new Cruncher();
-
-	        List<Integer> x0Remain = new ArrayList();
-	        List<Integer> y0Remain = new ArrayList();
-	        List<Integer> z0Remain = new ArrayList();
+	        
 	        final List<Integer[]> things = new ArrayList();
 	        final List<Integer[]> stuff = new ArrayList();
 
@@ -65,11 +59,7 @@ public class ExplosionCustom
 
 	        final List<Integer[]> moreotherthings = new ArrayList();
 	        final List<Integer[]> moreotherstuff = new ArrayList();
-
-	        List<Integer> BlastRemain = new ArrayList();
 	        
-	        List<Integer[]> destroyed =  new ArrayList<Integer[]>();
-
 	        long startTime = System.nanoTime();
 	        
 	        
@@ -111,17 +101,14 @@ public class ExplosionCustom
 
 	        try {latch.await();} catch (InterruptedException e1) {}
 	        long estimatedTime = System.nanoTime() - startTime;
-	        System.out.println("Total time "+estimatedTime/1000000000+"s");
+	     //   System.out.println("Total time "+estimatedTime/1000000000+"s");
 	        
 	        int n = things.get(4)[0] + stuff.get(4)[0]+morethings.get(4)[0] + morestuff.get(4)[0];
 	        
-	   //*     
-	        doPlume(worldObj, r0, centre, n, destroyed);
-	        destroyed.clear();
-	//*/
+	   //     harm(worldObj, x0, y0, z0, r0);
+	        
 			safe.setDead();
 	        System.gc();
-	        System.out.println("Finished Explosion");
 	      }
 	    });
 	    
@@ -129,14 +116,24 @@ public class ExplosionCustom
 	    
 	  }
 	  
-	  public static void harm(List<Entity> victims, List<Integer> damage){
-		  System.out.println(Thread.currentThread().getName());
+	  public static void harm(World worldObj, double x, double y, double z, double r0){
+		  
+		  List<Entity> victims = new ArrayList<Entity>();
 		  ThreadSafeWorldOperations safe = new ThreadSafeWorldOperations();
-		  for(int i=0;i<victims.size();i++){
-			  if(!victims.get(i).isDead){
-				  safe.safeHurt(victims.get(i), damage.get(i), DamageSource.generic);
-		  }}
+		  
+		  victims = safe.safeLocateEntity(worldObj, x, y, z, 80, 80, 80);
+		  System.out.println(victims.size());
+		  for(int i=0;i<victims.size();i++)
+		  {
+			  if(!victims.get(i).isDead&&vec.isVisibleEntityFromLocation(worldObj, victims.get(i), new double[] {x,y,z}))
+			  {
+				  double distSq = (x-victims.get(i).posX)*(x-victims.get(i).posX) + (y-victims.get(i).posY)*(y-victims.get(i).posY)+(z-victims.get(i).posZ)*(z-victims.get(i).posZ);
+				  System.out.println("dealing "+(100*r0/distSq)+" to "+victims.get(i));
+				  safe.safeHurt(victims.get(i), (int) (100*r0/distSq), DamageSource.generic);
+			  }
+		  }
 	  }
+	  
 
 	  public static class Cruncher
 	  {
@@ -533,6 +530,8 @@ public class ExplosionCustom
 	      IntMap map = new IntMap();
 	      IntMap resists = new IntMap();
 	      
+	      //Map<Integer, Integer> resists = new HashMap<Integer, Integer>();
+	      
 	      double x0 = centre[0];
 	      double y0 = centre[1];
 	      double z0 = centre[2];
@@ -546,7 +545,7 @@ public class ExplosionCustom
 	    		  zVal = 1+(zMax+zMin)*(zMax+zMin);
 	      Float prevDamp = 0.0F, damp = 0.0F, dj, blastResist,j,resist;
 	      
-	      int n = 0, meta, metaTest;
+	      int n = 0, meta, metaTest, m = 0, l = 0, o = 0;
 	      
 	      boolean inRange;
 	      for (z = 0; z < zMax; z++) {
@@ -589,7 +588,7 @@ public class ExplosionCustom
 	            	  inRange = false;
 	            	  if (map.contains(index) &&( map.get(index) <= vectMagSq)) {  
 		                    inRange = false;
-		                    
+		                    m++;
 		                    reflect = r0 * scaleFactor / (vectMagSq);
 		                    
 		                    if(!blockedLocations.get(index)&&reflect>30){
@@ -614,11 +613,11 @@ public class ExplosionCustom
 	                  
 	                  if(!(xtest==xtestprev&&ytest==ytestprev&&ztest==ztestprev)){
 	                  
-	                index =  xtest + xVal + (ytest + yMin) * (yVal) +  (ztest + zMin) * zVal;
-	               
+	                 index =  xtest + xVal + (ytest + yMin) * (yVal) +  (ztest + zMin) * zVal;
+	              
 	                  if (map.contains(index) &&( map.get(index) <= vectMagSq)) {  
 	                    inRange = false;
-	                    
+	                    m++;
 	                    reflect = r0 * scaleFactor / (vectMagSq);
 	                    
 	                    if(!blockedLocations.get(index)&&reflect>30){
@@ -635,21 +634,37 @@ public class ExplosionCustom
 	                  if(world.safeLookUp(worldObj,xtest + x0, ztest + z0, ytest + y0)){
 	                  idTest = world.ID;
 	                  metaTest = world.meta;
-	                  if (idTest != 0) {
-	                    resist = world.blastResistance;
-	                    if(world.ID==Block.grass.blockID) resist/=2;
-	                    if(resist<=1) resist/=10;
-	                    if (world.isLiquid(worldObj,(int)(xtest + x0), (int)(ztest + z0), (int)(ytest + y0))&&(vectMag < r0/5)){ 
-	                    	resist = 0.0F; 
-	                    	world.safeSet(worldObj,xtest + x0, ztest + z0, ytest + y0, 0, 0);
-	                    }
-
+	                  if (idTest != 0) 
+	                  {
+	                	 // if (idTest != 0) 
+	                	  { 
+		                    resist = world.blastResistance;
+		                    if(world.ID==Block.grass.blockID) resist/=2;
+		                    if(resist<=1) resist/=10;
+		                    if (world.isLiquid(worldObj,(int)(xtest + x0), (int)(ztest + z0), (int)(ytest + y0))&&(vectMag < r0/5)){ 
+		                    	resist = 0.0F; 
+		                    	world.safeSet(worldObj,xtest + x0, ztest + z0, ytest + y0, 0, 0);
+		                    }
+	                	 }
+	                    /*
+		                if(resists.contains(index))
+		                {
+		                	resist = ((float)resists.get(index))/100;
+		                	o++;
+		                }/* /
+		                else
+		                {
+		                	resist = ((float) resists.get(index))/100;
+		                	o++;
+		                }
+		                //*/
+	                    
 	                    damp = resist;
+	                    
 	                    if (damp >= (r0 * scaleFactor / (vectMagSq))) {
 	                      inRange = false;
 	                      
 	                      map.put(index, vectMagSq);
-	                      
 	                      reflect = r0 * scaleFactor / (vectMagSq);
 	                      if(!blockedLocations.get(index)&&reflect>30){
 		                      blockedLocations.set(index, true);
@@ -662,6 +677,8 @@ public class ExplosionCustom
 	                    }else{
 	                      
 		                  world.safeSet(worldObj,xtest+x0, ztest+z0, ytest+y0, 0, 0);
+	                      resists.put(index, (int) (resist*100));
+		                  l++;
 		                  if(idTest == BlockDust.instance.blockID){
 		                	  n+=metaTest+1;
 		                  }else if(resist>1){
@@ -678,6 +695,9 @@ public class ExplosionCustom
 	              //*
 	              if(inRange){
 	            	  world.safeSet(worldObj,x+x0, z1+z0, y+y0, 0, 0);
+	            	  index =  x + xVal + (y + yMin) * (yVal) +  (z1 + zMin) * zVal;
+                      resists.put(index, (int) (resist*100));
+	            	  l++;
 	            	  if(id == BlockDust.instance.blockID){
 	                	  n+=meta+1;
 	                  }else if(blastResist>1){
@@ -692,7 +712,7 @@ public class ExplosionCustom
 	          }
 	        }
 	      }
-	      
+	  //    System.out.println(m+" "+l+" "+o);
 	      blockedLocations.clear();
 	      world.setDead();
 	      list.add(blastR.toArray(new Integer[0]));

@@ -1,5 +1,6 @@
 package thutconcrete.common.blocks;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
@@ -7,6 +8,7 @@ import java.util.Random;
 import thutconcrete.client.BlockRenderHandler;
 import thutconcrete.common.ConcreteCore;
 import thutconcrete.common.utils.IRebar;
+import thutconcrete.common.utils.ThreadSafeWorldOperations;
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
 import net.minecraft.block.Block;
@@ -16,7 +18,10 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.IconRegister;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.Item;
+import net.minecraft.item.ItemDye;
+import net.minecraft.item.ItemStack;
 import net.minecraft.util.AxisAlignedBB;
 import net.minecraft.util.Icon;
 import net.minecraft.util.MovingObjectPosition;
@@ -33,23 +38,78 @@ public class BlockRebar extends Block implements IRebar
 	public Icon itemIcon;
 	boolean[] side = new boolean[6];
 	
+
+	public ThreadSafeWorldOperations safe = new ThreadSafeWorldOperations();
+	public static int MAX_PLACEMENT_RANGE = 64;
+	
 	public BlockRebar(int par1)
 	{
 		super(par1,Material.iron);
-		setHardness(0.1f);
+		setHardness((float) 10.0);
+		
 		setUnlocalizedName("rebar");
 		setCreativeTab(ConcreteCore.tabThut);
 		this.setBlockBounds(0, 0, 0, 0, 0, 0);
 		setResistance(10.0f);
 		this.instance=this;
 		setLightOpacity(0);
+		
 	}
 	
 	
+    public boolean onBlockActivated(World world, int x, int y, int z, EntityPlayer player, int side, float par7, float par8, float par9)
+    {
+    	ItemStack item = player.getHeldItem();
+    	if(!world.isRemote&&item!=null)
+    	{
+	    	int itemID = item.itemID;
+	    	
+	    	if(Block.blocksList[itemID] instanceof IRebar)
+	    	{
+		    	if(placeBlock(world, x, y, z, itemID, item.getItemDamage(), ForgeDirection.getOrientation(side))&&!player.capabilities.isCreativeMode)
+		    	{
+		    		item.splitStack(1);
+		    	}
+	    	}
+    	}
+        return true;
+        
+    }
+	
+
+    public boolean placeBlock(World worldObj, int x, int y, int z, int rebarID, int rebarMeta, ForgeDirection side)
+    {
+    	int dx = side.offsetX, dy = side.offsetY, dz = side.offsetZ;
+    	while(Math.abs(dx)<MAX_PLACEMENT_RANGE&&Math.abs(dy)<MAX_PLACEMENT_RANGE&&Math.abs(dz)<MAX_PLACEMENT_RANGE)
+    	{
+    		if(dy+y>worldObj.getActualHeight()) return false;
+        	int id = safe.safeGetID(worldObj,x+dx, y+dy, z+dz);
+        	Block block = safe.safeGetBlock(worldObj, x+dx, y+dy, z+dz);
+        	if(id==0||(safe.isLiquid(worldObj,x+dx, y+dy, z+dz)))
+    		{
+    			safe.safeSet(worldObj, x+dx, y+dy, z+dz, rebarID, rebarMeta);
+    			return true;
+    		}
+        	else if (id!=rebarID)
+        	{
+        		return false;
+        	}
+        	
+			dy+=side.offsetY;
+			dx+=side.offsetX;
+			dz+=side.offsetZ;
+		
+    	}
+    	return false;
+    }
+
+    
 	
 	
 	
-	//*
+	
+	
+	
     /**
      * Adds all intersecting collision boxes to a list. (Be sure to only add boxes to the list if they intersect the
      * mask.) Parameters: World, X, Y, Z, mask, list, colliding entity
@@ -72,10 +132,32 @@ public class BlockRebar extends Block implements IRebar
                         list.add(coll);
                 n--;
         }
-
-		
     }
 
+	
+	
+    /**
+     * Checks if a player or entity can use this block to 'climb' like a ladder.
+     *
+     * @param world The current world
+     * @param x X Position
+     * @param y Y position
+     * @param z Z position
+     * @return True if the block should act like a ladder
+     */
+    public boolean isLadder(World world, int x, int y, int z)
+    {
+    	
+    	side = sides(world,x,y,z);
+		
+		if(!(side[0]||side[1]||side[2]||side[3]||side[4]||side[5]))
+			side = new boolean[] {true, true, true, true, false, false};
+		
+        return side[0]||side[1]||side[2]||side[3];
+    }
+	
+	
+	
 	
 	@Override
 	public void setBlockBoundsBasedOnState(IBlockAccess par1IBlockAccess, int x, int y, int z)
@@ -166,16 +248,7 @@ public class BlockRebar extends Block implements IRebar
     }
     
     
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
+ 
 	 /**
      * The type of render function that is called for this block
      */

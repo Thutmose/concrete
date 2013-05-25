@@ -79,13 +79,17 @@ public class BlockDust extends Block16Fluid
 					BlockDust.instance.blockID+4096*BlockDust.instance.blockID,
 					4096*BlockDust.instance.blockID,
 					
-				}
+				},
+				{Block.leaves.blockID}
 			};
 			fluid16Blocks.put(this.thisID,data);
 	}
+
 	
-	
-    
+    public void onEntityCollidedWithBlock(World worldObj,int x,int y, int z, Entity entity)
+    {
+    	doFluidTick(worldObj, x, y, z);
+    }
     
     ///////////////////////////////////////////////////////////////////Block Ticking Stuff Above Here///////////////////////////////////////
     @SideOnly(Side.CLIENT)
@@ -138,7 +142,6 @@ public class BlockDust extends Block16Fluid
     public AxisAlignedBB getCollisionBoundingBoxFromPool(World par1World, int par2, int par3, int par4)
     {
     	int meta = par1World.getBlockMetadata(par2, par3, par4);
-    	ThreadSafeWorldOperations safe = new ThreadSafeWorldOperations();
         int l = par1World.getBlockMetadata(par2, par3, par4) & 15;
         int id = par1World.getBlockId(par2, par3 - 1, par4);
         Block block = Block.blocksList[id];

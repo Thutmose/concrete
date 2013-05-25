@@ -14,9 +14,6 @@ import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 
 import thutconcrete.common.ConcreteCore;
-import thutconcrete.common.corehandlers.TSaveHandler;
-import thutconcrete.common.utils.ISaveable;
-import thutconcrete.common.utils.ThreadSafeWorldOperations;
 
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
@@ -30,6 +27,7 @@ import net.minecraft.entity.EntityLiving;
 import net.minecraft.entity.item.EntityItem;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.AxisAlignedBB;
 import net.minecraft.util.Icon;
 import net.minecraft.world.IBlockAccess;
@@ -39,7 +37,6 @@ import net.minecraftforge.common.ForgeDirection;
 public class BlockLava extends Block16Fluid //implements ISaveable
 	{
 	public static Block[] instances = new BlockLava[16];
-	public Block instance;
 	public int typeid;
 	static Material wetConcrete = (new Material(MapColor.stoneColor));
 	Integer[][] data;
@@ -53,17 +50,27 @@ public class BlockLava extends Block16Fluid //implements ISaveable
 		this.setLightValue(1);
 		setUnlocalizedName("Lava" + typeid);
 		this.setResistance((float) 50.0);
-		this.instance = this;
-		this.rate = 0.95;
+		this.rate = 0.9;
 		this.instances[typeid] = this;
 	}
-	
+    /**
+     * Returns a bounding box from the pool of bounding boxes (this means this box can change after the pool has been
+     * cleared to be reused)
+     */
+    public AxisAlignedBB getCollisionBoundingBoxFromPool(World par1World, int par2, int par3, int par4)
+    {
+        return null;
+    }
 
 	public static Block getInstance(int colorid)
 	{
 		return BlockLava.instances[colorid];
 	}
 
+    public boolean isBlockNormalCube(World world, int x, int y, int z)
+    {
+        return false;
+    }
 	public void setData()
 	{
 			
@@ -81,7 +88,8 @@ public class BlockLava extends Block16Fluid //implements ISaveable
 		}
 
 		combinationList.add(BlockConcrete.instance.blockID+4096*BlockLava.getInstance(typeid).blockID);
-
+		combinationList.add(BlockDust.instance.blockID+4096*BlockLava.getInstance(typeid).blockID);
+		
 		combinationList.add(BlockLiquidConcrete.instance.blockID+4096*BlockLava.getInstance(typeid).blockID);
 		
 		int rate = 10;
@@ -90,36 +98,39 @@ public class BlockLava extends Block16Fluid //implements ISaveable
 		desiccantList.add(Block.dirt.blockID+rate*4096);
 		desiccantList.add(Block.grass.blockID+rate*4096);
 		desiccantList.add(Block.stone.blockID+rate*4096);
-		desiccantList.add(Block.waterMoving.blockID+2*rate*4096);
-		desiccantList.add(Block.waterStill.blockID+2*rate*4096);
+		desiccantList.add(Block.waterMoving.blockID+100*rate*4096);
+		desiccantList.add(Block.waterStill.blockID+100*rate*4096);
 		
 		for(int i=0;i<3;i++){
 			desiccantList.add(BlockSolidLava.getInstance(i).blockID+rate*20*4096);
 		}
 		
 		//ORDER HERE MATTERS
-		configList.add(0); //Add Return to
+		configList.add(0);
 		int viscosity = 0;
 		int fluidity = 2;
 		int differential;
 		if(typeid == 0)
 		{
+			differential = 2;
 			viscosity = 1;
 		}
 		else if(typeid==1)
 		{
+			differential = 2;
 			viscosity = 5;
 		}
 		else
 		{
-			fluidity = 1;
-			viscosity = 15;
+			differential = 1;
+			fluidity = 2;
+			viscosity = 10;
 		}
 		configList.add(viscosity);
 		configList.add(BlockSolidLava.getInstance(typeid).blockID); //Add harden to
-		configList.add(2); //Add Differential
-		configList.add(typeid==0?4:10); //Add random Factor
-		configList.add(2); //Make this a fluid
+		configList.add(differential); //Add Differential
+		configList.add(typeid==0?4:typeid==1?10:0); //Add random Factor
+		configList.add(fluidity); //Make this a fluid
 		configList.add(0);//no colour
 
 		
@@ -134,99 +145,24 @@ public class BlockLava extends Block16Fluid //implements ISaveable
    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     
 	@Override
-    public void onBlockPlacedBy(World worldObj,int x,int y,int z,EntityLiving entity, ItemStack item){
-		worldObj.setBlockMetadataWithNotify(x, y, z, 15, 3);
-
-		if(data==null){
-			setData();
-			}
-    	this.setTickRandomly(true);
-    	super.onBlockPlacedBy(worldObj, x, y, z, entity, item);
-    }
-	
-	@Override
-    public void onBlockAdded(World worldObj, int x, int y, int z) {
-		if(data==null){
-			setData();
-			}
-    	this.setTickRandomly(true);
-    }
+    public void onBlockAdded(World worldObj, int x, int y, int z) 
+	{
+		tickSides(worldObj, x, y, z, 5);
+	}
 	
 	
 	@Override
 	public void updateTick(World worldObj, int x, int y, int z, Random par5Random){
 
+		tickSides(worldObj, x, y, z, 5);
+		
 		if(data==null){
 			setData();
 		}
-		  if (worldObj.getGameRules().getGameRuleBooleanValue("doFireTick"))
-	        {
-	            Block base = Block.blocksList[worldObj.getBlockId(x, y - 1, z)];
-	            boolean flag = (base != null && base.isFireSource(worldObj, x, y - 1, z, worldObj.getBlockMetadata(x, y - 1, z), UP));
-
-                int l = worldObj.getBlockMetadata(x, y, z);
-
-              
-                boolean flag1 = worldObj.isBlockHighHumidity(x, y, z);
-                byte b0 = 0;
-
-                if (flag1)
-                {
-                    b0 = -50;
-                }
-
-                this.tryToCatchBlockOnFire(worldObj, x + 1, y, z, 300 + b0, par5Random, l, WEST );
-                this.tryToCatchBlockOnFire(worldObj, x - 1, y, z, 300 + b0, par5Random, l, EAST );
-                this.tryToCatchBlockOnFire(worldObj, x, y - 1, z, 250 + b0, par5Random, l, UP   );
-                this.tryToCatchBlockOnFire(worldObj, x, y + 1, z, 250 + b0, par5Random, l, DOWN );
-                this.tryToCatchBlockOnFire(worldObj, x, y, z - 1, 300 + b0, par5Random, l, SOUTH);
-                this.tryToCatchBlockOnFire(worldObj, x, y, z + 1, 300 + b0, par5Random, l, NORTH);
-
-                for (int i1 = x - 1; i1 <= x + 1; ++i1)
-                {
-                    for (int j1 = z - 1; j1 <= z + 1; ++j1)
-                    {
-                        for (int k1 = y - 1; k1 <= y + 4; ++k1)
-                        {
-                            if (i1 != x || k1 != y || j1 != z)
-                            {
-                                int l1 = 100;
-
-                                if (k1 > y + 1)
-                                {
-                                    l1 += (k1 - (y + 1)) * 100;
-                                }
-
-                                int i2 = this.getChanceOfNeighborsEncouragingFire(worldObj, i1, k1, j1);
-
-                                if (i2 > 0)
-                                {
-                                    int j2 = (i2 + 40 + worldObj.difficultySetting * 7) / (l + 30);
-
-                                    if (flag1)
-                                    {
-                                        j2 /= 2;
-                                    }
-
-                                    if (j2 > 0 && par5Random.nextInt(l1) <= j2 && (!worldObj.isRaining() || !worldObj.canLightningStrikeAt(i1, k1, j1)) && !worldObj.canLightningStrikeAt(i1 - 1, k1, z) && !worldObj.canLightningStrikeAt(i1 + 1, k1, j1) && !worldObj.canLightningStrikeAt(i1, k1, j1 - 1) && !worldObj.canLightningStrikeAt(i1, k1, j1 + 1))
-                                    {
-                                        int k2 = l + par5Random.nextInt(5) / 4;
-
-                                        if (k2 > 15)
-                                        {
-                                            k2 = 15;
-                                        }
-
-                                        worldObj.setBlock(i1, k1, j1, Block.fire.blockID, k2, 3);
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-	        }
 		
-		 super.updateTick(worldObj, x, y, z, par5Random);
+		doFluidTick(worldObj, x, y, z);
+		doFireTick(worldObj, x, y, z, par5Random);
+
 	}
 	
 	
@@ -381,13 +317,6 @@ public class BlockLava extends Block16Fluid //implements ISaveable
             return ((material == Material.air)||(block instanceof Block16Fluid&&meta!=15))? this.iconFloating : this.blockIcon;
             
     }
-    
-    public AxisAlignedBB getCollisionBoundingBoxFromPool(World par1World, int par2, int par3, int par4)
-    {
-    
-    	return AxisAlignedBB.getAABBPool().getAABB(0, 0, 0, 0, 0, 0);
-        
-    }
 	
     public void onEntityCollidedWithBlock(World worldObj,int x,int y, int z, Entity entity)
     {
@@ -395,9 +324,81 @@ public class BlockLava extends Block16Fluid //implements ISaveable
     	{
     		entity.setDead();
     	}
-    	setTEUpdate(worldObj, x, y, z);
     }
     
-}
+    
+    public void doFireTick(World worldObj, int x, int y, int z, Random par5Random)
+    {
+		  if (worldObj.getGameRules().getGameRuleBooleanValue("doFireTick"))
+	        {
+	            Block base = Block.blocksList[worldObj.getBlockId(x, y - 1, z)];
+	            boolean flag = (base != null && base.isFireSource(worldObj, x, y - 1, z, worldObj.getBlockMetadata(x, y - 1, z), UP));
+
+              int l = worldObj.getBlockMetadata(x, y, z);
+
+            
+              boolean flag1 = worldObj.isBlockHighHumidity(x, y, z);
+              byte b0 = 0;
+
+              if (flag1)
+              {
+                  b0 = -50;
+              }
+
+              this.tryToCatchBlockOnFire(worldObj, x + 1, y, z, 300 + b0, par5Random, l, WEST );
+              this.tryToCatchBlockOnFire(worldObj, x - 1, y, z, 300 + b0, par5Random, l, EAST );
+              this.tryToCatchBlockOnFire(worldObj, x, y - 1, z, 250 + b0, par5Random, l, UP   );
+              this.tryToCatchBlockOnFire(worldObj, x, y + 1, z, 250 + b0, par5Random, l, DOWN );
+              this.tryToCatchBlockOnFire(worldObj, x, y, z - 1, 300 + b0, par5Random, l, SOUTH);
+              this.tryToCatchBlockOnFire(worldObj, x, y, z + 1, 300 + b0, par5Random, l, NORTH);
+
+              for (int i1 = x - 1; i1 <= x + 1; ++i1)
+              {
+                  for (int j1 = z - 1; j1 <= z + 1; ++j1)
+                  {
+                      for (int k1 = y - 1; k1 <= y + 4; ++k1)
+                      {
+                          if (i1 != x || k1 != y || j1 != z)
+                          {
+                              int l1 = 100;
+
+                              if (k1 > y + 1)
+                              {
+                                  l1 += (k1 - (y + 1)) * 100;
+                              }
+
+                              int i2 = this.getChanceOfNeighborsEncouragingFire(worldObj, i1, k1, j1);
+
+                              if (i2 > 0)
+                              {
+                                  int j2 = (i2 + 40 + worldObj.difficultySetting * 7) / (l + 30);
+
+                                  if (flag1)
+                                  {
+                                      j2 /= 2;
+                                  }
+
+                                  if (j2 > 0 && par5Random.nextInt(l1) <= j2 && (!worldObj.isRaining() || !worldObj.canLightningStrikeAt(i1, k1, j1)) && !worldObj.canLightningStrikeAt(i1 - 1, k1, z) && !worldObj.canLightningStrikeAt(i1 + 1, k1, j1) && !worldObj.canLightningStrikeAt(i1, k1, j1 - 1) && !worldObj.canLightningStrikeAt(i1, k1, j1 + 1))
+                                  {
+                                      int k2 = l + par5Random.nextInt(5) / 4;
+
+                                      if (k2 > 15)
+                                      {
+                                          k2 = 15;
+                                      }
+
+                                      worldObj.setBlock(i1, k1, j1, Block.fire.blockID, k2, 3);
+                                  }
+                              }
+                          }
+                      }
+                  }
+              }
+	        }
+		
+    }
+    
+	 
+	}
 
 

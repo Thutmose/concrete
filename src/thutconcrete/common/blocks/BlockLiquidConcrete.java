@@ -10,12 +10,14 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import thutconcrete.common.ConcreteCore;
 import thutconcrete.common.corehandlers.TSaveHandler;
+import thutconcrete.common.tileEntities.TileEntityBlock16Fluid;
 import thutconcrete.common.utils.ISaveable;
 import thutconcrete.common.utils.ThreadSafeWorldOperations;
 
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
 import net.minecraft.block.Block;
+import net.minecraft.block.ITileEntityProvider;
 import net.minecraft.block.material.MapColor;
 import net.minecraft.block.material.Material;
 import net.minecraft.client.renderer.texture.IconRegister;
@@ -25,6 +27,7 @@ import net.minecraft.entity.EntityLiving;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.AxisAlignedBB;
 import net.minecraft.util.Icon;
 import net.minecraft.world.IBlockAccess;
@@ -35,11 +38,11 @@ import net.minecraftforge.common.ForgeDirection;
 import net.minecraftforge.liquids.IBlockLiquid;
 import net.minecraftforge.liquids.ILiquid;
 
-public class BlockLiquidConcrete extends Block16Fluid implements ILiquid
+public class BlockLiquidConcrete extends Block16Fluid implements ILiquid, ITileEntityProvider
 {
 
 	public static Block instance;
-	public static final int rate = 5;
+	public static int hardenRate = 5;
 	static Material wetConcrete = (new WetConcrete(MapColor.stoneColor));
 	Integer[][] data;
     @SideOnly(Side.CLIENT)
@@ -49,6 +52,7 @@ public class BlockLiquidConcrete extends Block16Fluid implements ILiquid
 		setUnlocalizedName("concreteLiquid");
 		this.setResistance((float) 10.0);
 		this.setHardness((float) 1.0);
+		this.rate = 0.9;
 		this.instance = this;
 	}
 	
@@ -101,14 +105,6 @@ public class BlockLiquidConcrete extends Block16Fluid implements ILiquid
 		entity.motionY*=0.5;
 	}
 	
-	@Override
-	public void updateTick(World worldObj, int x, int y, int z, Random par5Random){
-		if(data==null){
-			setData();
-			}
-		 super.updateTick(worldObj, x, y, z, par5Random);
-		 
-	}
 	
 	public void setData(){
 
@@ -136,11 +132,11 @@ public class BlockLiquidConcrete extends Block16Fluid implements ILiquid
 		}
 
 
-		desiccantList.add(0+rate*4096);
+		desiccantList.add(0+hardenRate*4096);
 
-		desiccantList.add(BlockREConcrete.instance.blockID+rate*4096*4);
+		desiccantList.add(BlockREConcrete.instance.blockID+hardenRate*4096*4);
 		
-		desiccantList.add(BlockConcrete.instance.blockID+rate*4096*4);
+		desiccantList.add(BlockConcrete.instance.blockID+hardenRate*4096*4);
 
 		data = new Integer[][]{
 				{
@@ -187,7 +183,7 @@ public class BlockLiquidConcrete extends Block16Fluid implements ILiquid
 	    public Icon getBlockTexture(IBlockAccess par1IBlockAccess, int x, int y, int z, int par5)
 	    {
 		 TileEntityBlock16Fluid te = (TileEntityBlock16Fluid) par1IBlockAccess.getBlockTileEntity(x, y, z);
-		 return this.iconArray[te.metaArray[par5]];
+		 return this.iconArray[te.metaArray[par5&15]&15];
 		 	
 	    }
 	 
@@ -220,4 +216,9 @@ public class BlockLiquidConcrete extends Block16Fluid implements ILiquid
 	    	return false;
 	    }
 	 
+		 public TileEntity createNewTileEntity(World world)
+		 {
+		    return new TileEntityBlock16Fluid();
+		 }
+		 
 }

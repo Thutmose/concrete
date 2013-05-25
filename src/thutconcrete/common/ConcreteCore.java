@@ -15,9 +15,12 @@ import thutconcrete.common.corehandlers.BlockHandler;
 import thutconcrete.common.corehandlers.ConfigHandler;
 import thutconcrete.common.corehandlers.ItemHandler;
 import thutconcrete.common.corehandlers.LiquidHandler;
+import thutconcrete.common.corehandlers.RecipeHandler;
 import thutconcrete.common.corehandlers.TSaveHandler;
 import thutconcrete.common.finiteWorld.WorldTypeCustom;
 import thutconcrete.common.ticks.TickHandler;
+import thutconcrete.common.tileEntities.TileEntityBlock16Fluid;
+import thutconcrete.common.tileEntities.TileEntityVolcano;
 import thutconcrete.common.worldgen.BiomeGenChalk;
 import thutconcrete.common.worldgen.LimestoneWorldGen;
 import thutconcrete.common.worldgen.TrassWorldGen;
@@ -33,11 +36,13 @@ import net.minecraftforge.common.*;
 import net.minecraftforge.oredict.OreDictionary;
 import cpw.mods.fml.common.FMLLog;
 import cpw.mods.fml.common.Mod;
+import cpw.mods.fml.common.Mod.PostInit;
 import cpw.mods.fml.common.Mod.PreInit;
 import cpw.mods.fml.common.SidedProxy;
 import cpw.mods.fml.common.Mod.Init;
 import cpw.mods.fml.common.Mod.Instance;
 import cpw.mods.fml.common.event.FMLInitializationEvent;
+import cpw.mods.fml.common.event.FMLPostInitializationEvent;
 import cpw.mods.fml.common.event.FMLPreInitializationEvent;
 import cpw.mods.fml.common.network.NetworkMod;
 import cpw.mods.fml.common.registry.EntityRegistry;
@@ -72,7 +77,7 @@ public class ConcreteCore {
 	public static Block[] blocks;
 	public static Item[] items;
 	
-	public static WorldType customWorldType= new WorldTypeCustom(15, "FINITE");
+	public static WorldType customWorldType;
 	
     private static final String[] colourNames = { "White",
         "Orange", "Magenta", "Light Blue",
@@ -89,6 +94,7 @@ public class ConcreteCore {
 	public LiquidHandler liquidHndlr;
 	public BlockHandler blockList;
 	public ItemHandler itemList;
+	public RecipeHandler recipes;
 
 	// Configuration Handler that handles the config file
 	public ConfigHandler config;
@@ -96,6 +102,8 @@ public class ConcreteCore {
 	@PreInit
 	public void preInit(FMLPreInitializationEvent e){
 		config = new ConfigHandler(e.getSuggestedConfigurationFile());
+		
+		customWorldType = new WorldTypeCustom(config.worldID, "FINITE");
 		
 		saveList = new TSaveHandler();
 		MinecraftForge.EVENT_BUS.register(saveList);
@@ -131,6 +139,7 @@ public class ConcreteCore {
 		
 		blockList = new BlockHandler(config);
 		itemList = new ItemHandler(config);
+		recipes = new RecipeHandler(config);
 		items = itemList.items;
 		blocks = blockList.blocks;
 	//*	
@@ -138,7 +147,15 @@ public class ConcreteCore {
 		GameRegistry.addBiome(theBiome);
 		BiomeDictionary.registerBiomeType(theBiome, Type.PLAINS);
 	
+		initOreMap();
 	//*/	
+	}
+	
+	@PostInit
+	public void postInit(FMLPostInitializationEvent e)
+	{
+		initHardens();
+		recipes.registerRecipes();
 	}
 	
 	static int entityID=0;
@@ -152,8 +169,11 @@ public class ConcreteCore {
 	
 	
 	public static Map<Short, Byte> colourMap = new HashMap<Short, Byte>();
-	
+	public static Map<String, Integer> oreMap0 = new HashMap<String, Integer>();
+	public static Map<String, Integer> oreMap1 = new HashMap<String, Integer>();
+	public static Map<String, Integer> oreMap2 = new HashMap<String, Integer>();
 	public static Map<String, Byte> volcanoMap = new HashMap<String, Byte>();
+	public static List<String> ores = new ArrayList<String>();
 	
 	void populateMap(){
 		
@@ -196,6 +216,121 @@ public class ConcreteCore {
 		Random rZ = new Random(z);
 		Byte Height = (byte) (rX.nextInt(45)+rZ.nextInt(45));
 		volcanoMap.put(Integer.toString(x)+Integer.toString(z), Height);
+	}
+	
+	public void initOreMap()
+	{
+		oreMap0.put("copper", 500);
+		oreMap0.put("tin", 500);
+		oreMap0.put("thorium", 120);
+		oreMap0.put("uranium", 40);
+		oreMap0.put("tungsten", 40);
+		oreMap0.put("iron", 1000);
+		oreMap0.put("chromium", 500);
+		oreMap0.put("osmium", 10);
+		oreMap0.put("iridium", 10);
+		oreMap0.put("silver", 20);
+		oreMap0.put("aluminium", 150);
+		oreMap0.put("platinum", 20);
+		oreMap0.put("diamond", 10);
+		oreMap0.put("emerald", 30);
+		oreMap0.put("ruby", 30);
+		oreMap0.put("sapphire", 30);
+		oreMap0.put("quartz", 100);
+		oreMap0.put("lead", 100);
+		oreMap0.put("zinc", 500);
+		oreMap0.put("redstone", 20);
+		
+		oreMap1.put("copper", 500);
+		oreMap1.put("tin", 250);
+		oreMap1.put("thorium", 120);
+		oreMap1.put("uranium", 40);
+		oreMap1.put("tungsten", 40);
+		oreMap1.put("iron", 1000);
+		oreMap1.put("chromium", 500);
+		oreMap1.put("osmium", 10);
+		oreMap1.put("iridium", 10);
+		oreMap1.put("silver", 20);
+		oreMap1.put("aluminium", 150);
+		oreMap1.put("platinum", 20);
+		oreMap1.put("diamond", 10);
+		oreMap1.put("emerald", 30);
+		oreMap1.put("ruby", 30);
+		oreMap1.put("sapphire", 30);
+		oreMap1.put("quartz", 100);
+		oreMap1.put("lead", 1000);
+		oreMap1.put("zinc", 500);
+		oreMap1.put("redstone", 20);
+		
+		oreMap2.put("copper", 200);
+		oreMap2.put("tin", 200);
+		oreMap2.put("thorium", 120);
+		oreMap2.put("uranium", 40);
+		oreMap2.put("tungsten", 40);
+		oreMap2.put("iron", 500);
+		oreMap2.put("chromium", 200);
+		oreMap2.put("osmium", 10);
+		oreMap2.put("iridium", 10);
+		oreMap2.put("silver", 20);
+		oreMap2.put("aluminium", 1000);
+		oreMap2.put("platinum", 20);
+		oreMap2.put("diamond", 10);
+		oreMap2.put("emerald", 30);
+		oreMap2.put("ruby", 30);
+		oreMap2.put("sapphire", 30);
+		oreMap2.put("quartz", 1000);
+		oreMap2.put("lead", 100);
+		oreMap2.put("zinc", 500);
+		oreMap2.put("redstone", 20);
+		
+	}
+
+	public void initHardens()
+	{
+		String name;
+		for(Block b:Block.blocksList)
+		{
+			for(int meta = 0; meta<16; meta++)
+			{
+				if(b!=null&&oreDictName(b.blockID,meta)!="Unknown")
+				{
+					name = oreDictName(b.blockID,meta);
+					for(String s:oreMap0.keySet())
+					{
+						if(!ores.contains(s))
+						if(!BlockSolidLava.getInstance(0).turnto.contains(b.blockID + 4096*ConcreteCore.oreMap0.get(s) + 4096*1024*meta))
+						if(name.toLowerCase().contains(s)&&name.toLowerCase().contains("ore"))
+						{
+							BlockSolidLava.getInstance(0).totalProb += ConcreteCore.oreMap0.get(s);
+							BlockSolidLava.getInstance(0).turnto.add(b.blockID + 4096*ConcreteCore.oreMap0.get(s) + 4096*1024*meta);
+							
+							
+							BlockSolidLava.getInstance(1).totalProb += ConcreteCore.oreMap1.get(s);
+							BlockSolidLava.getInstance(1).turnto.add(b.blockID + 4096*ConcreteCore.oreMap1.get(s) + 4096*1024*meta);
+							
+							BlockSolidLava.getInstance(2).totalProb += ConcreteCore.oreMap2.get(s);
+							BlockSolidLava.getInstance(2).turnto.add(b.blockID + 4096*ConcreteCore.oreMap2.get(s) + 4096*1024*meta);
+							
+							ores.add(s);
+						}
+					}
+				}
+			}
+			
+			
+		}
+		
+		double num = 1-config.CoolRate;
+		
+		for(int i = 0; i<3; i++)
+		{
+			BlockSolidLava.getInstance(i).totalProb /= num;
+		}
+	}
+
+	public static String oreDictName(int id, int meta)
+	{
+		return OreDictionary.getOreName(OreDictionary.getOreID(new ItemStack(id,1,meta)));
 	}
 	
 }

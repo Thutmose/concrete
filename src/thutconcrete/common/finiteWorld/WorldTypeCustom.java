@@ -10,11 +10,7 @@ import net.minecraft.world.chunk.IChunkProvider;
 public class WorldTypeCustom extends WorldType
 {       
     public WorldTypeCustom(int id, String string) {
-	        super(id, string);
-	        // The first parameter is the id number of the WorldType,
-	        // vanilla Minecraft uses 0, 1, 2, and 8 already. The max that can be used is 15,
-	        // The second parameter is our textname for our WorldType, the case needs to
-	        // match the "generator.void" localization in the "mod_" file.          
+	        super(id, string);         
 	}
 	
 	@Override
@@ -25,7 +21,6 @@ public class WorldTypeCustom extends WorldType
 	
 	@Override
 	public IChunkProvider getChunkGenerator(World world, String generatorOptions) {
-	        // This is our ChunkProvider, this generates the world terrain.
 	        return new WorldChunkProviderFinite(world);
 	}
 

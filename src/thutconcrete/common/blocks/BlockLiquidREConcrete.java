@@ -9,12 +9,15 @@ import thutconcrete.client.BlockRenderHandler;
 import thutconcrete.common.ConcreteCore;
 import thutconcrete.common.blocks.Block16Fluid.WetConcrete;
 import thutconcrete.common.corehandlers.TSaveHandler;
+import thutconcrete.common.items.ItemConcreteDust;
+import thutconcrete.common.tileEntities.TileEntityBlock16Fluid;
 import thutconcrete.common.utils.IRebar;
 import thutconcrete.common.utils.ISaveable;
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockPane;
+import net.minecraft.block.ITileEntityProvider;
 import net.minecraft.block.material.MapColor;
 import net.minecraft.block.material.Material;
 import net.minecraft.client.renderer.EntityRenderer;
@@ -26,13 +29,14 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLiving;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.AxisAlignedBB;
 import net.minecraft.util.Icon;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
 import net.minecraftforge.common.ForgeDirection;
 
-public class BlockLiquidREConcrete extends Block16Fluid implements IRebar
+public class BlockLiquidREConcrete extends Block16Fluid implements IRebar, ITileEntityProvider
 {
 	
 	public static Block instance;
@@ -42,12 +46,31 @@ public class BlockLiquidREConcrete extends Block16Fluid implements IRebar
 	boolean[] side = new boolean[6];
 	
 	public BlockLiquidREConcrete(int par1) {
-		super(par1, wetConcrete);
+		super(par1, Material.iron);
 		setUnlocalizedName("REconcreteLiquid");
 		this.setResistance((float) 10.0);
+		this.setHardness((float) 10.0);
 		this.instance = this;
 	}
 	
+    public boolean isBlockNormalCube(World world, int x, int y, int z)
+    {
+        return false;
+    }
+	
+    /**
+     * Returns the ID of the items to drop on destruction.
+     */
+    public int idDropped(int par1, Random par2Random, int par3)
+    {
+        return BlockRebar.instance.blockID;
+    }
+    
+    @Override
+    public int quantityDropped(int meta, int fortune, Random random)
+    {
+        return  1;
+    }
 	
 	@Override
     public void onBlockPlacedBy(World worldObj,int x,int y,int z,EntityLiving entity, ItemStack item){
@@ -89,11 +112,11 @@ public class BlockLiquidREConcrete extends Block16Fluid implements IRebar
 		combinationList.add(BlockREConcrete.instance.blockID+4096*BlockLiquidREConcrete.instance.blockID);
 		
 		
-		desiccantList.add(0+5*4096);
+		desiccantList.add(0+BlockLiquidConcrete.hardenRate*4096);
 		
-		desiccantList.add(BlockREConcrete.instance.blockID+5*4096*4);
+		desiccantList.add(BlockREConcrete.instance.blockID+BlockLiquidConcrete.hardenRate*4096*4);
 	
-		desiccantList.add(BlockConcrete.instance.blockID+5*4096*4);
+		desiccantList.add(BlockConcrete.instance.blockID+BlockLiquidConcrete.hardenRate*4096*4);
 		data = new Integer[][]{
 				{	
 					BlockRebar.instance.blockID,//ID that this returns when meta hits -1, 
@@ -270,12 +293,6 @@ public class BlockLiquidREConcrete extends Block16Fluid implements IRebar
     public Icon theIcon;
 	
 
-	    @Override
-	    public int quantityDropped(int meta, int fortune, Random random)
-	    {
-	        return 0;
-	    }
-	    
 	    /**
 	     * The type of render function that is called for this block
 	     */
@@ -321,7 +338,7 @@ public class BlockLiquidREConcrete extends Block16Fluid implements IRebar
 		    public Icon getBlockTexture(IBlockAccess par1IBlockAccess, int x, int y, int z, int par5)
 		    {
 			 TileEntityBlock16Fluid te = (TileEntityBlock16Fluid) par1IBlockAccess.getBlockTileEntity(x, y, z);
-			 return this.iconArray[te.metaArray[par5]];
+			 return this.iconArray[te.metaArray[par5&15]&15];
 			 	
 		    }
 
@@ -333,5 +350,9 @@ public class BlockLiquidREConcrete extends Block16Fluid implements IRebar
 		        this.setBoundsByMeta(15);
 		    }
 		 
-		 
+			 public TileEntity createNewTileEntity(World world)
+			 {
+			    return new TileEntityBlock16Fluid();
+			 }
+			 
 }

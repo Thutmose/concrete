@@ -79,8 +79,6 @@ public class ThreadSafeWorldOperations extends Ticker
 	public void safeBurn(Entity burnt, int time){
 		if(burnt.worldObj.doChunksNearChunkExist((int)burnt.posX,(int)burnt.posY, (int)burnt.posZ, 1))
 		burnt.setFire(time);
-		
-		
 	}
 	public void safeThrow(Entity harmed, double vx, double vy, double vz){
 		if(harmed instanceof EntityLiving||harmed instanceof EntityCreature){
@@ -88,13 +86,7 @@ public class ThreadSafeWorldOperations extends Ticker
 		}
 	}
 	public List safeLocateEntity(World worldObj,Entity looker, double x, double y, double z,double dx, double dy, double dz){
-		try {
-			return worldObj.getEntitiesWithinAABBExcludingEntity(looker, AxisAlignedBB.getBoundingBox(x-dx,y-dy,z-dz,x+dx,y+dy,z+dy));
-		} catch (Exception e) {
-			System.out.println("Error in looking");
-			e.printStackTrace();
-		}
-		return (List)null;
+		return worldObj.getEntitiesWithinAABBExcludingEntity(looker, AxisAlignedBB.getBoundingBox(x-dx,y-dy,z-dz,x+dx,y+dy,z+dy));
 	}
 	
 	public boolean checkAABB(World worldObj,AxisAlignedBB aabb){
@@ -112,37 +104,55 @@ public class ThreadSafeWorldOperations extends Ticker
 		return safeLocateEntity(world,(Entity)null, x,y,z,dx,dy,dz);
 	}
 	public synchronized boolean safeLookUp(World worldObj,double x, double y, double z){
-		
 		if(worldObj!=null){
-			if(worldObj.doChunksNearChunkExist((int)x,(int)y, (int)z, 1)){
-			this.ID = worldObj.getBlockId((int)x, (int)y, (int)z);
-			this.meta = worldObj.getBlockMetadata((int)x,(int)y, (int)z);
-			this.block = Block.blocksList[ID];
-			if(ID!=0&&block!=null){
-				this.blastResistance = 5.0F*block.getExplosionResistance((Entity)null, worldObj, (int)x,(int)y, (int)z, 0d, 0d, 0d);
-		}
-			return true;
-			}}
+			if(worldObj.doChunksNearChunkExist((int)x,(int)y, (int)z, 1))
+			{
+				this.ID = worldObj.getBlockId((int)x, (int)y, (int)z);
+				this.meta = worldObj.getBlockMetadata((int)x,(int)y, (int)z);
+				this.block = Block.blocksList[ID];
+				if(ID!=0&&block!=null)
+				{
+					this.blastResistance = 5.0F*block.getExplosionResistance((Entity)null, worldObj, (int)x,(int)y, (int)z, 0d, 0d, 0d);
+				}
+				return true;
+				}
+			}
 		return false;
 	}
 	public void safeSet(World worldObj,double x, double y, double z, int ID, int Meta){
 		if(!worldObj.isRemote)
-		worldObj.setBlock((int)x, (int)y, (int)z, ID, Meta, 2);
-		
+		{
+			worldObj.setBlock((int)x, (int)y, (int)z, ID, Meta, 2);
+		}
 	}
-	public  void safeSetMeta(World worldObj,double x, double y, double z, int Meta){
+	public void notAsSafeSet(World worldObj,double x, double y, double z, int ID, int Meta){
+		if(!worldObj.isRemote)
+		{
+			worldObj.setBlock((int)x, (int)y, (int)z, ID, Meta, 2);
+			worldObj.scheduleBlockUpdate((int)x, (int)y, (int)z, ID, 5);
+		}
+	}
+	public void safeSetMeta(World worldObj,double x, double y, double z, int Meta){
 		if(!worldObj.isRemote)
 		worldObj.setBlockMetadataWithNotify((int)x, (int)y, (int)z, Meta, 2);
 		
+	}
+	public int safeGetMeta(World worldObj,double x, double y, double z){
+		return worldObj.getBlockMetadata((int)x,(int)y, (int)z);
+	}
+	public int safeGetID(World worldObj,double x, double y, double z){
+		return worldObj.getBlockId((int)x, (int)y, (int)z);
+	}
+	public Block safeGetBlock(World worldObj,double x, double y, double z){
+		return Block.blocksList[safeGetID(worldObj, x, y, z)];
 	}
 	public void safeSpawn(World worldObj, Entity entity){
 		worldObj.spawnEntityInWorld(entity);
 	}
 	public TileEntity safeGetTE(World worldObj,double x, double y, double z){
 
-		if(!worldObj.isRemote){
-		TE = worldObj.getBlockTileEntity((int)x, (int)y, (int)z);;
-		}
+		TE = worldObj.getBlockTileEntity((int)x, (int)y, (int)z);
+		
 		return TE;
 	}
 	public double[] getWind(World worldObj, double x, double z){

@@ -3,20 +3,25 @@ package thutconcrete.common.blocks;
 import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 
+import thutconcrete.client.BlockRenderHandler;
 import thutconcrete.common.ConcreteCore;
 import thutconcrete.common.corehandlers.TSaveHandler;
 import thutconcrete.common.items.ItemConcreteDust;
+import thutconcrete.common.tileEntities.TileEntityBlock16Fluid;
+import thutconcrete.common.utils.IMultiPaintableBlock;
 import thutconcrete.common.utils.ISaveable;
 
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
 import net.minecraft.block.Block;
+import net.minecraft.block.ITileEntityProvider;
 import net.minecraft.block.material.Material;
 import net.minecraft.client.renderer.texture.IconRegister;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.AxisAlignedBB;
 import net.minecraft.util.Icon;
 import net.minecraft.world.Explosion;
@@ -24,7 +29,7 @@ import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
 import net.minecraftforge.common.ForgeDirection;
 
-public class BlockConcrete extends Block16Fluid
+public class BlockConcrete extends Block16Fluid implements ITileEntityProvider//, IMultiPaintableBlock
 {
 	
 
@@ -38,7 +43,7 @@ public class BlockConcrete extends Block16Fluid
 	public BlockConcrete(int par1) {
 		super(par1,Material.rock);
 		setUnlocalizedName("concrete");
-		this.rate = 0.95;
+		this.rate = 10;
 		this.instance = this;
 		setData();
 	}
@@ -81,6 +86,9 @@ public class BlockConcrete extends Block16Fluid
     }
 	
 	@Override
+	public void updateTick(World worldObj, int x, int y, int z, Random par5Random){}
+	
+	@Override
     public AxisAlignedBB getCollisionBoundingBoxFromPool(World par1World, int par2, int par3, int par4)
     {
     	int meta = par1World.getBlockMetadata(par2, par3, par4);
@@ -95,7 +103,7 @@ public class BlockConcrete extends Block16Fluid
     public void registerIcons(IconRegister par1IconRegister)
     {
         this.iconArray = new Icon[16];
-
+        super.registerIcons(par1IconRegister);
         this.blockIcon = par1IconRegister.registerIcon("thutconcrete:" + "dryConcrete_"+8);
         for (int i = 0; i < this.iconArray.length; ++i)
         {
@@ -124,15 +132,15 @@ public class BlockConcrete extends Block16Fluid
         return (f*hardness);
 	}
 	
+	
 	 @SideOnly(Side.CLIENT)
-
 	    /**
 	     * Retrieves the block texture to use based on the display side. Args: iBlockAccess, x, y, z, side
 	     */
 	    public Icon getBlockTexture(IBlockAccess par1IBlockAccess, int x, int y, int z, int par5)
 	    {
 		 TileEntityBlock16Fluid te = (TileEntityBlock16Fluid) par1IBlockAccess.getBlockTileEntity(x, y, z);
-		 return this.iconArray[te.metaArray[par5]];
+		 return this.iconArray[te.metaArray[par5&15]&15];
 		 	
 	    }
 	
@@ -149,6 +157,8 @@ public class BlockConcrete extends Block16Fluid
 	        return (int) ((meta+1)*random.nextDouble());
 	    }
 
-	    
-
+		 public TileEntity createNewTileEntity(World world)
+		 {
+		    return new TileEntityBlock16Fluid();
+		 }
 }

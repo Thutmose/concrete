@@ -6,8 +6,8 @@ import java.io.IOException;
 import java.util.Arrays;
 
 import thutconcrete.common.ConcreteCore;
-import thutconcrete.common.blocks.TileEntityBlock16Fluid;
 import thutconcrete.common.network.*;
+import thutconcrete.common.tileEntities.TileEntityBlock16Fluid;
 
 import com.google.common.io.ByteArrayDataInput;
 import com.google.common.io.ByteStreams;

@@ -7,18 +7,23 @@ import java.util.concurrent.ConcurrentHashMap;
 import thutconcrete.client.BlockRenderHandler;
 import thutconcrete.common.ConcreteCore;
 import thutconcrete.common.corehandlers.TSaveHandler;
+import thutconcrete.common.tileEntities.TileEntityBlock16Fluid;
 import thutconcrete.common.utils.IRebar;
 import thutconcrete.common.utils.ISaveable;
 
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
 import net.minecraft.block.Block;
+import net.minecraft.block.ITileEntityProvider;
 import net.minecraft.block.material.Material;
 import net.minecraft.client.renderer.texture.IconRegister;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.EntityLiving;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.AxisAlignedBB;
 import net.minecraft.util.Icon;
 import net.minecraft.world.Explosion;
@@ -26,13 +31,13 @@ import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
 import net.minecraftforge.common.ForgeDirection;
 
-public class BlockREConcrete extends Block16Fluid implements IRebar
+public class BlockREConcrete extends Block16Fluid implements IRebar, ITileEntityProvider
 {
 	
 	public static Block instance;
 	public int colourid;
 	public static int resistance = 100;
-	public static float hardness = 30;
+	public static float hardness = 100;
 	public static ConcurrentHashMap<String, Byte> metaData = new ConcurrentHashMap<String, Byte>();
 	Integer[][] data;
 	boolean[] side = new boolean[6];
@@ -47,6 +52,16 @@ public class BlockREConcrete extends Block16Fluid implements IRebar
 	}
 	
 
+	@Override
+    public void onBlockPlacedBy(World worldObj,int x,int y,int z,EntityLiving entity, ItemStack item){
+		worldObj.setBlockMetadataWithNotify(x, y, z, 15, 3);
+
+		if(data==null){
+			setData();
+			}
+    	super.onBlockPlacedBy(worldObj, x, y, z, entity, item);
+    }
+	
 	public void setData()
 	{
 		if(data==null){
@@ -66,6 +81,23 @@ public class BlockREConcrete extends Block16Fluid implements IRebar
 			fluid16Blocks.put(BlockREConcrete.instance.blockID,data);
 			}
 	}
+	
+	
+    /**
+     * Returns the ID of the items to drop on destruction.
+     */
+    public int idDropped(int par1, Random par2Random, int par3)
+    {
+        return BlockRebar.instance.blockID;
+    }
+    
+    
+    @Override
+    public int quantityDropped(int meta, int fortune, Random random)
+    {
+        return 1;
+    }
+	
 	
 	//*
     /**
@@ -331,8 +363,13 @@ public class BlockREConcrete extends Block16Fluid implements IRebar
     public Icon getBlockTexture(IBlockAccess par1IBlockAccess, int x, int y, int z, int par5)
     {
 	 TileEntityBlock16Fluid te = (TileEntityBlock16Fluid) par1IBlockAccess.getBlockTileEntity(x, y, z);
-	 return this.iconArray[te.metaArray[par5]];
+	 return this.iconArray[te.metaArray[par5]&15];
 	 	
     }
+	 
+	 public TileEntity createNewTileEntity(World world)
+	 {
+	    return new TileEntityBlock16Fluid();
+	 }
 	 
 }

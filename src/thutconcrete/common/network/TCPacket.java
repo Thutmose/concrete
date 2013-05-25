@@ -6,7 +6,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-import thutconcrete.common.blocks.TileEntityBlock16Fluid;
+import thutconcrete.common.tileEntities.TileEntityBlock16Fluid;
 
 import net.minecraft.client.entity.EntityClientPlayerMP;
 import net.minecraft.entity.Entity;

@@ -30,13 +30,14 @@ public class BlockHandler {
 			"Liquid Re-Enforced Concrete",
 			"Concrete",
 			"Liquid Concrete",
-			"Low Viscosity Lava",
-			"Solid Low Viscosity Lava",
-			"Moderate Viscosity Lava",
-			"Solid Moderate Viscosity Lava",
-			"High Viscosity Lava",
-			"Solid High Viscosity Lava",
-			"Boom Block",
+			"Mafic Lava",
+			"Basalt",
+			"Intermediate Lava",
+			"Andesite",
+			"Felsic Lava",
+			"Rhyolite",
+			"Volcano Block",
+			"air",
 		};
 	
 	
@@ -67,6 +68,7 @@ public class BlockHandler {
 			blockList.add(new BlockSolidLava(id++,i));
 		}
 
+		blockList.add(new BlockVolcano(id++));
 		blockList.add(new BlockBoom(id++));
 		blocks = blockList.toArray(new Block[0]);
 

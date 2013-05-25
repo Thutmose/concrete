@@ -1,9 +1,14 @@
 package thutconcrete.common.blocks;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 
+import thutconcrete.common.ConcreteCore;
+import thutconcrete.common.corehandlers.ConfigHandler;
 import thutconcrete.common.items.ItemConcreteDust;
+import thutconcrete.common.utils.ThreadSafeWorldOperations;
 
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
@@ -19,14 +24,20 @@ import net.minecraft.world.Explosion;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
 import net.minecraftforge.common.ForgeDirection;
+import net.minecraftforge.oredict.OreDictionary;
 
-public class BlockSolidLava extends Block16Fluid{
+public class BlockSolidLava extends Block16Fluid
+{
 	
-	public static Block[] instances = new BlockSolidLava[16];
-	public Block instance;
+	public static BlockSolidLava[] instances = new BlockSolidLava[16];
+	ThreadSafeWorldOperations safe = new ThreadSafeWorldOperations();
+	public List<Integer> turnto = new ArrayList<Integer>();
+	
+	public BlockSolidLava instance;
 	public int typeid;
-	public static int resistance = 30;
-	public static float hardness = 10;
+	public static int resistance = 10;
+	public static float hardness = 5;
+	public int totalProb = 0;
 	Integer[][] data;
 	
 	public BlockSolidLava(int par1, int par2) {
@@ -36,10 +47,11 @@ public class BlockSolidLava extends Block16Fluid{
 		this.instance = this;
 		this.rate = 1;
 		this.instances[typeid] = this;
+		this.setTickRandomly(true);
 		setData();
 	}
 
-	public static Block getInstance(int colorid)
+	public static BlockSolidLava getInstance(int colorid)
 	{
 		return BlockSolidLava.instances[colorid];
 	}
@@ -64,7 +76,6 @@ public class BlockSolidLava extends Block16Fluid{
 			
 			}
 	}
-	
 	
 	@Override
 	public void setBlockBoundsBasedOnState(IBlockAccess par1IBlockAccess, int par2, int par3, int par4)
@@ -93,15 +104,26 @@ public class BlockSolidLava extends Block16Fluid{
 	@SideOnly(Side.CLIENT)
     public void registerIcons(IconRegister par1IconRegister)
     {
-		this.blockIcon = par1IconRegister.registerIcon("thutconcrete:dryConcrete_"+8);
+		this.blockIcon = par1IconRegister.registerIcon("thutconcrete:"+"solidLava" + typeid);
     }
 	
 	@Override
-	public void updateTick(World worldObj, int x, int y, int z, Random par5Random)
+	public void updateTick(World worldObj, int xCoord, int yCoord, int zCoord, Random par5Random)
 	{
-		if(worldObj.getBlockMetadata(x, y, z)==15)
+		if(safe.safeGetMeta(worldObj,xCoord, yCoord, zCoord)==15)
 		{
-			worldObj.removeBlockTileEntity(x, y, z);
+			{
+				for(Integer i : BlockSolidLava.getInstance(typeid).turnto)
+				{
+					int id = i & 4095;
+					int probability = i>>12;
+					int meta = i>>22;
+					if(Math.random()<((double)probability)/((double)BlockSolidLava.getInstance(typeid).totalProb))
+					{
+						safe.safeSet(worldObj, xCoord, yCoord, zCoord, id, meta);
+					}
+				}
+			}
 		}
 	}
 	

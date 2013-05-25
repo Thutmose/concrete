@@ -26,6 +26,8 @@ public class ItemHandler {
 	public static Item[] items;
 	public static List<Item> itemList = new ArrayList<Item>();
 	
+	public static ItemStack[] brushes = new ItemStack[17];
+	
 	public static final String[] names = 
 		{
 			"Grinder",
@@ -46,6 +48,30 @@ public class ItemHandler {
     	"Trass",
     	"Limestone",
     };
+	
+	private static final String[] dyeNames = { "dyeBlack", "dyeRed", "dyeGreen", "dyeBrown", "dyeBlue", "dyePurple", "dyeCyan", "dyeLightGray", "dyeGray", "dyePink", "dyeLime", "dyeYellow", "dyeLightBlue", "dyeMagenta", "dyeOrange", "dyeWhite" };
+	 
+	
+	private final static String[] colourNames = { 
+		"Black",
+		"Red", 
+		"Green",
+		"Brown", 
+		"Blue",
+		"Purple",
+		"Cyan",
+		"Light Gray",
+		"Gray",
+		"Pink",
+		"Lime",
+		"Yellow",
+		"Light Blue",
+		"Magenta",
+		"Orange",
+		"White", 
+		"",
+		};
+
 
 	public ItemHandler(ConfigHandler handler){
 		config = handler;
@@ -77,7 +103,14 @@ public class ItemHandler {
 			LanguageRegistry.addName(stack, genNames[i]);
 		}
 		
-		registerRecipes();
+		for(int i = 0; i<17;i++)
+		{
+			Item painter = new ItemPaintBrush(id++, i);
+			ItemStack stack = new ItemStack(painter, 1,0);
+			LanguageRegistry.addName(stack, colourNames[i]+" Brush");
+			brushes[i] = stack;
+		}
+		ItemPaintBrush.emptyBrushID = id;
 	}
 	
 	public void registerItems(){
@@ -93,63 +126,4 @@ public class ItemHandler {
 		}
 	}
 	
-	public void registerRecipes(){
-		
-		OreDictionary.registerOre("dustRockTiny", items[1]);
-		OreDictionary.registerOre("dustCa(OH)2", items[2]);
-		OreDictionary.registerOre("dustCaCO3", items[3]);
-		OreDictionary.registerOre("dustCalciumHydroxide", items[2]);
-		OreDictionary.registerOre("dustCalciumCarbonate", items[3]);
-		OreDictionary.registerOre("dustRock", items[4]);
-		OreDictionary.registerOre("dustCement", items[5]);
-		OreDictionary.registerOre("oreChalk",new ItemStack(BlockWorldGen.instance,1,0));
-		OreDictionary.registerOre("oreTrass",new ItemStack(BlockWorldGen.instance,1,1));
-		OreDictionary.registerOre("oreLimestone",new ItemStack(BlockWorldGen.instance,1,2));
-		
-		ItemStack liquidConcrete = new ItemStack(BlockLiquidConcrete.instance,8);
-		ItemStack lime = new ItemStack(items[2]);
-		ItemStack trass = new ItemStack(items[4]);
-		ItemStack dust = new ItemStack(items[1]);
-		ItemStack cement = new ItemStack(items[5]);
-		ItemStack sand = new ItemStack(Block.sand);
-		ItemStack gravel = new ItemStack(Block.gravel);
-		ItemStack water = new ItemStack(Item.bucketWater);
-		ItemStack trassOre = new ItemStack(BlockWorldGen.instance,1,1);
-		ItemStack limestoneOre = new ItemStack(BlockWorldGen.instance,1,2);
-		ItemStack chalkOre = new ItemStack(BlockWorldGen.instance,1,0);
-		ItemStack rebar = new ItemStack(BlockRebar.instance);
-		ItemStack carbonate = new ItemStack(items[3]);
-		ItemStack boneMeal = new ItemStack(Item.dyePowder,1,15);
-		ItemStack grinder = new ItemStack(items[0]);
-		
-
-		ItemStack solidLava0 = new ItemStack(BlockSolidLava.getInstance(0),1,0);
-		ItemStack solidLava1 = new ItemStack(BlockSolidLava.getInstance(1),1,0);
-		ItemStack solidLava2 = new ItemStack(BlockSolidLava.getInstance(2),1,0);
-		
-		
-		GameRegistry.addShapelessRecipe(liquidConcrete,cement, gravel, gravel, gravel, gravel, sand, sand, sand, water);
-
-		GameRegistry.addShapelessRecipe(cement, lime, trass);
-		GameRegistry.addShapelessRecipe(cement, lime, dust, dust, dust, dust, dust, dust, dust, dust);
-		
-		
-		GameRegistry.addShapelessRecipe(trass, trassOre);
-		GameRegistry.addShapelessRecipe(dust, solidLava0);
-		GameRegistry.addShapelessRecipe(dust, solidLava1);
-		GameRegistry.addShapelessRecipe(dust, solidLava2);
-		
-		GameRegistry.addShapelessRecipe(grinder, new ItemStack(Block.obsidian));
-		
-		GameRegistry.addShapelessRecipe(carbonate, chalkOre);
-		GameRegistry.addShapelessRecipe(carbonate, limestoneOre);
-		GameRegistry.addShapelessRecipe(carbonate, boneMeal);
-		
-		GameRegistry.addShapelessRecipe(new ItemStack(BlockLiquidREConcrete.instance), liquidConcrete, rebar);
-		
-		GameRegistry.addRecipe(rebar,"x  "," x ","  x", 'x', Item.ingotIron);
-		
-		GameRegistry.addSmelting(items[3].itemID, lime, 0);
-		
-	}
 }

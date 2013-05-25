@@ -11,7 +11,7 @@ import cpw.mods.fml.common.network.Player;
 import net.minecraft.network.packet.Packet250CustomPayload;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.world.World;
-import thutconcrete.common.blocks.TileEntityBlock16Fluid;
+import thutconcrete.common.tileEntities.TileEntityBlock16Fluid;
 
 public class PacketTEB16F implements IPacketProcessor
 {
