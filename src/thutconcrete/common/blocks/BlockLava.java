@@ -14,6 +14,7 @@ import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 
 import thutconcrete.common.ConcreteCore;
+import thutconcrete.common.utils.ISoldifiable;
 
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
@@ -33,10 +34,12 @@ import net.minecraft.util.Icon;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
 import net.minecraftforge.common.ForgeDirection;
+import net.minecraftforge.liquids.IBlockLiquid;
+import net.minecraftforge.liquids.ILiquid;
 
-public class BlockLava extends Block16Fluid //implements ISaveable
+public class BlockLava extends Block16Fluid implements ISoldifiable, IBlockLiquid
 	{
-	public static Block[] instances = new BlockLava[16];
+	public static BlockLava[] instances = new BlockLava[16];
 	public int typeid;
 	static Material wetConcrete = (new Material(MapColor.stoneColor));
 	Integer[][] data;
@@ -51,6 +54,7 @@ public class BlockLava extends Block16Fluid //implements ISaveable
 		setUnlocalizedName("Lava" + typeid);
 		this.setResistance((float) 50.0);
 		this.rate = 0.9;
+		this.solidifiable = true;
 		this.instances[typeid] = this;
 	}
     /**
@@ -61,8 +65,17 @@ public class BlockLava extends Block16Fluid //implements ISaveable
     {
         return null;
     }
+    
+	@Override
+    public void onBlockPlacedBy(World worldObj,int x,int y,int z,EntityLiving entity, ItemStack item){
+		worldObj.setBlockMetadataWithNotify(x, y, z, 0, 3);
+		if(data==null){
+			setData();
+			}
+    	super.onBlockPlacedBy(worldObj, x, y, z, entity, item);
+    }
 
-	public static Block getInstance(int colorid)
+	public static BlockLava getInstance(int colorid)
 	{
 		return BlockLava.instances[colorid];
 	}
@@ -112,19 +125,19 @@ public class BlockLava extends Block16Fluid //implements ISaveable
 		int differential;
 		if(typeid == 0)
 		{
-			differential = 2;
+			differential = 1;
 			viscosity = 1;
 		}
 		else if(typeid==1)
 		{
 			differential = 2;
-			viscosity = 5;
+			viscosity = 3;
 		}
 		else
 		{
 			differential = 1;
 			fluidity = 2;
-			viscosity = 10;
+			viscosity = 8;
 		}
 		configList.add(viscosity);
 		configList.add(BlockSolidLava.getInstance(typeid).blockID); //Add harden to
@@ -150,7 +163,6 @@ public class BlockLava extends Block16Fluid //implements ISaveable
 		tickSides(worldObj, x, y, z, 5);
 	}
 	
-	
 	@Override
 	public void updateTick(World worldObj, int x, int y, int z, Random par5Random){
 
@@ -164,8 +176,6 @@ public class BlockLava extends Block16Fluid //implements ISaveable
 		doFireTick(worldObj, x, y, z, par5Random);
 
 	}
-	
-	
 	
 	@SideOnly(Side.CLIENT)
     public void registerIcons(IconRegister par1IconRegister)
@@ -314,7 +324,7 @@ public class BlockLava extends Block16Fluid //implements ISaveable
             int meta = par1IBlockAccess.getBlockMetadata(par2, par3 - 1, par4);
             Block block = Block.blocksList[id];
 
-            return ((material == Material.air)||(block instanceof Block16Fluid&&meta!=15))? this.iconFloating : this.blockIcon;
+            return ((material == Material.air)||(block instanceof Block16Fluid&&meta!=0))? this.iconFloating : this.blockIcon;
             
     }
 	
@@ -334,7 +344,7 @@ public class BlockLava extends Block16Fluid //implements ISaveable
 	            Block base = Block.blocksList[worldObj.getBlockId(x, y - 1, z)];
 	            boolean flag = (base != null && base.isFireSource(worldObj, x, y - 1, z, worldObj.getBlockMetadata(x, y - 1, z), UP));
 
-              int l = worldObj.getBlockMetadata(x, y, z);
+              int l = 15-worldObj.getBlockMetadata(x, y, z);
 
             
               boolean flag1 = worldObj.isBlockHighHumidity(x, y, z);
@@ -397,6 +407,38 @@ public class BlockLava extends Block16Fluid //implements ISaveable
 	        }
 		
     }
+	@Override
+	public int stillLiquidId() {
+		return BlockLava.getInstance(typeid).blockID;
+	}
+	@Override
+	public boolean isMetaSensitive() {
+		return false;
+	}
+	@Override
+	public int stillLiquidMeta() {
+		return 0;
+	}
+	@Override
+	public boolean willGenerateSources() {
+		return false;
+	}
+	@Override
+	public int getFlowDistance() {
+		return 15;
+	}
+	@Override
+	public byte[] getLiquidRGB() {
+		return null;
+	}
+	@Override
+	public String getLiquidBlockTextureFile() {
+		return "thutconcrete:lava";
+	}
+	@Override
+	public NBTTagCompound getLiquidProperties() {
+		return null;
+	}
     
 	 
 	}

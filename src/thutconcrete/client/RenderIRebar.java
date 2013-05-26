@@ -16,7 +16,7 @@ public class RenderIRebar {
         tessellator.setBrightness(parblock.getMixedBrightnessForBlock(world, (int)x, (int)y, (int)z));
         tessellator.setColorRGBA(255, 255, 255, 255);
         
-        int j = meta & 15;
+        int j = 15-meta;
         double yCCmax =y+ ((1 + j)) / 16.0F;
         
         double xCCmin = 0+x, zCCmin = 0+z, yCCmin = 0+y, xCCmax = 1+x, zCCmax = 1+z;

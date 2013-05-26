@@ -37,7 +37,8 @@ public class BlockHandler {
 			"Felsic Lava",
 			"Rhyolite",
 			"Volcano Block",
-			"air",
+	//		"air",
+			"water",
 		};
 	
 	
@@ -69,13 +70,16 @@ public class BlockHandler {
 		}
 
 		blockList.add(new BlockVolcano(id++));
-		blockList.add(new BlockBoom(id++));
+	//	blockList.add(new BlockBoom(id++));
+		//blockList.add(new BlockWater(idWorld+1));
+		
 		blocks = blockList.toArray(new Block[0]);
 
 		registerBlocks();
 		registerNames();
 		
 		BlockWorldGen block = new BlockWorldGen(idWorld);
+
 		
 		blockList.add(block);
 		blocks = blockList.toArray(new Block[0]);

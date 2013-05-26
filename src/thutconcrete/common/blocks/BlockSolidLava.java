@@ -17,7 +17,9 @@ import net.minecraft.block.material.Material;
 import net.minecraft.client.renderer.texture.IconRegister;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.EntityLiving;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.item.ItemStack;
 import net.minecraft.util.AxisAlignedBB;
 import net.minecraft.util.Icon;
 import net.minecraft.world.Explosion;
@@ -36,7 +38,7 @@ public class BlockSolidLava extends Block16Fluid
 	public BlockSolidLava instance;
 	public int typeid;
 	public static int resistance = 10;
-	public static float hardness = 5;
+	public static float hardness = 1;
 	public int totalProb = 0;
 	Integer[][] data;
 	
@@ -48,6 +50,8 @@ public class BlockSolidLava extends Block16Fluid
 		this.rate = 1;
 		this.instances[typeid] = this;
 		this.setTickRandomly(true);
+		this.setStepSound(soundStoneFootstep);
+		this.placeamount = 1;
 		setData();
 	}
 
@@ -95,7 +99,7 @@ public class BlockSolidLava extends Block16Fluid
     {
     	int meta = par1World.getBlockMetadata(par2, par3, par4);
     	
-        int l = par1World.getBlockMetadata(par2, par3, par4) & 15;
+        int l = 15-par1World.getBlockMetadata(par2, par3, par4);
         float f = 0.0625F;
         return AxisAlignedBB.getAABBPool().getAABB((double)par2 + this.minX, (double)par3 + this.minY, (double)par4 + this.minZ,
         								(double)par2 + this.maxX, (double)((float)par3 + (float)l * f), (double)par4 + this.maxZ);
@@ -108,9 +112,9 @@ public class BlockSolidLava extends Block16Fluid
     }
 	
 	@Override
-	public void updateTick(World worldObj, int xCoord, int yCoord, int zCoord, Random par5Random)
+	public void updateTick(World worldObj, int x, int y, int z, Random par5Random)
 	{
-		if(safe.safeGetMeta(worldObj,xCoord, yCoord, zCoord)==15)
+		if(!worldObj.isRemote&&safe.safeGetMeta(worldObj,x, y, z)==0)
 		{
 			{
 				for(Integer i : BlockSolidLava.getInstance(typeid).turnto)
@@ -118,13 +122,30 @@ public class BlockSolidLava extends Block16Fluid
 					int id = i & 4095;
 					int probability = i>>12;
 					int meta = i>>22;
-					if(Math.random()<((double)probability)/((double)BlockSolidLava.getInstance(typeid).totalProb))
+					if(par5Random.nextDouble()<((double)probability)/((double)BlockSolidLava.getInstance(typeid).totalProb))
 					{
-						safe.safeSet(worldObj, xCoord, yCoord, zCoord, id, meta);
+						safe.safeSet(worldObj, x, y, z, id, meta);
+						break;
 					}
 				}
 			}
 		}
+	}
+	
+	@Override
+    public void onBlockPlacedBy(World worldObj,int x,int y,int z,EntityLiving entity, ItemStack item){
+		worldObj.setBlockMetadataWithNotify(x, y, z, 15, 3);
+		if(data==null){
+			setData();
+			}
+    	super.onBlockPlacedBy(worldObj, x, y, z, entity, item);
+    }
+
+
+	
+	public int tickRate(World worldObj)
+	{
+		return 10;
 	}
 	
 	public void onBlockClicked(World worldObj, int x, int y, int z, EntityPlayer player){
@@ -132,18 +153,18 @@ public class BlockSolidLava extends Block16Fluid
 	}
 	
 	protected void setResistanceByMeta(int meta){
-		int j = meta & 15;
+		int j = 15-meta;
         float f = (float)((1 + j)) / 16.0F;
         this.setResistance(f*resistance*(1+typeid));
         this.setHardness(f*hardness);
 	}
 	protected float getBlastResistanceByMeta(int meta){
-		int j = meta & 15;
+		int j = 15-meta;
         float f = (float)((1 + j)) / 16.0F;
         return (f*resistance*(1+typeid));
 	}
 	protected float getHardnessByMeta(int meta){
-		int j = meta & 15;
+		int j = 15-meta;
         float f = (float)((1 + j)) / 16.0F;
         return (f*hardness);
 	}
@@ -161,7 +182,26 @@ public class BlockSolidLava extends Block16Fluid
 	   @Override
 	    public int quantityDropped(int meta, int fortune, Random random)
 	    {
-	        return (meta & 15) + 1;
+	        return 16-meta;
 	    }
 	    
+	   
+	    public boolean checkSides(World worldObj, int x, int y, int z){
+	    	int[][]sides = {{1,0,0},{-1,0,0},{0,0,1},{0,0,-1},{0,1,0},{0,-1,0}};
+	        for(int i=0;i<6;i++){
+	        	int id = safe.safeGetID(worldObj,x+sides[i][0], y+sides[i][1], z+sides[i][2]);
+	        	int meta = safe.safeGetMeta(worldObj,x+sides[i][0], y+sides[i][1], z+sides[i][2]);
+	        	Block block = safe.safeGetBlock(worldObj,x+sides[i][0], y+sides[i][1], z+sides[i][2]);
+
+	        	if(block instanceof BlockSolidLava && meta!=0)
+	        	{
+	        		return false;
+	        	}
+	        	if(id==0||safe.isLiquid(worldObj, x, y, z))
+	        	{
+	        		return false;
+	        	}
+	        }
+	        return true;
+	   }
 }

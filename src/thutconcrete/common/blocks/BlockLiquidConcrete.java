@@ -10,8 +10,9 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import thutconcrete.common.ConcreteCore;
 import thutconcrete.common.corehandlers.TSaveHandler;
-import thutconcrete.common.tileEntities.TileEntityBlock16Fluid;
+import thutconcrete.common.tileentity.TileEntityBlock16Fluid;
 import thutconcrete.common.utils.ISaveable;
+import thutconcrete.common.utils.ISoldifiable;
 import thutconcrete.common.utils.ThreadSafeWorldOperations;
 
 import cpw.mods.fml.relauncher.Side;
@@ -38,7 +39,7 @@ import net.minecraftforge.common.ForgeDirection;
 import net.minecraftforge.liquids.IBlockLiquid;
 import net.minecraftforge.liquids.ILiquid;
 
-public class BlockLiquidConcrete extends Block16Fluid implements ILiquid, ITileEntityProvider
+public class BlockLiquidConcrete extends Block16Fluid implements IBlockLiquid, ITileEntityProvider, ISoldifiable
 {
 
 	public static Block instance;
@@ -54,6 +55,7 @@ public class BlockLiquidConcrete extends Block16Fluid implements ILiquid, ITileE
 		this.setHardness((float) 1.0);
 		this.rate = 0.9;
 		this.instance = this;
+		this.solidifiable = true;
 	}
 	
 	/////////////////////////////////////////Block Bounds Stuff//////////////////////////////////////////////////////////
@@ -62,46 +64,37 @@ public class BlockLiquidConcrete extends Block16Fluid implements ILiquid, ITileE
      */
     public void setBlockBoundsForItemRender()
     {
-        this.setBoundsByMeta(15);
+        this.setBoundsByMeta(0);
     }
-    
 	
 	@Override
 	public void setBlockBoundsBasedOnState(IBlockAccess par1IBlockAccess, int par2, int par3, int par4)
     {
     	this.setBoundsByMeta(par1IBlockAccess.getBlockMetadata(par2, par3, par4));
     }
+    /**
+     * Returns a bounding box from the pool of bounding boxes (this means this box can change after the pool has been
+     * cleared to be reused)
+     */
     public AxisAlignedBB getCollisionBoundingBoxFromPool(World par1World, int par2, int par3, int par4)
     {
-		return AxisAlignedBB.getAABBPool().getAABB(0, 0.0, 0, 0, 0.0, 0);
+        return null;
     }
+    
+
+    public boolean isBlockNormalCube(World world, int x, int y, int z)
+    {
+        return false;
+    }
+ 
 	
    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    //*/
-    
-	@Override
-    public void onBlockPlacedBy(World worldObj,int x,int y,int z,EntityLiving entity, ItemStack item){
-		worldObj.setBlockMetadataWithNotify(x, y, z, 15, 3);
-		//TODO add set colour based on item
-		if(data==null){
-			setData();
-			}
-    	super.onBlockPlacedBy(worldObj, x, y, z, entity, item);
-    }
-	
-	@Override
-    public void onBlockAdded(World worldObj, int x, int y, int z) {
-		if(data==null){
-			setData();
-			}
-    }
 	
 	@Override
 	public void onEntityCollidedWithBlock(World par1World, int par2, int par3, int par4, Entity entity) {
 		entity.motionX*=0.5;
 		entity.motionZ*=0.5;
-		if(par1World.getBlockMetadata(par2, par3, par4)>6)
+		if(par1World.getBlockMetadata(par2, par3, par4)<7)
 		entity.motionY*=0.5;
 	}
 	
@@ -111,9 +104,12 @@ public class BlockLiquidConcrete extends Block16Fluid implements ILiquid, ITileE
 		List<Integer> combinationList = new ArrayList<Integer>();
 		List<Integer> desiccantList = new ArrayList<Integer>();
 
-		
+
 		//Rebar to make this colour.
 		combinationList.add(BlockRebar.instance.blockID+4096*BlockLiquidREConcrete.instance.blockID);
+		//waters to make this colour.
+		combinationList.add(Block.waterMoving.blockID+4096*BlockLiquidConcrete.instance.blockID);
+		combinationList.add(Block.waterStill.blockID+4096*BlockLiquidConcrete.instance.blockID);
 		//Air to make this colour.
 		combinationList.add(4096*BlockLiquidConcrete.instance.blockID);
 
@@ -127,11 +123,7 @@ public class BlockLiquidConcrete extends Block16Fluid implements ILiquid, ITileE
 		combinationList.add(BlockLiquidREConcrete.instance.blockID+4096*BlockLiquidREConcrete.instance.blockID);
 		combinationList.add(BlockREConcrete.instance.blockID+4096*BlockLiquidREConcrete.instance.blockID);
 
-		for(int i = 0;i<3;i++){
-	//		combinationList.add(BlockLiquidConcrete.instance.blockID+4096*BlockLava.getInstance(i).blockID);
-		}
-
-
+		
 		desiccantList.add(0+hardenRate*4096);
 
 		desiccantList.add(BlockREConcrete.instance.blockID+hardenRate*4096*4);
@@ -198,27 +190,38 @@ public class BlockLiquidConcrete extends Block16Fluid implements ILiquid, ITileE
 		}
 		@Override
 		public int stillLiquidMeta() {
-			return 15;
+			return 0;
 		}
 		
-	    /**
-	     * Checks if the block is a solid face on the given side, used by placement logic.
-	     *
-	     * @param world The current world
-	     * @param x X Position
-	     * @param y Y position
-	     * @param z Z position
-	     * @param side The side to check
-	     * @return True if the block is solid on the specified side.
-	     */
-	    public boolean isBlockSolidOnSide(World world, int x, int y, int z, ForgeDirection side)
-	    {
-	    	return false;
-	    }
-	 
+	    
 		 public TileEntity createNewTileEntity(World world)
 		 {
 		    return new TileEntityBlock16Fluid();
 		 }
+
+		@Override
+		public boolean willGenerateSources() {
+			return false;
+		}
+
+		@Override
+		public int getFlowDistance() {
+			return 15;
+		}
+
+		@Override
+		public byte[] getLiquidRGB() {
+			return null;
+		}
+
+		@Override
+		public String getLiquidBlockTextureFile() {
+			return "thutconcrete:" + "wetConcrete_"+8;
+		}
+
+		@Override
+		public NBTTagCompound getLiquidProperties() {
+			return null;
+		}
 		 
 }

@@ -46,34 +46,43 @@ public class BlockRebar extends Block implements IRebar
 	{
 		super(par1,Material.iron);
 		setHardness((float) 10.0);
-		
 		setUnlocalizedName("rebar");
 		setCreativeTab(ConcreteCore.tabThut);
 		this.setBlockBounds(0, 0, 0, 0, 0, 0);
 		setResistance(10.0f);
 		this.instance=this;
 		setLightOpacity(0);
-		
 	}
 	
 	
     public boolean onBlockActivated(World world, int x, int y, int z, EntityPlayer player, int side, float par7, float par8, float par9)
     {
+    	boolean placed = false;
     	ItemStack item = player.getHeldItem();
-    	if(!world.isRemote&&item!=null)
+    	if(item!=null)
     	{
 	    	int itemID = item.itemID;
 	    	
 	    	if(Block.blocksList[itemID] instanceof IRebar)
 	    	{
-		    	if(placeBlock(world, x, y, z, itemID, item.getItemDamage(), ForgeDirection.getOrientation(side))&&!player.capabilities.isCreativeMode)
+		    	if(placeBlock(world, x, y, z, itemID, item.getItemDamage(), ForgeDirection.getOrientation(side)))
 		    	{
-		    		item.splitStack(1);
+		    		placed = true;
+	    				if(!player.capabilities.isCreativeMode)
+	    					item.splitStack(1);
 		    	}
 	    	}
+	    	if(Block.blocksList[itemID] instanceof BlockLiquidConcrete)
+	    	{
+	    		placed = true;
+		    	world.setBlock(x, y, z, BlockLiquidREConcrete.instance.blockID,0,3);
+		    	world.scheduleBlockUpdate(x, y, z, BlockLiquidREConcrete.instance.blockID, 5);
+				if(!player.capabilities.isCreativeMode)
+					item.splitStack(1);
+		    	
+	    	}
     	}
-        return true;
-        
+        return placed;
     }
 	
 
@@ -103,12 +112,6 @@ public class BlockRebar extends Block implements IRebar
     	return false;
     }
 
-    
-	
-	
-	
-	
-	
 	
     /**
      * Adds all intersecting collision boxes to a list. (Be sure to only add boxes to the list if they intersect the

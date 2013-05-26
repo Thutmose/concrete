@@ -7,7 +7,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import thutconcrete.client.BlockRenderHandler;
 import thutconcrete.common.ConcreteCore;
 import thutconcrete.common.corehandlers.TSaveHandler;
-import thutconcrete.common.tileEntities.TileEntityBlock16Fluid;
+import thutconcrete.common.tileentity.TileEntityBlock16Fluid;
 import thutconcrete.common.utils.IRebar;
 import thutconcrete.common.utils.ISaveable;
 
@@ -48,19 +48,9 @@ public class BlockREConcrete extends Block16Fluid implements IRebar, ITileEntity
 		this.setTickRandomly(true);
 		this.rate = 1;
 		this.instance = this;
+		this.setStepSound(soundStoneFootstep);
 		setData();
 	}
-	
-
-	@Override
-    public void onBlockPlacedBy(World worldObj,int x,int y,int z,EntityLiving entity, ItemStack item){
-		worldObj.setBlockMetadataWithNotify(x, y, z, 15, 3);
-
-		if(data==null){
-			setData();
-			}
-    	super.onBlockPlacedBy(worldObj, x, y, z, entity, item);
-    }
 	
 	public void setData()
 	{
@@ -220,18 +210,11 @@ public class BlockREConcrete extends Block16Fluid implements IRebar, ITileEntity
 	@Override
     public AxisAlignedBB getCollisionBoundingBoxFromPool(World par1World, int par2, int par3, int par4)
     {
-    	int meta = par1World.getBlockMetadata(par2, par3, par4);
-    	EntityPlayer player;
-        int l = par1World.getBlockMetadata(par2, par3, par4) & 15;
+        int l = 15-par1World.getBlockMetadata(par2, par3, par4);
         float f = 0.0625F;
         return AxisAlignedBB.getAABBPool().getAABB((double)par2 + this.minX, (double)par3 + this.minY, (double)par4 + this.minZ,
         								(double)par2 + this.maxX, (double)((float)par3 + (float)l * f), (double)par4 + this.maxZ);
     }
-	
-	
-	
-	
-	
 	
 	
 	
@@ -249,9 +232,9 @@ public class BlockREConcrete extends Block16Fluid implements IRebar, ITileEntity
 		
 		int meta = worldObj.getBlockMetadata(x, y, z);
 		
-		if(meta<10)
+		if(meta>5)
 		{
-			for(int i=0;i<10-meta;i++)
+			for(int i=0;i>meta-5;i++)
 			{
 				if(Math.random()>(1-SOLIDIFY_CHANCE*100))
 				{
@@ -267,18 +250,18 @@ public class BlockREConcrete extends Block16Fluid implements IRebar, ITileEntity
 	}
 	
 	protected void setResistanceByMeta(int meta){
-		int j = meta & 15;
+		int j = 15-meta;
         float f = (float)((1 + j)) / 16.0F;
         this.setResistance(f*resistance);
         this.setHardness(f*hardness);
 	}
 	protected float getBlastResistanceByMeta(int meta){
-		int j = meta & 15;
+		int j = 15-meta;
         float f = (float)((1 + j)) / 16.0F;
         return (f*resistance);
 	}
 	protected float getHardnessByMeta(int meta){
-		int j = meta & 15;
+		int j = 15-meta;
         float f = (float)((1 + j)) / 16.0F;
         return (f*hardness);
 	}

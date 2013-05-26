@@ -10,9 +10,10 @@ import thutconcrete.common.ConcreteCore;
 import thutconcrete.common.blocks.Block16Fluid.WetConcrete;
 import thutconcrete.common.corehandlers.TSaveHandler;
 import thutconcrete.common.items.ItemConcreteDust;
-import thutconcrete.common.tileEntities.TileEntityBlock16Fluid;
+import thutconcrete.common.tileentity.TileEntityBlock16Fluid;
 import thutconcrete.common.utils.IRebar;
 import thutconcrete.common.utils.ISaveable;
+import thutconcrete.common.utils.ISoldifiable;
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
 import net.minecraft.block.Block;
@@ -36,7 +37,7 @@ import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
 import net.minecraftforge.common.ForgeDirection;
 
-public class BlockLiquidREConcrete extends Block16Fluid implements IRebar, ITileEntityProvider
+public class BlockLiquidREConcrete extends Block16Fluid implements IRebar, ITileEntityProvider, ISoldifiable
 {
 	
 	public static Block instance;
@@ -51,6 +52,7 @@ public class BlockLiquidREConcrete extends Block16Fluid implements IRebar, ITile
 		this.setResistance((float) 10.0);
 		this.setHardness((float) 10.0);
 		this.instance = this;
+		this.solidifiable = true;
 	}
 	
     public boolean isBlockNormalCube(World world, int x, int y, int z)
@@ -71,34 +73,7 @@ public class BlockLiquidREConcrete extends Block16Fluid implements IRebar, ITile
     {
         return  1;
     }
-	
-	@Override
-    public void onBlockPlacedBy(World worldObj,int x,int y,int z,EntityLiving entity, ItemStack item){
-		worldObj.setBlockMetadataWithNotify(x, y, z, 15, 3);
 
-		if(data==null){
-			setData();
-			}
-    	super.onBlockPlacedBy(worldObj, x, y, z, entity, item);
-    }
-	
-	@Override
-    public void onBlockAdded(World worldObj, int x, int y, int z) {
-		if(data==null){
-			setData();
-			}
-    }
-	
-	@Override
-	public void updateTick(World worldObj, int x, int y, int z, Random par5Random){
-
-		if(data==null){
-			setData();
-			}
-		 super.updateTick(worldObj, x, y, z, par5Random);
-		 
-	}
-	
 	public void setData(){
 		
 		List<Integer> combinationList = new ArrayList<Integer>();
@@ -114,9 +89,9 @@ public class BlockLiquidREConcrete extends Block16Fluid implements IRebar, ITile
 		
 		desiccantList.add(0+BlockLiquidConcrete.hardenRate*4096);
 		
-		desiccantList.add(BlockREConcrete.instance.blockID+BlockLiquidConcrete.hardenRate*4096*4);
+		desiccantList.add(BlockREConcrete.instance.blockID+BlockLiquidConcrete.hardenRate*4096*2);
 	
-		desiccantList.add(BlockConcrete.instance.blockID+BlockLiquidConcrete.hardenRate*4096*4);
+		desiccantList.add(BlockConcrete.instance.blockID+BlockLiquidConcrete.hardenRate*4096*2);
 		data = new Integer[][]{
 				{	
 					BlockRebar.instance.blockID,//ID that this returns when meta hits -1, 
@@ -338,17 +313,10 @@ public class BlockLiquidREConcrete extends Block16Fluid implements IRebar, ITile
 		    public Icon getBlockTexture(IBlockAccess par1IBlockAccess, int x, int y, int z, int par5)
 		    {
 			 TileEntityBlock16Fluid te = (TileEntityBlock16Fluid) par1IBlockAccess.getBlockTileEntity(x, y, z);
-			 return this.iconArray[te.metaArray[par5&15]&15];
+			 return this.iconArray[te.metaArray[par5]&15];
 			 	
 		    }
 
-		    /**
-		     * Sets the block's bounds for rendering it as an item
-		     */
-		    public void setBlockBoundsForItemRender()
-		    {
-		        this.setBoundsByMeta(15);
-		    }
 		 
 			 public TileEntity createNewTileEntity(World world)
 			 {

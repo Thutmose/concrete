@@ -6,7 +6,12 @@ import java.util.List;
 import net.minecraft.block.Block;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraftforge.liquids.LiquidContainerData;
+import net.minecraftforge.liquids.LiquidContainerRegistry;
+import net.minecraftforge.liquids.LiquidDictionary;
 import net.minecraftforge.oredict.OreDictionary;
+import thutconcrete.common.blocks.BlockConcrete;
+import thutconcrete.common.blocks.BlockLava;
 import thutconcrete.common.blocks.BlockLiquidConcrete;
 import thutconcrete.common.blocks.BlockLiquidREConcrete;
 import thutconcrete.common.blocks.BlockRebar;
@@ -50,12 +55,12 @@ public class RecipeHandler
 		
 		for (ItemStack steel : OreDictionary.getOres("ingotSteel")) 
 		{
-			GameRegistry.addRecipe(new ItemStack(BlockRebar.instance,4),"x  "," x ","  x", 'x', steel);
+			GameRegistry.addRecipe(new ItemStack(BlockRebar.instance,8),"x  "," x ","  x", 'x', steel);
 		}
 		
 		for (ItemStack steel : OreDictionary.getOres("ingotRefinedIron")) 
 		{
-			GameRegistry.addRecipe(new ItemStack(BlockRebar.instance,2),"x  "," x ","  x", 'x', steel);
+			GameRegistry.addRecipe(new ItemStack(BlockRebar.instance,4),"x  "," x ","  x", 'x', steel);
 		}
 		
 		for(int i = 0; i<16; i++)
@@ -79,6 +84,28 @@ public class RecipeHandler
 		OreDictionary.registerOre("oreChalk",new ItemStack(BlockWorldGen.instance,1,0));
 		OreDictionary.registerOre("oreTrass",new ItemStack(BlockWorldGen.instance,1,1));
 		OreDictionary.registerOre("oreLimestone",new ItemStack(BlockWorldGen.instance,1,2));
+		
+		LiquidDictionary.getOrCreateLiquid("mafic lava", Items.lava0);
+		LiquidDictionary.getOrCreateLiquid("intermediate lava", Items.lava1);
+		LiquidDictionary.getOrCreateLiquid("felsic lava", Items.lava2);
+		LiquidDictionary.getOrCreateLiquid("concrete", Items.concrete);
+
+		//*
+		Items.lava0.canonical().setRenderingIcon(BlockLava.instances[0].getIcon(0, 0));
+		Items.lava1.canonical().setRenderingIcon(BlockLava.instances[1].getIcon(0, 0));
+		Items.lava2.canonical().setRenderingIcon(BlockLava.instances[2].getIcon(0, 0));
+		Items.concrete.canonical().setRenderingIcon(BlockConcrete.instance.getIcon(0, 0));
+		//*/
+		//*
+		LiquidContainerRegistry.registerLiquid(new LiquidContainerData(LiquidDictionary.getLiquid("mafic lava", LiquidContainerRegistry.BUCKET_VOLUME), new ItemStack(
+				Item.bucketLava), new ItemStack(Item.bucketEmpty)));
+		LiquidContainerRegistry.registerLiquid(new LiquidContainerData(LiquidDictionary.getLiquid("intermediate lava", LiquidContainerRegistry.BUCKET_VOLUME),
+				new ItemStack(Item.bucketLava), new ItemStack(Item.bucketEmpty)));
+		LiquidContainerRegistry.registerLiquid(new LiquidContainerData(LiquidDictionary.getLiquid("felsic lava", LiquidContainerRegistry.BUCKET_VOLUME),
+				new ItemStack(Item.bucketLava), new ItemStack(Item.bucketEmpty)));
+		LiquidContainerRegistry.registerLiquid(new LiquidContainerData(LiquidDictionary.getLiquid("concrete", LiquidContainerRegistry.BUCKET_VOLUME),
+				Items.concreteBucketStack.copy(), new ItemStack(Item.bucketEmpty)));
+		//*/
 	}
 	
 	

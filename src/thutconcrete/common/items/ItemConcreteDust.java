@@ -13,6 +13,7 @@ import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.Item;
+import net.minecraft.item.ItemDye;
 import net.minecraft.item.ItemStack;
 import net.minecraft.block.Block;
 import net.minecraft.client.renderer.texture.IconRegister;
@@ -45,18 +46,30 @@ public class ItemConcreteDust extends Item {
     		int id = world.getBlockId(x1, y1, z1);
     		int meta = world.getBlockMetadata(x1, y1, z1);
     		Block block = Block.blocksList[id];
+    		
+            if (ItemDye.applyBonemeal(stack, world, x, y, z, player))
+            {
+                if (!world.isRemote)
+                {
+                    world.playAuxSFX(2005, x, y, z, 0);
+                }
+
+                return true;
+            }
+    		
     	//	System.out.println("side "+id);
-    		if(block instanceof BlockDust&&meta!=15)
+    		if(block instanceof BlockDust&&meta!=0)
     		{
-    			world.setBlockMetadataWithNotify(x1, y1, z1, meta+1, 3);
+    			world.setBlockMetadataWithNotify(x1, y1, z1, meta-1, 3);
     			stack.splitStack(1);
     		}
     		else if (id==0||world.getBlockMaterial(x1, y1, z1).isReplaceable())
     		{
-    			world.setBlock(x1, y1, z1, BlockDust.instance.blockID, Math.min(stack.stackSize-1, 15), 3);
+    			world.setBlock(x1, y1, z1, BlockDust.instance.blockID, Math.min(stack.stackSize-16, 0), 3);
     			stack.splitStack(Math.min(stack.stackSize, 16));
     		}
     	}
     	return false;
     }
+    
 }

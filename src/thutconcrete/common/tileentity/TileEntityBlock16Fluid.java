@@ -1,4 +1,4 @@
-package thutconcrete.common.tileEntities;
+package thutconcrete.common.tileentity;
 
 import java.util.Arrays;
 import java.util.Random;

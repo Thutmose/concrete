@@ -1,5 +1,7 @@
 package thutconcrete.common.blocks;
 
+import static net.minecraftforge.common.ForgeDirection.UP;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -12,6 +14,7 @@ import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
 
 import net.minecraft.block.Block;
+import net.minecraft.block.BlockFlower;
 import net.minecraft.block.ITileEntityProvider;
 import net.minecraft.block.material.Material;
 import net.minecraft.client.renderer.texture.IconRegister;
@@ -28,6 +31,9 @@ import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.potion.*;
+import net.minecraftforge.common.EnumPlantType;
+import net.minecraftforge.common.ForgeDirection;
+import net.minecraftforge.common.IPlantable;
 
 
 public class BlockDust extends Block16Fluid
@@ -127,7 +133,7 @@ public class BlockDust extends Block16Fluid
             int id = par1IBlockAccess.getBlockId(par2, par3 - 1, par4);
             int meta = par1IBlockAccess.getBlockMetadata(par2, par3 - 1, par4);
             Block block = Block.blocksList[id];
-            return ((material == Material.air)||(block instanceof Block16Fluid&&meta!=15))? this.iconFloatingDust : this.blockIcon;
+            return ((material == Material.air)||(block instanceof Block16Fluid&&meta!=0))? this.iconFloatingDust : this.blockIcon;
 
     }
     
@@ -142,7 +148,7 @@ public class BlockDust extends Block16Fluid
     public AxisAlignedBB getCollisionBoundingBoxFromPool(World par1World, int par2, int par3, int par4)
     {
     	int meta = par1World.getBlockMetadata(par2, par3, par4);
-        int l = par1World.getBlockMetadata(par2, par3, par4) & 15;
+        int l = 15-par1World.getBlockMetadata(par2, par3, par4);
         int id = par1World.getBlockId(par2, par3 - 1, par4);
         Block block = Block.blocksList[id];
         float f = 0.0625F;
@@ -154,5 +160,74 @@ public class BlockDust extends Block16Fluid
         	return AxisAlignedBB.getAABBPool().getAABB(0, 0, 0, 0, 0, 0);
         }
     }
+    
+    ////////////////////////////////////////////Plant stuff////////////////////////////////////////////////////////////////
+    
+
+    /**
+     * Determines if this block can support the passed in plant, allowing it to be planted and grow.
+     * Some examples:
+     *   Reeds check if its a reed, or if its sand/dirt/grass and adjacent to water
+     *   Cacti checks if its a cacti, or if its sand
+     *   Nether types check for soul sand
+     *   Crops check for tilled soil
+     *   Caves check if it's a colid surface
+     *   Plains check if its grass or dirt
+     *   Water check if its still water
+     *
+     * @param world The current world
+     * @param x X Position
+     * @param y Y Position
+     * @param z Z position
+     * @param direction The direction relative to the given position the plant wants to be, typically its UP
+     * @param plant The plant that wants to check
+     * @return True to allow the plant to be planted/stay.
+     */
+    public boolean canSustainPlant(World world, int x, int y, int z, ForgeDirection direction, IPlantable plant)
+    {
+       return world.getBlockMetadata(x, y, z)==0;
+    }
+
+    /**
+     * Called when a plant grows on this block, only implemented for saplings using the WorldGen*Trees classes right now.
+     * Modder may implement this for custom plants.
+     * This does not use ForgeDirection, because large/huge trees can be located in non-representable direction,
+     * so the source location is specified.
+     * Currently this just changes the block to dirt if it was grass.
+     *
+     * Note: This happens DURING the generation, the generation may not be complete when this is called.
+     *
+     * @param world Current world
+     * @param x Soil X
+     * @param y Soil Y
+     * @param z Soil Z
+     * @param sourceX Plant growth location X
+     * @param sourceY Plant growth location Y
+     * @param sourceZ Plant growth location Z
+     */
+    public void onPlantGrow(World world, int x, int y, int z, int sourceX, int sourceY, int sourceZ)
+    {
+    	
+    }
+
+    /**
+     * Checks if this soil is fertile, typically this means that growth rates
+     * of plants on this soil will be slightly sped up.
+     * Only vanilla case is tilledField when it is within range of water.
+     *
+     * @param world The current world
+     * @param x X Position
+     * @param y Y Position
+     * @param z Z position
+     * @return True if the soil should be considered fertile.
+     */
+    public boolean isFertile(World world, int x, int y, int z)
+    {
+    	 return world.getBlockMetadata(x, y, z)==0;
+    }
+
+    
+    
+    
     
 }

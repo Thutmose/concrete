@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
+import thutconcrete.common.blocks.BlockWater;
 import thutconcrete.common.blocks.BlockWorldGen;
 
 import net.minecraft.block.Block;
@@ -169,6 +170,8 @@ public class WorldChunkProviderFinite implements IChunkProvider
         this.biomesForGeneration = this.worldObj.getWorldChunkManager().getBiomesForGeneration(this.biomesForGeneration, par1 * 4 - 2, par2 * 4 - 2, k + 5, l + 5);
         this.noiseArray = this.initializeNoiseField(this.noiseArray, par1 * b0, 0, par2 * b0, k, b3, l);
 
+        int idWater = Block.waterStill.blockID;
+        
         for (int i1 = 0; i1 < b0; ++i1)
         {
             for (int j1 = 0; j1 < b0; ++j1)
@@ -210,7 +213,7 @@ public class WorldChunkProviderFinite implements IChunkProvider
                                 }
                                 else if (k1 * 8 + l1 < b2)
                                 {
-                                    par3ArrayOfByte[j2 += short1] = (byte)Block.waterStill.blockID;
+                                    par3ArrayOfByte[j2 += short1] = (byte)idWater;
                                 }
                                 else
                                 {
@@ -257,6 +260,8 @@ public class WorldChunkProviderFinite implements IChunkProvider
                 byte b2 = biomegenbase.fillerBlock;
                 
                 int idStone = biomegenbase.biomeName=="chalk"?BlockWorldGen.instance.blockID:Block.stone.blockID;
+                int idIce = Block.ice.blockID;
+                int idWater = Block.waterStill.blockID;
 
                 for (int k1 = 127; k1 >= 0; --k1)
                 {
@@ -294,11 +299,11 @@ public class WorldChunkProviderFinite implements IChunkProvider
                                 {
                                     if (f < 0.15F)
                                     {
-                                        b1 = (byte)Block.ice.blockID;
+                                        b1 = (byte)idIce;
                                     }
                                     else
                                     {
-                                        b1 = (byte)Block.waterStill.blockID;
+                                        b1 = (byte)idWater;
                                     }
                                 }
 

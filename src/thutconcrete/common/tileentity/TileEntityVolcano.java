@@ -1,4 +1,4 @@
-package thutconcrete.common.tileEntities;
+package thutconcrete.common.tileentity;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -37,20 +37,24 @@ public class TileEntityVolcano extends TileEntity
     public boolean erupted = false;
     public boolean active = true;
     
+    public int[][] sides = {{0,1},{0,-1},{1,0},{-1,0},{1,1},{1,-1},{-1,1},{-1,-1},{0,0}};
+    
     private List<Vect> sideVents = new ArrayList<Vect>();
     private Vect mainVent = new Vect(0,1,0);
     
-    private ThreadSafeWorldOperations safe = new ThreadSafeWorldOperations();
-    private LinearAlgebra vec;
+    private static ThreadSafeWorldOperations safe = new ThreadSafeWorldOperations();
+    private static LinearAlgebra vec;
 	public List<PlumeParticle> particles = new ArrayList<PlumeParticle>();
 	public List<PlumeParticle> deadParticles = new ArrayList<PlumeParticle>();
+	
+	//private int[][] ash = new int[10000][3];
 	
 	private double x0,y0,z0;
 	private boolean read = false;
 	public double r0 = 0;
 	public int seed = new Random().nextInt(1000);
 	private double[] wind = {0,0};
-	private int num = 10;
+	private int num = 7;
 	private int dustId = BlockDust.instance.blockID;
 	double rMax;
 	public boolean first = true;
@@ -80,7 +84,7 @@ public class TileEntityVolcano extends TileEntity
 			height = ConcreteCore.getVolcano(xCoord, z);
 			typeid = height>60?2:height>30?1:0;
 			r0 = height/2;
-			n = 5000*(typeid+1);
+			n = 50000*(typeid+1);
 			ventCount = (int) (10*Math.random());
 			mainVent.i = height+64-yCoord;
 			mainVent.r = ConfigHandler.CoolRate*ConfigHandler.CoolRate;
@@ -91,10 +95,8 @@ public class TileEntityVolcano extends TileEntity
 			for(int i = 0; i<ventCount; i++)
 			{
 				sideVents.add(new Vect(new double[] {2*(Math.random()-0.5), Math.random(), 2*(Math.random()-0.5)},
-				height, mainVent.i*Math.random(), 5,1-Math.random()/250 , true));
-			//	System.out.println(sideVents.get(i).toString());
+				height, mainVent.i*Math.random(), Math.random()*10,1-Math.random()/250 , true));
 			}
-			//System.out.println(ventCount);
 			
 		}
 		
@@ -135,8 +137,13 @@ public class TileEntityVolcano extends TileEntity
 	{
 		if(!worldObj.isRemote)
 		{
-			safe.safeSet(worldObj, x, y, z, BlockLava.getInstance(typeid).blockID, 15);
-			worldObj.scheduleBlockUpdate((int)x, (int)y, (int)z, BlockLava.getInstance(typeid).blockID, 5);
+			for(int[] side : sides)
+			{
+				int id = worldObj.getBlockId((int)x+side[0], (int)y, (int)z+side[1]);
+				
+				if((lava.contains(id)||replaceable.contains(id)||solidlava.contains(id)))
+					safe.notAsSafeSet(worldObj, x+side[0], y, z+side[1], BlockLava.getInstance(typeid).blockID, 0);
+			}
 		}
 	}
 	
@@ -152,8 +159,16 @@ public class TileEntityVolcano extends TileEntity
 		   Vect vec = sideVents.get(i);
 		   vec.writeToNBT(par1, Integer.toString(i));
 	   }
+	   par1.setInteger("ashCount", particles.size());
+	   for(int i = 0; i<particles.size(); i++)
+	   {
+		   PlumeParticle p = particles.get(i);
+		   p.writeToNBT(par1, "particle"+i);
+	   }
+	   System.out.println("written");
 	   mainVent.writeToNBT(par1, "main");
-	   par1.setBoolean("firstTime", firstTime);
+	   par1.setBoolean("active", active);
+	   par1.setBoolean("erupted", erupted);
    }
 
    public void readFromNBT(NBTTagCompound par1)
@@ -166,11 +181,20 @@ public class TileEntityVolcano extends TileEntity
 	   for(int i = 0; i<ventCount; i++)
 	   {
 		   sideVents.add(Vect.readFromNBT(par1,Integer.toString(i)));
-	//	   System.out.println(sideVents.get(i).toString());
 	   }
+	   particles.clear();
+	   for(int i = 0; i<par1.getInteger("ashCount");i++)
+	   {
+		   particles.add(PlumeParticle.readFromNBT(par1, "particle"+i));
+	   }
+	   System.out.println("read");
+	   
 	   mainVent = Vect.readFromNBT(par1, "main");
 	   mainVent.var = 0;
-	  // firstTime = par1.getBoolean("firstTime");
+	   active = par1.getBoolean("active");
+	   erupted = par1.getBoolean("erupted");
+	   
+	   
    }
 
    public int getZCoord()
@@ -180,14 +204,21 @@ public class TileEntityVolcano extends TileEntity
    
    private void volcanoTick()
 	   {
-		   if(active&&Math.random()>0.95)
+		   if(Math.random()>0.975)
 			{
 			  if(ventCount>0)
 			  {
 				growVent(sideVents.get(index));
 				index = (index+1)%sideVents.size();
 			  }
+			  if(active)
+			  {
 				growVent(mainVent);
+			  }
+			  else if (Math.random()>0.995)
+			   {
+				   active = true;
+			   }
 			}
 	   }
 	      
@@ -198,25 +229,17 @@ public class TileEntityVolcano extends TileEntity
 			   plumeCalculations();
 		   }
 	   }
+
 	   
 	private void plumeCalculations()
 		{
-			if(particles.size()==0){
-				if(!first&&particles.size()<0)
-				{
-				//	System.out.println("d");
-					erupted = false;
-					active = true;
-				}
-				else
-				{
-				//	System.out.println("p");
-					first = false;
-					addPlumeParticles();
-
-				}
+			if(particles.size()==0)
+			{
+				erupted = false;
+				active = true;
+				return;
 			}
-		//	else
+			
 			{
 				
 			for(PlumeParticle particle : particles)
@@ -244,19 +267,12 @@ public class TileEntityVolcano extends TileEntity
 				
 				if(!(next[0]==-1&&next[1]==-1&&next[2]==-1)&&!(next[0]==x0&&next[1]==y0&&next[2]==z0))
 				{
-				//	if(!worldObj.isRemote)
-				//	System.out.println(Arrays.toString(next)+Arrays.toString(current)+Arrays.toString(vHat));
-					
 					int x1 = (int) (next[0]-vHat[0]), y1 = (int) (next[1]-vHat[1]), z1=(int)(next[2]-vHat[2]);
-					safe.safeLookUp(worldObj, x1, y1, z1);
-					int id = safe.ID;
-					int meta = safe.meta;
+					
+					int id = safe.safeGetID(worldObj, x1, y1, z1);
+					int meta = safe.safeGetMeta(worldObj, x1, y1, z1);
 					Block block = Block.blocksList[id];
-					if(id == BlockBoom.instance.blockID)
-					{
-						
-					}
-					else if(id==0)
+					if(id==0)
 					{//If 1 ahead is air, add a fallout stack
 						deadParticles.add(particle);
 						
@@ -283,13 +299,12 @@ public class TileEntityVolcano extends TileEntity
 						}else
 						{ //if the fallout is full, put fallout where currently is
 							deadParticles.add(particle);
-							safe.safeLookUp(worldObj,x1-2*vHat[0], y1-2*vHat[1], z1-2*vHat[2]);
 							//only place/modify on server
-							if(!worldObj.isRemote&&safe.ID==0)
+							if(!worldObj.isRemote&&safe.safeGetID(worldObj,x1-2*vHat[0], y1-2*vHat[1], z1-2*vHat[2])==0)
 							{
 								safe.safeSet(worldObj,x1-2*vHat[0], y1-2*vHat[1], z1-2*vHat[2], BlockDust.instance.blockID, num);
 							}
-							else if(!worldObj.isRemote&&safe.ID==BlockDust.instance.blockID)
+							else if(!worldObj.isRemote&&safe.safeGetID(worldObj,x1-2*vHat[0], y1-2*vHat[1], z1-2*vHat[2])==BlockDust.instance.blockID)
 							{
 								safe.safeSetMeta(worldObj,x1-2*vHat[0], y1-2*vHat[1], z1-2*vHat[2], meta+num);
 							}
@@ -306,9 +321,9 @@ public class TileEntityVolcano extends TileEntity
 				particle.x = x;
 				particle.y = y;
 				particle.z = z;
-				particle.vx = vx*0.9 - 0.01*vx + 0.1*wind[0]*(y/r0)*(y/r0);
+				particle.vx = vx*0.9 - 0.01*vx + wind[0]*(y/r0)*(y/r0);
 				particle.vy = vy*0.9 - 0.01*vy;
-				particle.vz = vz*0.9 - 0.01*vz + 0.1*wind[1]*(y/r0)*(y/r0);
+				particle.vz = vz*0.9 - 0.01*vz + wind[1]*(y/r0)*(y/r0);
 				
 			}
 			for(PlumeParticle p : deadParticles)
@@ -326,7 +341,7 @@ public class TileEntityVolcano extends TileEntity
 		Random r = new Random();
 		r.setSeed(seed);
 		r0 = Math.min(r0,50); //Limits the size to "50"
-		for(int i = 0; i<n/(num+1); i++)
+		for(int i = 0; i<n/(num); i++)
 		{
 			double x=10,y=10,z=10;
 			while(Math.sqrt(x*x+y*y+z*z)>1)
@@ -358,59 +373,46 @@ public class TileEntityVolcano extends TileEntity
 		double maxLength = vent.i;
 		
 		double x = vent.x,y = vent.y,z = vent.z, h = vent.j, e = vent.k, r = vent.r;
-		int id = safe.safeGetID(worldObj,  xCoord, yCoord, getZCoord());
 		if(vent!=mainVent && h>mainVent.var)
 		{
 			return;
 		}
-		for(int j = 1;j<maxLength;j++)
+
+		int i = 1;
+		int id = 1;
+
+		boolean toErupt = false;
+		
+		while(id!=0)
 		{
-			safe.safeLookUp(worldObj, xCoord+j*x, yCoord+j*y+h, getZCoord()+j*z);
-			id = safe.ID;
-			int meta = safe.meta;
+			i++;
+			id = safe.safeGetID(worldObj, xCoord+i*x, yCoord+i*y+h, getZCoord()+i*z);
 			
 			if(!(lava.contains(id)||replaceable.contains(id)||solidlava.contains(id))) break;
 			
-			if((lava.contains(id)&&meta!=15)||replaceable.contains(id))
+			setLava(xCoord+i*x, yCoord+i*y+h, getZCoord()+i*z);
+			
+			if(Math.random()>r&&!erupted)
 			{
-				if(Math.random()<r)
-				{
-					setLava(xCoord+j*x, yCoord+j*y+h, getZCoord()+j*z);
-					if(vent == mainVent)
-					{
-						vent.var = Math.max(j,vent.var);
-					}
-				}
-				else if (!erupted)
-				{
-					ExplosionCustom boom = new ExplosionCustom();
-			    	boom.doExplosion(worldObj,xCoord+j*x, yCoord+j*y+h, getZCoord()+j*z, e*(typeid+1), true);
-			    	worldObj.playSoundEffect(xCoord+j*x, yCoord+j*y+h, getZCoord()+j*z, "random.explode", 10.0F, 1.0F);
-			    	x0 = xCoord+j*x; y0 =  yCoord+j*y+h; z0 = getZCoord()+j*z;
-			    	r0 = e*(typeid+1);
-			    	n = (int) (e*(typeid+1)*100);
-			    	
-			    	if(!vent.bool)
-			    	{
-				    	erupted = true;
-				    	first = true;
-			    	}
-			    	else
-			    	{
-				    	addPlumeParticles();
-			    	}
-			    }
-				break;
-			}
-			if(solidlava.contains(id))
-			{
-				setLava(xCoord+j*x, yCoord+j*y+h, getZCoord()+j*z);
-				if(vent == mainVent)
-				{
-					vent.var = Math.max(j,vent.var);
-				}
+				toErupt = true;
 			}
 		}
+		
+		if(toErupt)
+		{
+			ExplosionCustom boom = new ExplosionCustom();
+	    	boom.doExplosion(worldObj,xCoord+i*x, yCoord+i*y+h, getZCoord()+i*z, Math.random()*e*(typeid+1), false);
+	    	worldObj.playSoundEffect(xCoord+i*x, yCoord+i*y+h, getZCoord()+i*z, "random.explode", 10.0F, 1.0F);
+	    	x0 = xCoord+i*x; y0 =  yCoord+i*y+h; z0 = getZCoord()+i*z;
+	    	r0 = e*(typeid+1);
+	    	n = (int) (e*(typeid+1)*100);
+	    	addPlumeParticles();
+	    	if(!vent.bool)
+	    	{
+		    	erupted = true;
+	    	}
+		}
+		
 	}
 	
 		
@@ -438,17 +440,15 @@ public class TileEntityVolcano extends TileEntity
 			
 		}
 		
-		public static NBTTagCompound writeToNBT(NBTTagCompound cmpnd,String tag ,PlumeParticle p){
+		public void writeToNBT(NBTTagCompound cmpnd,String tag){
 
-			cmpnd.setDouble(tag+"x",p.x);
-			cmpnd.setDouble(tag+"y",p.y);
-			cmpnd.setDouble(tag+"z",p.z);
-			cmpnd.setDouble(tag+"vx",p.vx);
-			cmpnd.setDouble(tag+"vy",p.vy);
-			cmpnd.setDouble(tag+"vz",p.vz);
-			cmpnd.setDouble(tag+"dvy",p.dvy);
-
-			return cmpnd;
+			cmpnd.setDouble(tag+"x",this.x);
+			cmpnd.setDouble(tag+"y",this.y);
+			cmpnd.setDouble(tag+"z",this.z);
+			cmpnd.setDouble(tag+"vx",this.vx);
+			cmpnd.setDouble(tag+"vy",this.vy);
+			cmpnd.setDouble(tag+"vz",this.vz);
+			cmpnd.setDouble(tag+"dvy",this.dvy);
 		}
 		
 		}

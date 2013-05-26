@@ -7,7 +7,7 @@ import thutconcrete.client.BlockRenderHandler;
 import thutconcrete.common.ConcreteCore;
 import thutconcrete.common.corehandlers.TSaveHandler;
 import thutconcrete.common.items.ItemConcreteDust;
-import thutconcrete.common.tileEntities.TileEntityBlock16Fluid;
+import thutconcrete.common.tileentity.TileEntityBlock16Fluid;
 import thutconcrete.common.utils.IMultiPaintableBlock;
 import thutconcrete.common.utils.ISaveable;
 
@@ -45,6 +45,7 @@ public class BlockConcrete extends Block16Fluid implements ITileEntityProvider//
 		setUnlocalizedName("concrete");
 		this.rate = 10;
 		this.instance = this;
+		this.setStepSound(soundStoneFootstep);
 		setData();
 	}
 	
@@ -93,7 +94,7 @@ public class BlockConcrete extends Block16Fluid implements ITileEntityProvider//
     {
     	int meta = par1World.getBlockMetadata(par2, par3, par4);
     	
-        int l = par1World.getBlockMetadata(par2, par3, par4) & 15;
+        int l = 15-par1World.getBlockMetadata(par2, par3, par4);
         float f = 0.0625F;
         return AxisAlignedBB.getAABBPool().getAABB((double)par2 + this.minX, (double)par3 + this.minY, (double)par4 + this.minZ,
         								(double)par2 + this.maxX, (double)((float)par3 + (float)l * f), (double)par4 + this.maxZ);
@@ -116,18 +117,18 @@ public class BlockConcrete extends Block16Fluid implements ITileEntityProvider//
 	}
 	
 	protected void setResistanceByMeta(int meta){
-		int j = meta & 15;
+		int j = 15-meta;
         float f = (float)((1 + j)) / 16.0F;
         this.setResistance(f*resistance);
         this.setHardness(f*hardness);
 	}
 	protected float getBlastResistanceByMeta(int meta){
-		int j = meta & 15;
+		int j = 15-meta;
         float f = (float)((1 + j)) / 16.0F;
         return (f*resistance);
 	}
 	protected float getHardnessByMeta(int meta){
-		int j = meta & 15;
+		int j = 15-meta;
         float f = (float)((1 + j)) / 16.0F;
         return (f*hardness);
 	}
@@ -154,7 +155,7 @@ public class BlockConcrete extends Block16Fluid implements ITileEntityProvider//
 	    
 	    public int quantityDropped(int meta, int fortune, Random random)
 	    {
-	        return (int) ((meta+1)*random.nextDouble());
+	        return (int) ((16-meta)*random.nextDouble());
 	    }
 
 		 public TileEntity createNewTileEntity(World world)

@@ -8,7 +8,7 @@ import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
 
 import thutconcrete.common.ConcreteCore;
-import thutconcrete.common.tileEntities.TileEntityVolcano;
+import thutconcrete.common.tileentity.TileEntityVolcano;
 import thutconcrete.common.utils.ExplosionCustom;
 import net.minecraft.block.Block;
 import net.minecraft.block.ITileEntityProvider;
@@ -49,7 +49,7 @@ public class BlockVolcano extends Block implements ITileEntityProvider
 	@SideOnly(Side.CLIENT)
     public void registerIcons(IconRegister par1IconRegister)
     {
-        this.blockIcon = par1IconRegister.registerIcon("thutconcrete:lava");
+        this.blockIcon = par1IconRegister.registerIcon("bedrock");
     }
 	
 	
