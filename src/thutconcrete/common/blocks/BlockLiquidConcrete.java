@@ -42,7 +42,7 @@ import net.minecraftforge.liquids.ILiquid;
 public class BlockLiquidConcrete extends Block16Fluid implements IBlockLiquid, ITileEntityProvider, ISoldifiable
 {
 
-	public static Block instance;
+	public static BlockLiquidConcrete instance;
 	public static int hardenRate = 5;
 	static Material wetConcrete = (new WetConcrete(MapColor.stoneColor));
 	Integer[][] data;
@@ -176,14 +176,13 @@ public class BlockLiquidConcrete extends Block16Fluid implements IBlockLiquid, I
 	    {
 		 TileEntityBlock16Fluid te = (TileEntityBlock16Fluid) par1IBlockAccess.getBlockTileEntity(x, y, z);
 		 return this.iconArray[te.metaArray[par5&15]&15];
-		 	
 	    }
-	 
 
 		@Override
 		public int stillLiquidId() {
 			return BlockLiquidConcrete.instance.blockID;
 		}
+		
 		@Override
 		public boolean isMetaSensitive() {
 			return false;
@@ -193,7 +192,6 @@ public class BlockLiquidConcrete extends Block16Fluid implements IBlockLiquid, I
 			return 0;
 		}
 		
-	    
 		 public TileEntity createNewTileEntity(World world)
 		 {
 		    return new TileEntityBlock16Fluid();

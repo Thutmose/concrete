@@ -19,8 +19,9 @@ public class Items
 	public static List<Item> itemList = ItemHandler.itemList;
 	
 	public static ItemStack[] brushes = ItemHandler.brushes;
-	
+
 	public static ItemStack liquidConcreteStack = new ItemStack(BlockLiquidConcrete.instance,8);
+	public static ItemStack singleLiquidConcreteStack = new ItemStack(BlockLiquidConcrete.instance,1);
 	public static ItemStack limeStack = new ItemStack(items[2]);
 	public static ItemStack trassStack = new ItemStack(items[4]);
 	public static ItemStack dustStack = new ItemStack(items[1]);
@@ -50,9 +51,9 @@ public class Items
 	public static Item grinder = items[0];
 
 	
-	public static LiquidStack lava0 = new LiquidStack(BlockLava.getInstance(0),1);
-	public static LiquidStack lava1 = new LiquidStack(BlockLava.getInstance(1),1);
-	public static LiquidStack lava2 = new LiquidStack(BlockLava.getInstance(2),1);
+	public static LiquidStack lava0Full = new LiquidStack(BlockLava.getInstance(0),1000);
+	public static LiquidStack lava1Full = new LiquidStack(BlockLava.getInstance(1),1000);
+	public static LiquidStack lava2Full = new LiquidStack(BlockLava.getInstance(2),1000);
 	
-	public static LiquidStack concrete = new LiquidStack(BlockLiquidConcrete.instance,1);
+	public static LiquidStack concrete = new LiquidStack(BlockLiquidConcrete.instance,1000);
 }

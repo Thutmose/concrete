@@ -37,10 +37,11 @@ public class BlockSolidLava extends Block16Fluid
 	
 	public BlockSolidLava instance;
 	public int typeid;
-	public static int resistance = 10;
+	public static int resistance = 5;
 	public static float hardness = 1;
 	public int totalProb = 0;
 	Integer[][] data;
+	ArrayList<ItemStack> drops = new ArrayList<ItemStack>();
 	
 	public BlockSolidLava(int par1, int par2) {
 		super(par1,Material.rock);
@@ -114,35 +115,72 @@ public class BlockSolidLava extends Block16Fluid
 	@Override
 	public void updateTick(World worldObj, int x, int y, int z, Random par5Random)
 	{
-		if(!worldObj.isRemote&&safe.safeGetMeta(worldObj,x, y, z)==0)
-		{
-			{
-				for(Integer i : BlockSolidLava.getInstance(typeid).turnto)
-				{
-					int id = i & 4095;
-					int probability = i>>12;
-					int meta = i>>22;
-					if(par5Random.nextDouble()<((double)probability)/((double)BlockSolidLava.getInstance(typeid).totalProb))
-					{
-						safe.safeSet(worldObj, x, y, z, id, meta);
-						break;
-					}
-				}
-			}
-		}
 	}
 	
-	@Override
-    public void onBlockPlacedBy(World worldObj,int x,int y,int z,EntityLiving entity, ItemStack item){
-		worldObj.setBlockMetadataWithNotify(x, y, z, 15, 3);
-		if(data==null){
-			setData();
-			}
-    	super.onBlockPlacedBy(worldObj, x, y, z, entity, item);
+    /**
+     * This returns a complete list of items dropped from this block.
+     *
+     * @param world The current world
+     * @param x X Position
+     * @param y Y Position
+     * @param z Z Position
+     * @param metadata Current metadata
+     * @param fortune Breakers fortune level
+     * @return A ArrayList containing all items this block drops
+     */
+    public ArrayList<ItemStack> getBlockDropped(World worldObj, int x, int y, int z, int metadata, int fortune)
+    {
+        ArrayList<ItemStack> ret = new ArrayList<ItemStack>();
+        
+        return ret;
     }
+    
+    private void initDrops()
+    {
+        for(Integer i : BlockSolidLava.getInstance(typeid).turnto)
+		{
+			int id = i & 4095;
+			int probability = i>>12;
+			int meta = i>>22;
+			for(int j = 0; j<probability; j++)
+			{
+				drops.add(new ItemStack(Block.blocksList[id], 1, meta));
+			}
+		}
+    }
+    
+    /**
+     * Drops the block items with a specified chance of dropping the specified items
+     */
+    public void dropBlockAsItemWithChance(World worldObj, int x, int y, int z, int thismeta, float par6, int par7)
+    {
+        if (!worldObj.isRemote)
+        {
+            ArrayList<ItemStack> items = new ArrayList<ItemStack>();
+            
+            if(drops.size()==0)
+            {
+            	initDrops();
+            }
+            
+            if(thismeta==0)
+            {
+            	items = drops;
+            }
+            else
+            {
+            	items.add(new ItemStack(Block.blocksList[blockID], 16-thismeta, 0));
+            }
+            
+            int i = (new Random()).nextInt(items.size());
 
-
-	
+            ItemStack item = items.get(i);
+            
+            this.dropBlockAsItem_do(worldObj, x, y, z, item);
+            
+        }
+    }
+    
 	public int tickRate(World worldObj)
 	{
 		return 10;
@@ -178,13 +216,12 @@ public class BlockSolidLava extends Block16Fluid
 	    {
 	           return this.blockIcon;
 	    }
-	
-	   @Override
-	    public int quantityDropped(int meta, int fortune, Random random)
-	    {
-	        return 16-meta;
-	    }
 	    
+	    public void onBlockPlacedBy(World worldObj,int x,int y,int z,EntityLiving entity, ItemStack item)
+	    {
+	    	worldObj.setBlockMetadataWithNotify(x, y, z, 15, 3);
+	    	merge(worldObj, x, y, z, x, y-1, z);
+	    }
 	   
 	    public boolean checkSides(World worldObj, int x, int y, int z){
 	    	int[][]sides = {{1,0,0},{-1,0,0},{0,0,1},{0,0,-1},{0,1,0},{0,-1,0}};

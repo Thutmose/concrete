@@ -28,6 +28,7 @@ public class ThreadSafeWorldOperations extends Ticker
 {
 	// stuff needed
 	private Random	r = new Random();
+	LinearAlgebra vec;
 	
 	// actually used
 	private double x;
@@ -162,7 +163,7 @@ public class ThreadSafeWorldOperations extends Ticker
 	}
 	public double[] getWind(World worldObj, double x, double z){
 		double[] tempWind = new double[] {0,0};
-		double windFactor = 0.001;
+		double windFactor = 1;
 		double frequencyFactor = 0.00015;
 		tempWind[0] = windFactor*(Math.sin(frequencyFactor*((x/16)+worldObj.getTotalWorldTime()))+
 				Math.sin(frequencyFactor*((x/16)+worldObj.getTotalWorldTime())*frequencyFactor*((x/16)+worldObj.getTotalWorldTime()))+
@@ -175,7 +176,7 @@ public class ThreadSafeWorldOperations extends Ticker
 				Math.sin(frequencyFactor*((z/16)+worldObj.getTotalWorldTime()))*Math.cos(frequencyFactor*((z/16)+worldObj.getTotalWorldTime()))+
 				Math.sin(frequencyFactor*((z/16)+worldObj.getTotalWorldTime()))*Math.cos(frequencyFactor*((z/16)+worldObj.getTotalWorldTime()))*
 				Math.sin(frequencyFactor*((z/16)+worldObj.getTotalWorldTime()))*Math.cos(frequencyFactor*((z/16)+worldObj.getTotalWorldTime())));
-		return tempWind;
+		return vec.vectorNormalize(tempWind);
 	}
 	
 	
@@ -236,7 +237,9 @@ public class ThreadSafeWorldOperations extends Ticker
     }
     
 	@Override
-	public void onUpdate() {}
+	public void onUpdate() 
+	{
+	}
 
 	
 	

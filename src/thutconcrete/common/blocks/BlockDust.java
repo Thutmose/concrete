@@ -41,6 +41,7 @@ public class BlockDust extends Block16Fluid
 	public static Block instance;
 	static Integer[][] data;
 	private static int thisID;
+	long time = 0;
 	
 	@SideOnly(Side.CLIENT)
 	private Icon iconFloatingDust;
@@ -53,19 +54,10 @@ public class BlockDust extends Block16Fluid
 		setResistance(0.0f);
 		instance=this;
 		this.thisID = par1;
+		this.dust = true;
 		if(data==null){
 			setData();
 		}
-    }
-    
-    /**
-     * Called whenever the block is added into the world. Args: world, x, y, z
-     */
-    @Override
-    public void onBlockAdded(World worldObj, int x, int y, int z) {
-    	if(data==null){
-			setData();
-			}
     }
   
 	public void setData(){
@@ -90,11 +82,11 @@ public class BlockDust extends Block16Fluid
 			};
 			fluid16Blocks.put(this.thisID,data);
 	}
-
-	
-    public void onEntityCollidedWithBlock(World worldObj,int x,int y, int z, Entity entity)
+    
+    @Override
+    public void onBlockAdded(World worldObj, int x, int y, int z)
     {
-    	doFluidTick(worldObj, x, y, z);
+		worldObj.scheduleBlockUpdate(x, y, z, worldObj.getBlockId(x, y, z), 5);
     }
     
     ///////////////////////////////////////////////////////////////////Block Ticking Stuff Above Here///////////////////////////////////////
@@ -161,6 +153,22 @@ public class BlockDust extends Block16Fluid
         }
     }
     
+	@Override
+	public void updateTick(World worldObj, int x, int y, int z, Random par5Random)
+	{ 
+		doFluidTick(worldObj, x, y, z);
+		
+		if(Math.random()>0.9999&&worldObj.getBlockMetadata(x, y, z)==0)
+		{
+			int idUp = worldObj.getBlockId(x, y+1, z);
+			int metaUp = worldObj.getBlockMetadata(x, y+1, z);
+			if(idUp==thisID&&metaUp==0)
+			{
+				worldObj.setBlock(x, y, z, BlockWorldGen.instance.blockID, 1, 2);
+			}
+		}
+    }
+    
     ////////////////////////////////////////////Plant stuff////////////////////////////////////////////////////////////////
     
 
@@ -186,28 +194,6 @@ public class BlockDust extends Block16Fluid
     public boolean canSustainPlant(World world, int x, int y, int z, ForgeDirection direction, IPlantable plant)
     {
        return world.getBlockMetadata(x, y, z)==0;
-    }
-
-    /**
-     * Called when a plant grows on this block, only implemented for saplings using the WorldGen*Trees classes right now.
-     * Modder may implement this for custom plants.
-     * This does not use ForgeDirection, because large/huge trees can be located in non-representable direction,
-     * so the source location is specified.
-     * Currently this just changes the block to dirt if it was grass.
-     *
-     * Note: This happens DURING the generation, the generation may not be complete when this is called.
-     *
-     * @param world Current world
-     * @param x Soil X
-     * @param y Soil Y
-     * @param z Soil Z
-     * @param sourceX Plant growth location X
-     * @param sourceY Plant growth location Y
-     * @param sourceZ Plant growth location Z
-     */
-    public void onPlantGrow(World world, int x, int y, int z, int sourceX, int sourceY, int sourceZ)
-    {
-    	
     }
 
     /**

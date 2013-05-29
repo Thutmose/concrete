@@ -2,10 +2,12 @@ package thutconcrete.common.corehandlers;
 
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
+import thutconcrete.common.blocks.BlockConcrete;
 import thutconcrete.common.blocks.BlockLava;
 import thutconcrete.common.blocks.BlockLiquidConcrete;
 import thutconcrete.common.blocks.BlockWater;
 import thutconcrete.common.items.ItemBucketConcrete;
+import thutconcrete.common.items.Items;
 import net.minecraft.block.Block;
 import net.minecraft.client.Minecraft;
 import net.minecraft.item.Item;
@@ -16,7 +18,11 @@ import net.minecraftforge.client.event.TextureStitchEvent;
 import net.minecraftforge.event.Event.Result;
 import net.minecraftforge.event.ForgeSubscribe;
 import net.minecraftforge.event.entity.player.FillBucketEvent;
+import net.minecraftforge.liquids.IBlockLiquid;
+import net.minecraftforge.liquids.LiquidContainerData;
+import net.minecraftforge.liquids.LiquidContainerRegistry;
 import net.minecraftforge.liquids.LiquidDictionary;
+import net.minecraftforge.liquids.LiquidStack;
 
 public class LiquidHandler {
 
@@ -72,8 +78,37 @@ public class LiquidHandler {
 		LiquidDictionary.getCanonicalLiquid("mafic lava").setRenderingIcon(BlockHandler.blocks[6].getBlockTextureFromSide(1)).setTextureSheet("/terrain.png");
 		LiquidDictionary.getCanonicalLiquid("intermediate lava").setRenderingIcon(BlockHandler.blocks[8].getBlockTextureFromSide(1)).setTextureSheet("/terrain.png");
 		LiquidDictionary.getCanonicalLiquid("felsic lava").setRenderingIcon(BlockHandler.blocks[10].getBlockTextureFromSide(1)).setTextureSheet("/terrain.png");
-		LiquidDictionary.getCanonicalLiquid("concrete").setRenderingIcon(BlockHandler.blocks[8].getIcon(0,0)).setTextureSheet("/terrain.png");
+		LiquidDictionary.getCanonicalLiquid("concrete").setRenderingIcon(BlockHandler.blocks[5].getIcon(0,0)).setTextureSheet("/terrain.png");
+		
+		
+		
+		
+		
+		
+		
 
+	}
+	
+	public void registerLiquids()
+	{
+		LiquidDictionary.getOrCreateLiquid("mafic lava", Items.lava0Full);
+		LiquidDictionary.getOrCreateLiquid("intermediate lava", Items.lava1Full);
+		LiquidDictionary.getOrCreateLiquid("felsic lava", Items.lava2Full);
+		LiquidDictionary.getOrCreateLiquid("concrete", Items.concrete);
+		
+
+		//*
+		LiquidContainerRegistry.registerLiquid(new LiquidContainerData(LiquidDictionary.getLiquid("mafic lava", LiquidContainerRegistry.BUCKET_VOLUME), new ItemStack(
+				Item.bucketLava), new ItemStack(Item.bucketEmpty)));
+		LiquidContainerRegistry.registerLiquid(new LiquidContainerData(LiquidDictionary.getLiquid("intermediate lava", LiquidContainerRegistry.BUCKET_VOLUME),
+				new ItemStack(Item.bucketLava), new ItemStack(Item.bucketEmpty)));
+		LiquidContainerRegistry.registerLiquid(new LiquidContainerData(LiquidDictionary.getLiquid("felsic lava", LiquidContainerRegistry.BUCKET_VOLUME),
+				new ItemStack(Item.bucketLava), new ItemStack(Item.bucketEmpty)));
+		LiquidContainerRegistry.registerLiquid(new LiquidContainerData(LiquidDictionary.getLiquid("concrete", LiquidContainerRegistry.BUCKET_VOLUME),
+				Items.concreteBucketStack.copy(), new ItemStack(Item.bucketEmpty)));
+		//*/
+	
+		
 	}
 
 }

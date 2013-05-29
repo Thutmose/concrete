@@ -145,7 +145,8 @@ public class ConcreteCore {
 		BiomeGenBase theBiome = new BiomeGenChalk(252);
 		GameRegistry.addBiome(theBiome);
 		BiomeDictionary.registerBiomeType(theBiome, Type.PLAINS);
-	
+
+		liquidHndlr.registerLiquids();
 		initOreMap();
 	//*/	
 	}
@@ -213,7 +214,7 @@ public class ConcreteCore {
 	public static void addVolcano(int x, int z){
 		Random rX = new Random(x);
 		Random rZ = new Random(z);
-		Byte Height = (byte) (rX.nextInt(45)+rZ.nextInt(45));
+		Byte Height = (byte) (rX.nextInt(30)+rZ.nextInt(30));
 		volcanoMap.put(Integer.toString(x)+Integer.toString(z), Height);
 	}
 	
@@ -318,12 +319,6 @@ public class ConcreteCore {
 			
 		}
 		
-		double num = 1-config.CoolRate;
-		
-		for(int i = 0; i<3; i++)
-		{
-			BlockSolidLava.getInstance(i).totalProb /= num;
-		}
 	}
 
 	public static String oreDictName(int id, int meta)

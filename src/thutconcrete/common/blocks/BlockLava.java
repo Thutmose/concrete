@@ -43,6 +43,8 @@ public class BlockLava extends Block16Fluid implements ISoldifiable, IBlockLiqui
 	public int typeid;
 	static Material wetConcrete = (new Material(MapColor.stoneColor));
 	Integer[][] data;
+	public static int HardenRate;
+	private long time = 0;
 
 	@SideOnly(Side.CLIENT)
 	private Icon iconFloating;
@@ -52,11 +54,29 @@ public class BlockLava extends Block16Fluid implements ISoldifiable, IBlockLiqui
 		typeid = x;
 		this.setLightValue(1);
 		setUnlocalizedName("Lava" + typeid);
-		this.setResistance((float) 50.0);
+		this.setResistance((float) 5.0);
 		this.rate = 0.9;
 		this.solidifiable = true;
 		this.instances[typeid] = this;
 	}
+	
+	
+	
+	
+    /**
+     * Returns whether this block is collideable based on the arguments passed in Args: blockMetaData, unknownFlag
+     */
+    public boolean canCollideCheck(int par1, boolean par2)
+    {
+        return false;
+    }
+	
+	
+	
+	
+	
+	
+	
     /**
      * Returns a bounding box from the pool of bounding boxes (this means this box can change after the pool has been
      * cleared to be reused)
@@ -64,15 +84,6 @@ public class BlockLava extends Block16Fluid implements ISoldifiable, IBlockLiqui
     public AxisAlignedBB getCollisionBoundingBoxFromPool(World par1World, int par2, int par3, int par4)
     {
         return null;
-    }
-    
-	@Override
-    public void onBlockPlacedBy(World worldObj,int x,int y,int z,EntityLiving entity, ItemStack item){
-		worldObj.setBlockMetadataWithNotify(x, y, z, 0, 3);
-		if(data==null){
-			setData();
-			}
-    	super.onBlockPlacedBy(worldObj, x, y, z, entity, item);
     }
 
 	public static BlockLava getInstance(int colorid)
@@ -105,9 +116,9 @@ public class BlockLava extends Block16Fluid implements ISoldifiable, IBlockLiqui
 		
 		combinationList.add(BlockLiquidConcrete.instance.blockID+4096*BlockLava.getInstance(typeid).blockID);
 		
-		int rate = 10;
+		int rate = 10*HardenRate*(1+typeid);
 		
-		desiccantList.add(0+rate*4096);
+		desiccantList.add(0+4096);
 		desiccantList.add(Block.dirt.blockID+rate*4096);
 		desiccantList.add(Block.grass.blockID+rate*4096);
 		desiccantList.add(Block.stone.blockID+rate*4096);
@@ -126,23 +137,23 @@ public class BlockLava extends Block16Fluid implements ISoldifiable, IBlockLiqui
 		if(typeid == 0)
 		{
 			differential = 1;
-			viscosity = 1;
+			viscosity = 0;
+			fluidity = 2;
 		}
 		else if(typeid==1)
 		{
 			differential = 2;
-			viscosity = 3;
+			viscosity = 2;
 		}
 		else
 		{
-			differential = 1;
-			fluidity = 2;
-			viscosity = 8;
+			differential = 2;
+			viscosity = 5;
 		}
 		configList.add(viscosity);
 		configList.add(BlockSolidLava.getInstance(typeid).blockID); //Add harden to
 		configList.add(differential); //Add Differential
-		configList.add(typeid==0?4:typeid==1?10:0); //Add random Factor
+		configList.add(typeid==0?2:10); //Add random Factor
 		configList.add(fluidity); //Make this a fluid
 		configList.add(0);//no colour
 
@@ -156,25 +167,52 @@ public class BlockLava extends Block16Fluid implements ISoldifiable, IBlockLiqui
 	}
 	
    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    
-	@Override
-    public void onBlockAdded(World worldObj, int x, int y, int z) 
-	{
-		tickSides(worldObj, x, y, z, 5);
-	}
 	
 	@Override
 	public void updateTick(World worldObj, int x, int y, int z, Random par5Random){
 
-		tickSides(worldObj, x, y, z, 5);
-		
 		if(data==null){
 			setData();
 		}
 		
 		doFluidTick(worldObj, x, y, z);
+		doHardenTick(worldObj, x, y, z);
+		
+		if(time%6==0)
 		doFireTick(worldObj, x, y, z, par5Random);
 
+		tickSides(worldObj, x, y, z, 5);
+		
+		time++;
+		
+	}
+	
+	@Override
+	public void doHardenTick(World worldObj, int x, int y, int z)
+	{
+		
+		if(y>40)
+		{
+			if(worldObj.getBlockId(x, y-1, z)!=this.blockID)
+			{
+				super.doHardenTick(worldObj, x, y, z);
+			}
+			return;
+		}
+		int metaFactor = (15-worldObj.getBlockMetadata(x, y, z));
+		
+		if(time%(1+32*metaFactor)==0)
+		{
+			if(worldObj.getBlockId(x, y-1, z)!=this.blockID)
+			{
+				super.doHardenTick(worldObj, x, y, z);
+			}
+
+			time++;
+		}
+		
+		
+		
 	}
 	
 	@SideOnly(Side.CLIENT)
@@ -440,7 +478,6 @@ public class BlockLava extends Block16Fluid implements ISoldifiable, IBlockLiqui
 		return null;
 	}
     
-	 
 	}
 
 

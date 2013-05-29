@@ -475,6 +475,7 @@ public class LinearAlgebra {
 	  
 	  public static boolean isVisibleEntityFromLocation(World worldObj, Entity target, double[] location){
 		  boolean[] visible = new boolean[27];
+		  if(target==null){return false;}
 		  AxisAlignedBB aabb = target.getBoundingBox();
 		  boolean ret = false;
 		  if(target.isDead){return false;}
@@ -530,20 +531,77 @@ public class LinearAlgebra {
 		  return visible;
 	  }
 	  
-	  public static double sqrt(double number){
-			  return Math.sqrt(number);
-	  }
-	  
-	  
-	  
     public static boolean isVisibleEntityFromEntity(Entity looker, Entity target, double rMax)
     {
     	double[] location = {looker.posX, looker.posY, looker.posZ};
     	return isVisibleEntityFromLocation(looker.worldObj, target, location);
     }
   
+
+    //TODO make this not continue checking each pixel if the block or aabb was null.
+	public static List<Entity> isEntityOnLine(double range, double[] direction, double[] source, World worldObj)
+	{
+		int n = 0;
+		
+		double xprev = source[0], yprev = source[1], zprev = source[2];
+		boolean notNull = true;
+		for(double i=0;i<range;i+=0.0625){
+			  double  xtest = (source[0]+i*direction[0]),
+					  ytest = (source[1]+i*direction[1]),
+					  ztest = (source[2]+i*direction[2]);
+			  
+			  {
+				  int clear = isPointclear(xtest, ytest, ztest, worldObj);
+				  boolean check = clear !=0;
+				  
+				  if(!check){
+					  break;
+				  }
+	
+				  worldObj.spawnParticle("flame", xtest, ytest, ztest, 0.0D, 0.0D, 0.0D);
+				  List<Entity> entities = worldObj.getEntitiesWithinAABBExcludingEntity((Entity)null, AxisAlignedBB.getBoundingBox(xtest-0.0625, ytest-0.0625, ztest-0.0625,
+						   xtest+0.0625, ytest+0.0625, ztest+0.0625));
+				  
+				  if(worldObj.getEntitiesWithinAABBExcludingEntity((Entity)null, AxisAlignedBB.getBoundingBox(xtest-0.0625, ytest-0.0625, ztest-0.0625,
+							   xtest+0.0625, ytest+0.0625, ztest+0.0625)).size() !=0)
+				  {
+					  return entities;
+				  }
+				  n++;
+				  
+			  
+			  }
+		  }
+		
+		return null;
+	}
 	  
-	  
-	  
+	public static int isPointclear(double x, double y, double z, World worldObj)
+	{
+		int x0 = (x>0?(int)x:(int)x-1), y0 = (y>0?(int)y:(int)y-1), z0 = (z>0?(int)z:(int)z-1);
+		double x1 = x-x0, y1 = y-y0, z1 = z-z0;
+		
+		Block block = Block.blocksList[worldObj.getBlockId(x0, y0, z0)];
+		
+		if(block==null)
+			return -1;
+	
+		AxisAlignedBB aabb = block.getCollisionBoundingBoxFromPool(worldObj, x0, y0, z0);
+		
+		if(aabb==null)
+			return -1;
+		
+		System.out.println("not null, checking");
+		
+		if(y<=aabb.maxY&&y>=aabb.minY)
+			return 0;
+		if(z<=aabb.maxZ&&z>=aabb.minZ)
+			return 0;
+		if(x<=aabb.maxX&&x>=aabb.minX)
+				
+			return 0;
+		
+		return 1;
+	}
 	  
 }

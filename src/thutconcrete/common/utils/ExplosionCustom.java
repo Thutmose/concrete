@@ -24,6 +24,7 @@ public class ExplosionCustom
 	public static double sqrt2 = Math.sqrt(2.0D);
 	static LinearAlgebra vec;
 	public static final int MAX_RADIUS = 128;
+	public static final int DUSTID = BlockDust.instance.blockID;
 	
 	  public static void doExplosion(World worldObj,double x0, double y0, double z0, double r0, boolean vapourize)
 	  {
@@ -575,7 +576,8 @@ public class ExplosionCustom
 	            blastResist = world.blastResistance;
 	              
             if(world.ID==Block.grass.blockID) blastResist/=2;
-
+            if(world.ID==Block.glass.blockID||world.ID==Block.thinGlass.blockID) blastResist = 0f;
+            
             if(blastResist<=1) blastResist/=10;
             
             if (vapourize&&world.isLiquid(worldObj,(int)(x + x0), (int)(z1 + z0), (int)(y + y0))&&(vectMag < r0/5)){ 
@@ -583,7 +585,7 @@ public class ExplosionCustom
             }
             
 	              inRange = true;
-	              if ((id == 0) || (blastResist > r0 * scaleFactor / (vectMagSq))) { 
+	              if ((id == 0||id==DUSTID) || (blastResist > r0 * scaleFactor / (vectMagSq))) { 
 	            	  
 	            	  inRange = false;
 	            	  if (map.contains(index) &&( map.get(index) <= vectMagSq)) {  
@@ -634,7 +636,7 @@ public class ExplosionCustom
 	                  if(world.safeLookUp(worldObj,xtest + x0, ztest + z0, ytest + y0)){
 	                  idTest = world.ID;
 	                  metaTest = world.meta;
-	                  if (idTest != 0) 
+	                  if (!(idTest == 0||idTest==DUSTID)) 
 	                  {
 	                	  { 
 		                    resist = world.blastResistance;
@@ -666,9 +668,7 @@ public class ExplosionCustom
 		                  world.safeSet(worldObj,xtest+x0, ztest+z0, ytest+y0, 0, 0);
 	                      resists.put(index, (int) (resist*100));
 		                  l++;
-		                  if(idTest == BlockDust.instance.blockID){
-		                	  n+=metaTest+1;
-		                  }else if(resist>1){
+		                  if(resist>1){
 		                	  n++;
 		                  }
 		                  
@@ -685,9 +685,7 @@ public class ExplosionCustom
 	            	  index =  x + xVal + (y + yMin) * (yVal) +  (z1 + zMin) * zVal;
                       resists.put(index, (int) (resist*100));
 	            	  l++;
-	            	  if(id == BlockDust.instance.blockID){
-	                	  n+=meta+1;
-	                  }else if(blastResist>1){
+	            	  if(blastResist>1){
 	                	  n++;
 	                  }
 	              }
