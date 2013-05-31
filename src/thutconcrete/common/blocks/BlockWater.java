@@ -32,7 +32,6 @@ public class BlockWater extends Block16Fluid implements ILiquid
 		this.setTickRandomly(true);
 		setData();
 		instance = this;
-	//	this.setLightOpacity(0);
 		this.wanderer = true;
 	}
 	

@@ -81,6 +81,7 @@ public class RecipeHandler
 		OreDictionary.registerOre("fertilizer", items[1]);
 		OreDictionary.registerOre("fertilizer", items[4]);
 		OreDictionary.registerOre("dustCement", items[5]);
+		OreDictionary.registerOre("rebar", new ItemStack(BlockRebar.instance,1,0));
 		OreDictionary.registerOre("oreChalk",new ItemStack(BlockWorldGen.instance,1,0));
 		OreDictionary.registerOre("oreTrass",new ItemStack(BlockWorldGen.instance,1,1));
 		OreDictionary.registerOre("oreLimestone",new ItemStack(BlockWorldGen.instance,1,2));
@@ -106,6 +107,19 @@ public class RecipeHandler
 		GameRegistry.addShapelessRecipe(Items.carbonateStack, Items.boneMealStack);
 		
 		GameRegistry.addShapelessRecipe(Items.concreteBucketStack, Items.singleLiquidConcreteStack, new ItemStack(Item.bucketEmpty));
+		
+		
+		for (ItemStack item : OreDictionary.getOres("rebar")) 
+		{
+			GameRegistry.addShapelessRecipe(new ItemStack(BlockRebar.instance,1,0), item);
+		}
+		for(Item i : Item.itemsList)
+		{
+			if(i!=null&&i.itemID!=Items.rebarStack.itemID&&i.getUnlocalizedName().toLowerCase().contains("rebar"))
+			{
+				GameRegistry.addShapelessRecipe(new ItemStack(BlockRebar.instance,1,0), new ItemStack(i,1,0));
+			}
+		}
 		
 		for(int i = 0; i<16; i++)
 		{

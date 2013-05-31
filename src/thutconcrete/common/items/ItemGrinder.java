@@ -53,9 +53,9 @@ public class ItemGrinder extends Item {
         			blockid = par3World.getBlockId(x + locx, y, z + locz);
         			if(Block.blocksList[blockid] instanceof Block16Fluid)
         			{
-        				if(par3World.getBlockMetadata(x + locx, y, z + locz) < minmeta)
+        				if(15 - par3World.getBlockMetadata(x + locx, y, z + locz) < minmeta)
         				{
-        					minmeta = par3World.getBlockMetadata(x + locx, y, z + locz);
+        					minmeta = 15 - par3World.getBlockMetadata(x + locx, y, z + locz);
         				}
         			}
         		}
@@ -78,12 +78,12 @@ public class ItemGrinder extends Item {
             			blockid = par3World.getBlockId(x + locx, y, z + locz);
             			if(Block.blocksList[blockid] instanceof Block16Fluid)
             			{
-            				if(par3World.getBlockMetadata(x + locx, y, z + locz) > maxmeta && par3World.getBlockMetadata(x + locx, y, z + locz) != 15)
+            				if((15 - par3World.getBlockMetadata(x + locx, y, z + locz)) > maxmeta && (15 - par3World.getBlockMetadata(x + locx, y, z + locz)) != 15)
             				{
             					found = true;
             					modifyx = x + locx;
             					modifyz = z + locz;
-            					maxmeta = par3World.getBlockMetadata(x + locx, y, z + locz);
+            					maxmeta = 15 - par3World.getBlockMetadata(x + locx, y, z + locz);
             				}
             			}
             		}
@@ -91,9 +91,9 @@ public class ItemGrinder extends Item {
             	
             	if(found)
             	{
-	            	if(MAX_USES - par1ItemStack.getItemDamage() >= maxmeta - minmeta)
+	            	if(MAX_USES - (15 - par1ItemStack.getItemDamage()) >= maxmeta - minmeta)
 	            	{
-	            		par3World.setBlockMetadataWithNotify(modifyx, y, modifyz, minmeta, 3);
+	            		par3World.setBlockMetadataWithNotify(modifyx, y, modifyz, 15 - minmeta, 3);
 	            		par1ItemStack.damageItem(maxmeta - minmeta, par2EntityPlayer);
 	            		
 	            		blockid = par3World.getBlockId(modifyx, y, modifyz);
@@ -105,14 +105,14 @@ public class ItemGrinder extends Item {
 	            	}
 	            	else
 	            	{
-	            		par3World.setBlockMetadataWithNotify(modifyx, y, modifyz, MAX_USES - par1ItemStack.getItemDamage(), 3);
-	            		par1ItemStack.damageItem(MAX_USES - par1ItemStack.getItemDamage() + 1, par2EntityPlayer);
+	            		par3World.setBlockMetadataWithNotify(modifyx, y, modifyz, MAX_USES - (15 - par1ItemStack.getItemDamage()), 3);
+	            		par1ItemStack.damageItem(MAX_USES - (15 - par1ItemStack.getItemDamage()) + 1, par2EntityPlayer);
 	            		
 	            		blockid = par3World.getBlockId(modifyx, y, modifyz);
 	            		
 	            		if(Block.blocksList[blockid] instanceof BlockConcrete || Block.blocksList[blockid] instanceof BlockREConcrete)
 	            		{
-	            			totalPieces += MAX_USES - par1ItemStack.getItemDamage();
+	            			totalPieces += MAX_USES - (15 - par1ItemStack.getItemDamage());
 	            		}
 	            		
 	            		break;
@@ -139,8 +139,9 @@ public class ItemGrinder extends Item {
         	{
 
             	Random rdusts = new Random();
-            	EntityItem dusts = new EntityItem(par3World, x + hitX, y + hitY, z + hitZ, new ItemStack(dustid, rdusts.nextInt(totalPieces+1), 0));
-            	if(totalPieces>0)
+            	int randnum = rdusts.nextInt(totalPieces+1);
+            	EntityItem dusts = new EntityItem(par3World, x + hitX, y + hitY, z + hitZ, new ItemStack(dustid, randnum, 0));
+            	if(randnum>0)
             	{
             		par3World.spawnEntityInWorld(dusts);
             	}

@@ -62,25 +62,28 @@ public class BlockRebar extends Block implements IRebar
     	if(item!=null)
     	{
 	    	int itemID = item.itemID;
-	    	
-	    	if(Block.blocksList[itemID] instanceof IRebar)
+	    	if(itemID<4095)
 	    	{
-		    	if(placeBlock(world, x, y, z, itemID, item.getItemDamage(), ForgeDirection.getOrientation(side)))
+		    	if(Block.blocksList[itemID] instanceof IRebar)
+		    	{
+			    	if(placeBlock(world, x, y, z, itemID, item.getItemDamage(), ForgeDirection.getOrientation(side)))
+			    	{
+			    		placed = true;
+		    				if(!player.capabilities.isCreativeMode)
+		    					item.splitStack(1);
+			    	}
+		    	}
+		    	if(Block.blocksList[itemID] instanceof BlockLiquidConcrete)
 		    	{
 		    		placed = true;
-	    				if(!player.capabilities.isCreativeMode)
-	    					item.splitStack(1);
+			    	world.setBlock(x, y, z, BlockLiquidREConcrete.instance.blockID,0,3);
+			    	world.scheduleBlockUpdate(x, y, z, BlockLiquidREConcrete.instance.blockID, 5);
+					if(!player.capabilities.isCreativeMode)
+						item.splitStack(1);
+			    	
 		    	}
 	    	}
-	    	if(Block.blocksList[itemID] instanceof BlockLiquidConcrete)
-	    	{
-	    		placed = true;
-		    	world.setBlock(x, y, z, BlockLiquidREConcrete.instance.blockID,0,3);
-		    	world.scheduleBlockUpdate(x, y, z, BlockLiquidREConcrete.instance.blockID, 5);
-				if(!player.capabilities.isCreativeMode)
-					item.splitStack(1);
-		    	
-	    	}
+	    	
     	}
         return placed;
     }

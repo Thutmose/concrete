@@ -80,13 +80,6 @@ public class LiquidHandler {
 		LiquidDictionary.getCanonicalLiquid("felsic lava").setRenderingIcon(BlockHandler.blocks[10].getBlockTextureFromSide(1)).setTextureSheet("/terrain.png");
 		LiquidDictionary.getCanonicalLiquid("concrete").setRenderingIcon(BlockHandler.blocks[5].getIcon(0,0)).setTextureSheet("/terrain.png");
 		
-		
-		
-		
-		
-		
-		
-
 	}
 	
 	public void registerLiquids()

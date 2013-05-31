@@ -39,7 +39,7 @@ public class BlockSolidLava extends Block16Fluid
 	public int typeid;
 	public static int resistance = 5;
 	public static float hardness = 1;
-	public int totalProb = 0;
+	public static double oreProb = 0;
 	Integer[][] data;
 	ArrayList<ItemStack> drops = new ArrayList<ItemStack>();
 	
@@ -53,6 +53,7 @@ public class BlockSolidLava extends Block16Fluid
 		this.setTickRandomly(true);
 		this.setStepSound(soundStoneFootstep);
 		this.placeamount = 1;
+		this.solid = true;
 		setData();
 	}
 
@@ -163,13 +164,17 @@ public class BlockSolidLava extends Block16Fluid
             	initDrops();
             }
             
-            if(thismeta==0)
+            double rand = Math.random();
+            
+            if(thismeta==0&&rand<oreProb)
             {
             	items = drops;
             }
             else
             {
-            	items.add(new ItemStack(Block.blocksList[blockID], 16-thismeta, 0));
+            	int dropAmount = thismeta==0? (int)(Math.random()*(16-thismeta)):16-thismeta;
+            	items.add(new ItemStack(Block.blocksList[blockID], dropAmount, 0));
+            	items.add(new ItemStack(ItemConcreteDust.instance, dropAmount, 0));
             }
             
             int i = (new Random()).nextInt(items.size());

@@ -127,7 +127,7 @@ public class ConcreteCore {
 		
 		GameRegistry.registerWorldGenerator(new TrassWorldGen());
 		GameRegistry.registerWorldGenerator(new VolcanoWorldGen());
-		GameRegistry.registerWorldGenerator(new LimestoneWorldGen());
+	//	GameRegistry.registerWorldGenerator(new LimestoneWorldGen());
 		
 		
 		GameRegistry.registerTileEntity(TileEntityBlock16Fluid.class, "Fluid16BlockTE");
@@ -172,7 +172,6 @@ public class ConcreteCore {
 	public static Map<String, Integer> oreMap0 = new HashMap<String, Integer>();
 	public static Map<String, Integer> oreMap1 = new HashMap<String, Integer>();
 	public static Map<String, Integer> oreMap2 = new HashMap<String, Integer>();
-	public static Map<String, Byte> volcanoMap = new HashMap<String, Byte>();
 	public static List<String> ores = new ArrayList<String>();
 	
 	void populateMap(){
@@ -204,6 +203,11 @@ public class ConcreteCore {
 		
 	}
 	
+	/*/
+	
+	
+	public static Map<String, Byte> volcanoMap = new HashMap<String, Byte>();
+	
 	public static int getVolcano(int x, int z){
 		if(!(volcanoMap.containsKey(Integer.toString(x)+Integer.toString(z)))){
 			addVolcano(x,z);
@@ -217,6 +221,13 @@ public class ConcreteCore {
 		Byte Height = (byte) (rX.nextInt(30)+rZ.nextInt(30));
 		volcanoMap.put(Integer.toString(x)+Integer.toString(z), Height);
 	}
+	
+	
+	
+	
+	//*/
+	
+	
 	
 	public void initOreMap()
 	{
@@ -297,17 +308,14 @@ public class ConcreteCore {
 					name = oreDictName(b.blockID,meta);
 					for(String s:oreMap0.keySet())
 					{
-						if(!ores.contains(s))
+						if(!s.contains("nether")&&(s.equals("quartz")||!ores.contains(s)))
 						if(!BlockSolidLava.getInstance(0).turnto.contains(b.blockID + 4096*ConcreteCore.oreMap0.get(s) + 4096*1024*meta))
 						if(name.toLowerCase().contains(s)&&name.toLowerCase().contains("ore"))
 						{
-							BlockSolidLava.getInstance(0).totalProb += ConcreteCore.oreMap0.get(s);
 							BlockSolidLava.getInstance(0).turnto.add(b.blockID + 4096*ConcreteCore.oreMap0.get(s) + 4096*1024*meta);
 							
-							BlockSolidLava.getInstance(1).totalProb += ConcreteCore.oreMap1.get(s);
 							BlockSolidLava.getInstance(1).turnto.add(b.blockID + 4096*ConcreteCore.oreMap1.get(s) + 4096*1024*meta);
 							
-							BlockSolidLava.getInstance(2).totalProb += ConcreteCore.oreMap2.get(s);
 							BlockSolidLava.getInstance(2).turnto.add(b.blockID + 4096*ConcreteCore.oreMap2.get(s) + 4096*1024*meta);
 							
 							ores.add(s);
@@ -315,10 +323,7 @@ public class ConcreteCore {
 					}
 				}
 			}
-			
-			
 		}
-		
 	}
 
 	public static String oreDictName(int id, int meta)

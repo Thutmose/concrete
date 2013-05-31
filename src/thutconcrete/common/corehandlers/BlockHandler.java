@@ -9,6 +9,7 @@ import cpw.mods.fml.common.registry.GameRegistry;
 import cpw.mods.fml.common.registry.LanguageRegistry;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockDoor;
+import net.minecraft.block.BlockGrass;
 import net.minecraft.block.material.Material;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
@@ -37,6 +38,7 @@ public class BlockHandler {
 			"Felsic Lava",
 			"Rhyolite",
 			"Volcano Spawner",
+			"flame thrower"
 		};
 	
 	
@@ -68,7 +70,7 @@ public class BlockHandler {
 		}
 
 		blockList.add(new BlockVolcano(id++));
-	//	blockList.add(new BlockBoom(id++));
+		blockList.add(new BlockBoom(id++));
 		//blockList.add(new BlockWater(idWorld+1));
 		
 		blocks = blockList.toArray(new Block[0]);

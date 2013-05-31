@@ -27,7 +27,6 @@ public abstract class Ticker{
 			for(Ticker ticker : instances.toArray( new Ticker[instances.size()] ))
 			{
 				ticker.onUpdate();
-			//	instances.remove(ticker);
 			}
 		}
 	}

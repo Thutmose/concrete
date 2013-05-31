@@ -7,6 +7,8 @@ import java.util.logging.Level;
 import thutconcrete.common.ConcreteCore;
 import thutconcrete.common.blocks.BlockLava;
 import thutconcrete.common.blocks.BlockLiquidConcrete;
+import thutconcrete.common.blocks.BlockSolidLava;
+import thutconcrete.common.tileentity.TileEntityVolcano;
 
 import net.minecraft.nbt.NBTBase;
 import net.minecraftforge.common.ConfigCategory;
@@ -21,7 +23,7 @@ public class ConfigHandler {
     private int itemRange = 7000;
 
     private int chunkSize = 500;
-    private double coolrate = 4;
+    private double coolrate = 3.5;
     private int ashamount = 25000;
 
     private int volcanoRate = 5000;
@@ -36,7 +38,7 @@ public class ConfigHandler {
 	public static int VolcRate;
 	public static int worldID;
 	public static int ashAmount;
-	
+	public static boolean debugPrints;
 	public static boolean volcanosActive;
 	
 	// Items
@@ -70,15 +72,21 @@ public class ConfigHandler {
 			Property concreteDryRate = conf.get("Drying Rate", "Drying Rate", BlockLiquidConcrete.hardenRate,"This is an arbitrary rate that determines how quickly concrete dries, the higher this is, the faster it dries.");
 			BlockLiquidConcrete.hardenRate = concreteDryRate.getInt();
 			
-			
-			
 			//////////////Volcano Stuff///////////////////////////////////////////////
-			CoolRate = conf.get("Volcano Stuff", "Explosion Rate", coolrate,"the number of standard deviations needed for an eruption").getDouble(coolrate);
 			BlockLava.HardenRate = conf.get("Volcano Stuff", "Hardening Rate", 5,"this is an arbitrary rate of the conversion of lava to solid lava, scales inversely with viscosity").getInt();
+			BlockSolidLava.oreProb = conf.get("Volcano Stuff", "Ore Drop Rate", 0.25,"the chance that solid lava drops ore rather than itself or dust.").getDouble(0.25);
 			volcanos = conf.get("Volcano Stuff", "volcano", true,"do volcanoes spawn?" ).getBoolean(true);
-			VolcRate = conf.get("Volcano Stuff", "Volcano Rate", volcanoRate,"volcanos occur once every this many chunks").getInt();
+			VolcRate = conf.get("Volcano Stuff", "Volcano occurance Rate", volcanoRate,"volcanos occur once every this many chunks").getInt();
+			TileEntityVolcano.tickRate = conf.get("Volcano Stuff", "Volcano tick Rate", 10,"volcanos tick once every this many ticks").getInt();
 			ashAmount= conf.get("Volcano Stuff", "Ash Volume", ashamount, "The base amount of ash from large explosions, scales with lava type, set below 1000 to completely disable ash").getInt();
 			volcanosActive = conf.get("Volcano Stuff", "volcano grow", true,"do volcanos grow?" ).getBoolean(true);
+			CoolRate = conf.get("Volcano Stuff", "Major Explosion Rate", coolrate,"the number of standard deviations needed for a large explosion, this causes ash").getDouble(coolrate);
+			TileEntityVolcano.minorExplosionRate = conf.get("Volcano Stuff", "Minor Explosion Rate", 2,"the number of standard deviations needed for a small explosion, no ash").getDouble(2);
+			TileEntityVolcano.dormancyRate = conf.get("Volcano Stuff", "Dormancy Rate", 5,"the number of standard deviations needed for the volcano to go dormant").getDouble(5);
+			TileEntityVolcano.activityRate = conf.get("Volcano Stuff", "Activity Rate", 4.5,"the number of standard deviations needed for the volcano to go active").getDouble(4.5);
+			TileEntityVolcano.eruptionStartRate = conf.get("Volcano Stuff", "Eruption start Rate", 3,"the number of standard deviations needed for the volcano to enter an eruptive period").getDouble(3);
+			TileEntityVolcano.eruptionStopRate = conf.get("Volcano Stuff", "Eruption stop Rate", 2,"the number of standard deviations needed for the volcano to exit an eruptive period").getDouble(2);
+			debugPrints = conf.get("Volcano Stuff", "debug Prints", false,"Do Printouts of whatever the volcano does happen?").getBoolean(false);
 			//debug = conf.get("Volcano Stuff", "debug bool", false,"debug bool" ).getBoolean(false);
 			
 			// Load Item Ids

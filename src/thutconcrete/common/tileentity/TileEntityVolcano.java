@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Random;
 
 import thutconcrete.common.ConcreteCore;
+import thutconcrete.common.Volcano;
 import thutconcrete.common.blocks.Block16Fluid;
 import thutconcrete.common.blocks.BlockBoom;
 import thutconcrete.common.blocks.BlockDust;
@@ -39,6 +40,14 @@ public class TileEntityVolcano extends TileEntity
     public boolean erupted = false;
     public boolean active = true;
     public static int ashAmount = ConfigHandler.ashAmount;;
+
+    public static double eruptionStartRate;
+    public static double eruptionStopRate;
+    public static double minorExplosionRate;
+    public static double dormancyRate;
+    public static double activityRate;
+    
+    public long age = 0;
     
     public String[] types = 
     	{
@@ -48,6 +57,7 @@ public class TileEntityVolcano extends TileEntity
     	};
     
     public int[][] sides = {{0,1},{0,-1},{1,0},{-1,0},{1,1},{1,-1},{-1,1},{-1,-1},{0,0}};
+    public int[][] extendedSides =  {{0,2},{0,-2},{2,0},{-2,0},{2,2},{2,-2},{-2,2},{-2,-2}};
     
     private List<Vect> sideVents = new ArrayList<Vect>();
     private Vect mainVent = new Vect(0,1,0);
@@ -56,6 +66,8 @@ public class TileEntityVolcano extends TileEntity
     private static LinearAlgebra vec;
 	public List<PlumeParticle> particles = new ArrayList<PlumeParticle>();
 	public List<PlumeParticle> deadParticles = new ArrayList<PlumeParticle>();
+	
+	
 	boolean doop = false;
 	
 	private double x0,y0,z0;
@@ -71,11 +83,19 @@ public class TileEntityVolcano extends TileEntity
 	public int time = 0;
 	Random rand = new Random();
 	int index = 0;
+	public static int tickRate;
+	
 	@Override
 	public void updateEntity()
 	{
-		if(!worldObj.isRemote&&ConfigHandler.volcanosActive)
+		if(tickRate<=0)
 		{
+			tickRate = 1;
+		}
+		//System.out.println(age%tickRate);
+		if(age%tickRate==0&&!worldObj.isRemote&&ConfigHandler.volcanosActive)
+		{
+		//	System.out.println(age);
 			if(firstTime)
 			{
 				init();
@@ -85,16 +105,21 @@ public class TileEntityVolcano extends TileEntity
 				volcanoTick();
 				plumeTick();
 				maintainMagma();
-				if(rand.nextGaussian()>6)
+				if(rand.nextGaussian()>dormancyRate)
 				{
 					dormant = true;
+					if(ConfigHandler.debugPrints)
+					System.out.println("Volcano at location "+xCoord+" "+z+" changed to activity state: "+getState());
 				}
 			}
-			else if(rand.nextGaussian()>4.5)
+			else if(rand.nextGaussian()>activityRate)
 			{
 				dormant = false;
+				if(ConfigHandler.debugPrints)
+				System.out.println("Volcano at location "+xCoord+" "+z+" changed to activity state: "+getState());
 			}
 		}
+		age++;
 	}
 	
 	private void init()
@@ -102,21 +127,24 @@ public class TileEntityVolcano extends TileEntity
 		firstTime = false;
 		if(typeid>2)
 		{
-			height = ConcreteCore.getVolcano(xCoord, z);
-			typeid = height>40?2:height>20?1:0;
+			Volcano volc = Volcano.getVolcano(xCoord, z);
+			height = volc.h;
+			typeid = volc.type;
+			if(ConfigHandler.debugPrints)
+			System.out.println(types[typeid]);
 			r0 = height/2;
 			n = ashAmount*(typeid+1);
 			ventCount = (int) (10*Math.random());
 			mainVent.i = height+64-yCoord;
 			mainVent.r = ConfigHandler.CoolRate;
-			mainVent.k = 40;
+			mainVent.k = 40*(typeid+1);
 			mainVent.j = 0;
 			mainVent.bool = false;
 			mainVent.var = 0;
 			for(int i = 0; i<ventCount; i++)
 			{
 				sideVents.add(new Vect(new double[] {2*(Math.random()-0.5), Math.random(), 2*(Math.random()-0.5)},
-				height, mainVent.i*Math.random(), Math.random()*10, 0.85*mainVent.r , true));
+				height, mainVent.i*Math.random(), Math.random()*10*(typeid+1), 0.85*mainVent.r , true));
 			}
 			
 		}
@@ -198,6 +226,7 @@ public class TileEntityVolcano extends TileEntity
 	   par1.setBoolean("active", active);
 	   par1.setBoolean("erupted", erupted);
 	   par1.setBoolean("dormant", dormant);
+	   par1.setLong("age", age);
    }
 
    public void readFromNBT(NBTTagCompound par1)
@@ -216,8 +245,10 @@ public class TileEntityVolcano extends TileEntity
 	   active = par1.getBoolean("active");
 	   erupted = par1.getBoolean("erupted");
 	   dormant = par1.getBoolean("dormant");
-	   System.out.println("Loaded "+types[typeid]+" Volcano at location "+xCoord+" "+z);
-	   ConcreteCore.getVolcano(xCoord, z);
+	   age = par1.getLong("age");
+	   if(ConfigHandler.debugPrints)
+	   System.out.println("Loaded "+types[typeid]+" Volcano at location "+xCoord+" "+z+" of activity state: "+getState());
+	   Volcano.getVolcano(xCoord, z);
    }
 
    public int getZCoord()
@@ -225,9 +256,17 @@ public class TileEntityVolcano extends TileEntity
 	   return z;
    }
    
+   public String getState()
+   {
+	   String dormancy = dormant?"dormant":"active";
+	   String activity = active?"erupting":"not erupting";
+	   String state = dormant?dormancy:dormancy+" "+activity;
+	   return state;
+   }
+   
    private void volcanoTick()
 	   {
-		   if(active&&Math.random()>0.975)
+		   if(active&&rand.nextGaussian()>0)
 			{
 			  if(ventCount>0)
 			  {
@@ -235,15 +274,19 @@ public class TileEntityVolcano extends TileEntity
 				index = (index+1)%sideVents.size();
 			  }
 			  growVent(mainVent);
-			  if(Math.random()>0.95)
+			  if(rand.nextGaussian()>eruptionStopRate)
 			  {
 				active = false;
+				if(ConfigHandler.debugPrints)
+				System.out.println("Volcano at location "+xCoord+" "+z+" changed to activity state: "+getState());
 			  }
 			}
 			
-		  else if (!active&&Math.random()>0.9999)
+		  if (!active&rand.nextGaussian()>eruptionStartRate)
 		   {
 			   active = true;
+			   if(ConfigHandler.debugPrints)
+				System.out.println("Volcano at location "+xCoord+" "+z+" changed to activity state: "+getState());
 		   }
 	   }
 	      
@@ -251,8 +294,9 @@ public class TileEntityVolcano extends TileEntity
 	   {
 	   int y = worldObj.getTopSolidOrLiquidBlock(xCoord, z);
 	   int id = worldObj.getBlockId(xCoord, y, z);
-		   if(erupted&&ashAmount>1000&&(lava.contains(id)||solidlava.contains(id)))
+		   if(erupted&&ashAmount>1&&(lava.contains(id)||solidlava.contains(id)))
 		   {
+		//	   System.out.println("plumeTick");
 			   plumeCalculations();
 		   }
 	   }
@@ -263,43 +307,54 @@ public class TileEntityVolcano extends TileEntity
 		if(particles.size()==0)
 		{
 			erupted = false;
-			active = true;
+			if(!active)
+			{
+				active = true;
+				if(ConfigHandler.debugPrints)
+				System.out.println("Volcano at location "+xCoord+" "+z+" changed to activity state: "+getState());
+			}
 			return;
 		}
 		
 		for(PlumeParticle p: particles)
 		{
-			int y = (int)p.y;//1+worldObj.getTopSolidOrLiquidBlock((int)p.x, (int)p.z);
+			int y = (int)p.y;
 			int id = worldObj.getBlockId((int)p.x, y, (int)p.z);
+			int idP = (int)p.vy;
 			
 	        boolean canBreak = Block16Fluid.instance.willBreak(id);
 
-	        boolean breakException = Block16Fluid.instance.breakException(BlockDust.instance.blockID, id);
-			
+	        boolean breakException = Block16Fluid.instance.breakException(idP, id);
+		//	System.out.println("placing "+idP+" at "+(int)p.x+" "+y+" "+(int)p.z);
 			if(id==0||(canBreak&&!breakException))
-				worldObj.setBlock((int)p.x, y, (int)p.z, BlockDust.instance.blockID, (int)p.vx, 3);
+			{
+				worldObj.setBlock((int)p.x, y, (int)p.z, idP, (int)p.vx, 3);
+			}
 		}
 		
 		particles.clear();
 		
 	}
 	
-	private void addPlumeParticles()
+	private void addPlumeParticles(double Hfactor, int id)
 	{
-		int typeFactor = typeid == 2? 255: typeid==1? 200: 150;
+		int typeFactor = typeid == 2? (int)(Hfactor*50+150): typeid==1? (int)(Hfactor*50+100): (int)(Hfactor*74+76);
 		Random r = new Random();
 		r.setSeed(seed);
 		r0 = Math.min(r0,50); //Limits the size to "50"
 		while(n>0)
 		{
-			double x,z, dx, dz, h;
+			double x,z, dx=0, dz=0, h;
 		
 			x = r0*r.nextGaussian();
 			z = r0*r.nextGaussian();	
 			
+			
+			if(id==BlockDust.instance.blockID)
+			{
 			dx = safe.getWind(worldObj, x, z)[0];
     		dz = safe.getWind(worldObj, x, z)[1];
-	    	
+			}
 
 			int y=typeFactor-r.nextInt(50);
 			h = y-1;	
@@ -318,7 +373,13 @@ public class TileEntityVolcano extends TileEntity
 	    		h--;
 	    	}
 	    	
-			
+	    	id1 = safe.safeGetID(worldObj,x+(int)(dx*(y-h)), h, z+(int)(dz*(y-h)));
+	    	if(!(id1==0||Block16Fluid.instance.breaks.contains(id1)))
+	    	{
+	    		n--;
+	    	}
+	    	else
+	    	{
 			PlumeParticle particle = new PlumeParticle();
 			
 			particle.x = x+x0;
@@ -326,10 +387,10 @@ public class TileEntityVolcano extends TileEntity
 			particle.z = z+z0;
 			
 			particle.vx = num;
-			
+			particle.vy = id;
 			particles.add(particle);
-			
 			n--;
+	    	}
 		}
 		
 
@@ -351,7 +412,7 @@ public class TileEntityVolcano extends TileEntity
 
 		boolean toErupt = false;
 		
-		while(id!=0)
+		while(id!=0&&i*y+h<=maxLength)
 		{
 			i++;
 			id = safe.safeGetID(worldObj, xCoord+i*x, yCoord+i*y+h, getZCoord()+i*z);
@@ -369,33 +430,42 @@ public class TileEntityVolcano extends TileEntity
 			}
 		}
 		
-		if(mainVent.var > 0.75*h&&rand.nextGaussian()>2)
+		if(mainVent.var > 0.75*maxLength&&rand.nextGaussian()>eruptionStopRate)
 		{
 			active = false;
+			if(ConfigHandler.debugPrints)
+			System.out.println("Volcano at location "+xCoord+" "+this.z+" changed to activity state: "+getState());
 		}
 		
 
-	  if(Math.random()>0.95)
+	  if(age>2500&&rand.nextGaussian()>minorExplosionRate)
 	  {
+		  if(ConfigHandler.debugPrints)
+		  System.out.println("minor Explosion");
+		  double rad = Math.random()*5;
 			ExplosionCustom boom = new ExplosionCustom();
-	    	boom.doExplosion(worldObj,xCoord+i*x, yCoord+i*y+h, getZCoord()+i*z, 0.1*Math.random()*e*(typeid+1), false);
-	    	worldObj.playSoundEffect(xCoord+i*x, yCoord+i*y+h, getZCoord()+i*z, "random.explode", 10.0F, 1.0F);
-	  }
-		
-		if(toErupt||(vent == mainVent && doop))
-		{
-			ExplosionCustom boom = new ExplosionCustom();
-	    	boom.doExplosion(worldObj,xCoord+i*x, yCoord+i*y+h, getZCoord()+i*z, Math.random()*e*(typeid+1), false);
+	    	boom.doExplosion(worldObj,xCoord+i*x, yCoord+i*y+h, getZCoord()+i*z, rad, false);
 	    	worldObj.playSoundEffect(xCoord+i*x, yCoord+i*y+h, getZCoord()+i*z, "random.explode", 10.0F, 1.0F);
 	    	x0 = xCoord+i*x; y0 =  yCoord+i*y+h; z0 = getZCoord()+i*z;
-	    	r0 = e*(typeid+1);
-	    	n = (int) (e*(typeid+1)*100);
-	    	addPlumeParticles();
+	    	r0 = rad;
+	    	n = (int)(0.01*ashAmount*(typeid+1));
+	    	addPlumeParticles(0.5, BlockLava.getInstance(typeid).blockID);
+	    	erupted = true;
+	  }
+		
+		if(age>2500&&toErupt||(vent == mainVent && doop))
+		{
+			if(ConfigHandler.debugPrints)
+			  System.out.println("major Explosion");
+			ExplosionCustom boom = new ExplosionCustom();
+	    	boom.doExplosion(worldObj,xCoord+i*x, yCoord+i*y+h, getZCoord()+i*z, Math.random()*e, false);
+	    	worldObj.playSoundEffect(xCoord+i*x, yCoord+i*y+h, getZCoord()+i*z, "random.explode", 10.0F, 1.0F);
+	    	x0 = xCoord+i*x; y0 =  yCoord+i*y+h; z0 = getZCoord()+i*z;
+	    	r0 = e;
+	    	n = (int) (vent==mainVent?ashAmount*(typeid+1):0.1*ashAmount*(typeid+1));
+	    	addPlumeParticles(vent==mainVent?1:0.5, BlockDust.instance.blockID);
 	    	doop = false;
-	    	if(!vent.bool)
-	    	{
 		    	erupted = true;
-	    	}
 		}
 		
 	}

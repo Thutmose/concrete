@@ -25,11 +25,13 @@ public class PacketTEB16F implements IPacketProcessor
        int z = te.zCoord;
        TileEntityBlock16Fluid teb16f = (TileEntityBlock16Fluid) te;
        int[] items = teb16f.metaArray;
+       int[] ids = teb16f.iconIDs;
+       int[] sides = teb16f.sideArray;
        
-       if(!isSame(items,x,y,z))
+       if(!(isMetaSame(items,x,y,z)&&isIDSame(ids, x, y, z)))
 	        {
        	
-		 	ByteArrayOutputStream bos = new ByteArrayOutputStream(16+(4*items.length));
+		 	ByteArrayOutputStream bos = new ByteArrayOutputStream(16+(3*4*items.length));
 		 	DataOutputStream dos = new DataOutputStream(bos);
 	        
 	        try
@@ -41,6 +43,8 @@ public class PacketTEB16F implements IPacketProcessor
 	            for (int i = 0; i < 6; i++)
 	            {
 	                dos.writeInt(items[i]);
+	                dos.writeInt(ids[i]);
+	                dos.writeInt(sides[i]);
 	            }
 	        }
 	        catch (IOException e)
@@ -58,7 +62,7 @@ public class PacketTEB16F implements IPacketProcessor
        return null;
    }
 	 
-	 public static boolean isSame(int[] array, int x, int y, int z)
+	 public static boolean isMetaSame(int[] array, int x, int y, int z)
 	 {
 		 {
 			 return ( 
@@ -71,6 +75,20 @@ public class PacketTEB16F implements IPacketProcessor
 					);
 		 }
 	 }
+	 
+	 public static boolean isIDSame(int[] array, int x, int y, int z)
+	 {
+		 {
+			 return ( 
+					  array[0]==0
+					&&array[1]==0
+					&&array[2]==0
+					&&array[3]==0
+					&&array[4]==0
+					&&array[5]==0
+					);
+		 }
+	 }
 
 	@Override
 	public void processPacket(ByteArrayDataInput dat, Player player, World world) {
@@ -79,10 +97,14 @@ public class PacketTEB16F implements IPacketProcessor
         int z = dat.readInt();
         
         int[] intArray = new int[6];
+        int[] idArray = new int[6];
+        int[] sideArray = new int[6];
         
         for (int i = 0; i < 6; i++)
         {
             intArray[i] = dat.readInt();
+            idArray[i] = dat.readInt();
+            sideArray[i] = dat.readInt();
         }
 		
         TileEntity te = world.getBlockTileEntity(x, y, z);
@@ -90,6 +112,9 @@ public class PacketTEB16F implements IPacketProcessor
         {
         	TileEntityBlock16Fluid teb16f = (TileEntityBlock16Fluid) te;
         	teb16f.metaArray=intArray;
+        	teb16f.iconIDs=idArray;
+        	teb16f.sideArray = sideArray;
+        	teb16f.setIconArray();
         }
 	}
 	 

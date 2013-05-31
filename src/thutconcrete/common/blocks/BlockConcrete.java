@@ -37,8 +37,6 @@ public class BlockConcrete extends Block16Fluid implements ITileEntityProvider//
 	public static int resistance = 10;
 	public static float hardness = 30;
 	Integer[][] data;
-    @SideOnly(Side.CLIENT)
-    private Icon[] iconArray;
 	
 	public BlockConcrete(int par1) {
 		super(par1,Material.rock);
@@ -46,6 +44,7 @@ public class BlockConcrete extends Block16Fluid implements ITileEntityProvider//
 		this.rate = 10;
 		this.instance = this;
 		this.setStepSound(soundStoneFootstep);
+		this.solid = true;
 		setData();
 	}
 	
@@ -138,8 +137,11 @@ public class BlockConcrete extends Block16Fluid implements ITileEntityProvider//
 	    public Icon getBlockTexture(IBlockAccess par1IBlockAccess, int x, int y, int z, int par5)
 	    {
 		 TileEntityBlock16Fluid te = (TileEntityBlock16Fluid) par1IBlockAccess.getBlockTileEntity(x, y, z);
-		 return this.iconArray[te.metaArray[par5&15]&15];
-		 	
+		 if(te.icons[par5]==null)
+		 {
+			 te.icons[par5]=this.iconArray[te.metaArray[par5]&15];
+		 }
+		 return te.icons[par5];
 	    }
 	
 	    /**

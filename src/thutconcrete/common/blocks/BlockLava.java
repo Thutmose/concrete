@@ -14,6 +14,7 @@ import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 
 import thutconcrete.common.ConcreteCore;
+import thutconcrete.common.Volcano;
 import thutconcrete.common.utils.ISoldifiable;
 
 import cpw.mods.fml.relauncher.Side;
@@ -62,6 +63,15 @@ public class BlockLava extends Block16Fluid implements ISoldifiable, IBlockLiqui
 	
 	
 	
+    @SideOnly(Side.CLIENT)
+
+    /**
+     * A randomly called display update to be able to add particles or other items for display
+     */
+    public void randomDisplayTick(World par1World, int par2, int par3, int par4, Random par5Random)
+    {
+    	Block.lavaStill.randomDisplayTick(par1World, par2, par3, par4, par5Random);
+    }
 	
     /**
      * Returns whether this block is collideable based on the arguments passed in Args: blockMetaData, unknownFlag
@@ -70,12 +80,7 @@ public class BlockLava extends Block16Fluid implements ISoldifiable, IBlockLiqui
     {
         return false;
     }
-	
-	
-	
-	
-	
-	
+    
 	
     /**
      * Returns a bounding box from the pool of bounding boxes (this means this box can change after the pool has been
@@ -121,6 +126,9 @@ public class BlockLava extends Block16Fluid implements ISoldifiable, IBlockLiqui
 		desiccantList.add(0+4096);
 		desiccantList.add(Block.dirt.blockID+rate*4096);
 		desiccantList.add(Block.grass.blockID+rate*4096);
+		desiccantList.add(Block.sand.blockID+rate*4096);
+		desiccantList.add(Block.sandStone.blockID+rate*4096);
+		desiccantList.add(Block.gravel.blockID+rate*4096);
 		desiccantList.add(Block.stone.blockID+rate*4096);
 		desiccantList.add(Block.waterMoving.blockID+100*rate*4096);
 		desiccantList.add(Block.waterStill.blockID+100*rate*4096);
@@ -184,34 +192,42 @@ public class BlockLava extends Block16Fluid implements ISoldifiable, IBlockLiqui
 		tickSides(worldObj, x, y, z, 5);
 		
 		time++;
-		
 	}
+	
+    public void tickSides(World worldObj, int x, int y, int z, int rate){
+    	int[][]sides = {{1,0,0},{-1,0,0},{0,0,1},{0,0,-1}};
+        for(int i=0;i<sides.length;i++){
+        	Block blocki = Block.blocksList[worldObj.getBlockId(x+sides[i][0], y+sides[i][1], z+sides[i][2])];
+  
+        	if(blocki instanceof Block16Fluid && ((Block16Fluid)blocki).solidifiable)
+        	{
+        		int id = worldObj.getBlockId( x+sides[i][0], y+sides[i][1], z+sides[i][2]);
+        		worldObj.scheduleBlockUpdate(x+sides[i][0], y+sides[i][1], z+sides[i][2],id,rate);
+        	}
+        }
+   }
 	
 	@Override
 	public void doHardenTick(World worldObj, int x, int y, int z)
 	{
 		
-		if(y>40)
+		int below = worldObj.getBlockId(x, y-1, z);
+		
+		if(below == this.blockID) 
 		{
-			if(worldObj.getBlockId(x, y-1, z)!=this.blockID)
-			{
-				super.doHardenTick(worldObj, x, y, z);
-			}
 			return;
 		}
-		int metaFactor = (15-worldObj.getBlockMetadata(x, y, z));
 		
-		if(time%(1+32*metaFactor)==0)
+		if(worldObj.getBlockId(x, y-1, z)==Block.grass.blockID)
 		{
-			if(worldObj.getBlockId(x, y-1, z)!=this.blockID)
-			{
-				super.doHardenTick(worldObj, x, y, z);
-			}
-
-			time++;
+			worldObj.setBlock(x, y-1, z, Block.dirt.blockID);
 		}
 		
-		
+		if(!Volcano.isOverAnyVolcano(x, z))
+		{
+			super.doHardenTick(worldObj, x, y, z);
+			return;
+		}
 		
 	}
 	

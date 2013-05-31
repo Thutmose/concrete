@@ -8,6 +8,7 @@ import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
 
 import thutconcrete.common.ConcreteCore;
+import thutconcrete.common.Volcano;
 import thutconcrete.common.tileentity.TileEntityVolcano;
 import thutconcrete.common.utils.ExplosionCustom;
 import net.minecraft.block.Block;
@@ -36,7 +37,7 @@ public class BlockVolcano extends Block implements ITileEntityProvider
 	
 	 public void onBlockAdded(World worldObj, int par2, int par3, int par4) 
 	 {
-		 ConcreteCore.addVolcano(par2, par4);
+		 Volcano.getVolcano(par2, par4);
 		 TileEntityVolcano te = (TileEntityVolcano)worldObj.getBlockTileEntity(par2, par3, par4);
 		 te.z = par4;
 	 }

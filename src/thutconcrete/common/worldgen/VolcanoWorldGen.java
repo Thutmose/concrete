@@ -21,7 +21,7 @@ public class VolcanoWorldGen implements IWorldGenerator{
 			int y = chunkZ*16 + random.nextInt(16);
 			int z = 5;
 			System.out.println(x+" "+z+" "+y);
-			  world.setBlock(x, z, y, BlockVolcano.instance.blockID, 0, 3);
+			world.setBlock(x, z, y, BlockVolcano.instance.blockID, 0, 3);
 			}
 		}
 		

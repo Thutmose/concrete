@@ -49,6 +49,7 @@ public class BlockREConcrete extends Block16Fluid implements IRebar, ITileEntity
 		this.rate = 1;
 		this.instance = this;
 		this.setStepSound(soundStoneFootstep);
+		this.solid = true;
 		setData();
 	}
 	
