@@ -138,7 +138,7 @@ public class BlockLiquidConcrete extends Block16Fluid implements IBlockLiquid, I
 					1,//The hardening differential that prevents things staying liquid forever.,
 					0,//a randomness coefficient, this is multiplied by a random 0-10 then added to the hardening differential and viscosity.,
 					1,//The will fall of edges factor, this is 0 or 1,
-					1,//0 = not colourable, 1 = colourable.
+					0,//0 = not colourable, 1 = colourable.
 				},
 				desiccantList.toArray(new Integer[0]),
 				combinationList.toArray(new Integer[0]),
@@ -174,8 +174,7 @@ public class BlockLiquidConcrete extends Block16Fluid implements IBlockLiquid, I
 	     */
 	    public Icon getBlockTexture(IBlockAccess par1IBlockAccess, int x, int y, int z, int par5)
 	    {
-		 TileEntityBlock16Fluid te = (TileEntityBlock16Fluid) par1IBlockAccess.getBlockTileEntity(x, y, z);
-		 return this.iconArray[te.metaArray[par5&15]&15];
+		 return this.blockIcon;
 	    }
 
 		@Override

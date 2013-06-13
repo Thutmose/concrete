@@ -128,8 +128,8 @@ public class EntityLift extends EntityLiving implements IEntityAdditionalSpawnDa
 	{
 		int[][] sides = {{3,0},{-3,0},{0,3},{0,-3}};
 		
-		boolean ret1 = worldObj.getBlockId((int)Math.floor(posX)+sides[axis?2:0][0],(int)Math.floor(posY+dir),(int)Math.floor(posZ)+sides[axis?2:0][1])==BlockLiftRail.instance.blockID;
-		boolean ret2 = worldObj.getBlockId((int)Math.floor(posX)+sides[axis?3:1][0],(int)Math.floor(posY+dir),(int)Math.floor(posZ)+sides[axis?3:1][1])==BlockLiftRail.instance.blockID;
+		boolean ret1 = worldObj.getBlockId((int)Math.floor(posX)+sides[axis?2:0][0],(int)Math.floor(posY+dir),(int)Math.floor(posZ)+sides[axis?2:0][1])==BlockLiftRail.staticBlock.blockID;
+		boolean ret2 = worldObj.getBlockId((int)Math.floor(posX)+sides[axis?3:1][0],(int)Math.floor(posY+dir),(int)Math.floor(posZ)+sides[axis?3:1][1])==BlockLiftRail.staticBlock.blockID;
 		
 		if(!(ret1&&ret2))
 		{

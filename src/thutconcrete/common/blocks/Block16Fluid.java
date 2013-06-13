@@ -334,7 +334,12 @@ public class Block16Fluid extends Block
     	if(!(Block.blocksList[id] instanceof Block16Fluid)) return false;
 		if(!(id1==0||breaks.contains(id1)))
 		{
-			falldown = false;
+			boolean combine = willCombine(id, id1);
+			if(combine&&merge(worldObj,x, y, z, x+(int)(dx*(y-h)), h, z+(int)(dz*(y-h))))
+			{
+			//	System.out.println("merged");
+				return true;
+			}
 		}
     	
     	if(((Block16Fluid)Block.blocksList[id]).dust)
@@ -344,11 +349,12 @@ public class Block16Fluid extends Block
     		
         	
 	    	id1 = safe.safeGetID(worldObj,x+(int)(dx*(y-h)), h, z+(int)(dz*(y-h)));
-	    	
+	    	boolean combine = willCombine(id, id1);
 	    	while(h>1)
 	    	{
 	    		id1 = safe.safeGetID(worldObj,x+(int)(dx*(1+y-h)), h-1, z+(int)(dz*(1+y-h)));
-	    		if(!(id1==0||breaks.contains(id1)))
+	    		combine = willCombine(id, id1);
+	    		if(!(id1==0||breaks.contains(id1)||combine))
 	    		{
 	    			break;
 	    		}
@@ -382,7 +388,8 @@ public class Block16Fluid extends Block
                     	while(h>1)
                     	{
                     		idSideDown = safe.safeGetID(worldObj,x+sides[i][0], h, z+sides[i][1]);
-                    		if(!(id1==0||breaks.contains(id1)))
+                        	boolean combine = willCombine(id, idSideDown);
+                    		if(!(idSideDown==0||breaks.contains(idSideDown)||combine))
                     		{
                     			break;
                     		}

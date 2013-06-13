@@ -37,7 +37,7 @@ public class BlockRebar extends Block implements IRebar
 	@SideOnly(Side.CLIENT)
 	public Icon itemIcon;
 	boolean[] side = new boolean[6];
-	
+	public static boolean first = true;
 
 	public ThreadSafeWorldOperations safe = new ThreadSafeWorldOperations();
 	public static int MAX_PLACEMENT_RANGE = 64;
@@ -50,7 +50,11 @@ public class BlockRebar extends Block implements IRebar
 		setCreativeTab(ConcreteCore.tabThut);
 		this.setBlockBounds(0, 0, 0, 0, 0, 0);
 		setResistance(10.0f);
-		this.instance=this;
+		if(first)
+		{
+			this.instance=this;
+			first = false;
+		}
 		setLightOpacity(0);
 	}
 	

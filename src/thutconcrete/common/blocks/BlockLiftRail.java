@@ -31,12 +31,12 @@ public class BlockLiftRail extends BlockRebar implements ITileEntityProvider
 
 	public Icon[] iconArray;
 	
-	public static BlockLiftRail instance;
+	public static BlockLiftRail staticBlock;
 
 	public BlockLiftRail(int par1) 
 	{
 		super(par1);
-		instance = this;
+		staticBlock = this;
 		this.setUnlocalizedName("liftRail");
 	//	this.setTickRandomly(true);
 	}
