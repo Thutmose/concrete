@@ -1,4 +1,4 @@
-package thutconcrete.client;
+package thutconcrete.client.render;
 
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.util.Icon;
@@ -13,7 +13,6 @@ public class RenderCuboid {
 		
         double d0 = (double)icons[3].getMinU();
         double d1 = (double)icons[3].getMaxU();
-        double d2 = (double)icons[3].getMaxU();
         double d3 = (double)icons[3].getMinV();
         double d4 = (double)icons[3].getMaxV();
 
@@ -33,7 +32,6 @@ public class RenderCuboid {
         
         d0 = (double)icons[5].getMinU();
         d1 = (double)icons[5].getMaxU();
-        d2 = (double)icons[5].getMaxU();
         d3 = (double)icons[5].getMinV();
         d4 = (double)icons[5].getMaxV();
         
@@ -54,7 +52,6 @@ public class RenderCuboid {
         
         d0 = (double)icons[4].getMinU();
         d1 = (double)icons[4].getMaxU();
-        d2 = (double)icons[4].getMaxU();
         d3 = (double)icons[4].getMinV();
         d4 = (double)icons[4].getMaxV();
         
@@ -77,7 +74,6 @@ public class RenderCuboid {
         
         d0 = (double)icons[2].getMinU();
         d1 = (double)icons[2].getMaxU();
-        d2 = (double)icons[2].getMaxU();
         d3 = (double)icons[2].getMinV();
         d4 = (double)icons[2].getMaxV();
         
@@ -99,13 +95,19 @@ public class RenderCuboid {
         
         d0 = (double)icons[0].getMinU();
         d1 = (double)icons[0].getMaxU();
-        d2 = (double)icons[0].getMaxU();
         d3 = (double)icons[0].getMinV();
         d4 = (double)icons[0].getMaxV(); 
         
         
         
         ///////////////side5///////////////
+
+        tessellator.addVertexWithUV(xMax, yMin, zMin, d0, d3);
+        tessellator.addVertexWithUV(xMax, yMin, zMax, d0, d4);
+        
+        tessellator.addVertexWithUV(xMin, yMin, zMax, d1, d4);
+        tessellator.addVertexWithUV(xMin, yMin, zMin, d1, d3);
+        
         
         tessellator.addVertexWithUV(xMax, yMin, zMax, d0, d3);
         tessellator.addVertexWithUV(xMax, yMin, zMin, d0, d4);
@@ -113,20 +115,13 @@ public class RenderCuboid {
         tessellator.addVertexWithUV(xMin, yMin, zMin, d1, d4);
         tessellator.addVertexWithUV(xMin, yMin, zMax, d1, d3);
        //* 
-        
-        tessellator.addVertexWithUV(xMin, yMin, zMax, d1, d4);
-        tessellator.addVertexWithUV(xMin, yMin, zMin, d1, d3);
-        
-        tessellator.addVertexWithUV(xMax, yMin, zMin, d0, d3);
-        tessellator.addVertexWithUV(xMax, yMin, zMax, d0, d4);
        
 		////////////////////////////////////////*/   
         
         d0 = (double)icons[1].getMinU();
         d1 = (double)icons[1].getMaxU();
-        d2 = (double)icons[1].getMaxU();
-        d3 = (double)icons[1].getMinV();
-        d4 = (double)icons[1].getMaxV();  
+        d4 = (double)icons[1].getMinV();
+        d3 = (double)icons[1].getMaxV();  
         
         
         

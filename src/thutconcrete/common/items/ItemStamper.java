@@ -6,7 +6,9 @@ import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
 import thutconcrete.common.ConcreteCore;
 import thutconcrete.common.blocks.Block16Fluid;
+import thutconcrete.common.utils.IStampableBlock;
 import net.minecraft.block.Block;
+import net.minecraft.client.renderer.texture.IconRegister;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.Item;
@@ -38,36 +40,42 @@ public class ItemStamper extends Item
         	{
         		itemstack.setTagCompound(new NBTTagCompound() );
         	}
-    		
-    		
-        	int index = player.inventory.currentItem;
-        	if(index==8)
-        	{
-        		return false;
-        	}
-        	System.err.println("sucking Icon");
-        	ItemStack blocks = player.inventory.getStackInSlot(index+1);
-        	if(blocks==null)
-        	{
-        		return false;
-        	}
-        	
-        	int blockID = worldObj.getBlockId(x, y, z);
-        	int blockMeta = worldObj.getBlockMetadata(x, y, z);
-        	
-        	ItemStack block = new ItemStack(blockID, 1, blockMeta);
-        	Block b = Block.blocksList[blockID];
-        	
-        	System.out.println(block.getItemName()+" "+blocks.getItemName());
-        	
-        	if(b!=null&&b.renderAsNormalBlock()&&block.getItemName().equals(blocks.getItemName()))
-        	{
-        		itemstack.stackTagCompound.setInteger("blockID", blockID);
-        		itemstack.stackTagCompound.setInteger("blockMeta", blockMeta);
-        		itemstack.stackTagCompound.setInteger("side", side);
-        		player.inventory.consumeInventoryItem(blockID);
-        	}
-    		return true;
+           	
+           	for(ItemStack blocks: player.inventory.mainInventory)
+           	{
+	        	if(blocks==null)
+	        	{
+	        		return false;
+	        	}
+	        	
+	        	int blockID = worldObj.getBlockId(x, y, z);
+	        	int blockMeta = worldObj.getBlockMetadata(x, y, z);
+	        	
+	        	ItemStack block = new ItemStack(blockID, 1, blockMeta);
+	        	Block b = Block.blocksList[blockID];
+	        	
+	        	if(b!=null&&(player.capabilities.isCreativeMode||b.renderAsNormalBlock()&&block.getItemName().equals(blocks.getItemName())))
+	        	{
+	        		
+	        		if(!(b instanceof IStampableBlock))
+	        		{
+		        		itemstack.stackTagCompound.setInteger("blockID", blockID);
+		        		itemstack.stackTagCompound.setInteger("blockMeta", blockMeta);
+		        		itemstack.stackTagCompound.setInteger("side", side);
+		        		if(!player.capabilities.isCreativeMode)
+		        			player.inventory.consumeInventoryItem(blockID);
+	        		}
+	        		else
+	        		{
+	        			IStampableBlock b1 = (IStampableBlock)b;
+		        		itemstack.stackTagCompound.setInteger("blockID", b1.sideIconBlockId(worldObj, x, y, z, side));
+		        		itemstack.stackTagCompound.setInteger("blockMeta", b1.sideIconMetadata(worldObj, x, y, z, side));
+		        		itemstack.stackTagCompound.setInteger("side", b1.sideIconSide(worldObj, x, y, z, side));
+	        		}
+	        		
+	        		return true;
+	        	}
+           	}
     	}
     	
     	
@@ -81,7 +89,7 @@ public class ItemStamper extends Item
     	}
        	
        	Block b = Block.blocksList[worldObj.getBlockId(x, y, z)];
-       	if(b!=null&&b instanceof Block16Fluid
+       	if(b!=null&&b instanceof IStampableBlock
        			&&itemstack.stackTagCompound!=null)
        	{
        		int id = itemstack.stackTagCompound.getInteger("blockID");
@@ -91,7 +99,7 @@ public class ItemStamper extends Item
        		if(!(id==0||meta==-1||side==-1))
        		{
            		Icon icon = Block.blocksList[id].getIcon(storedSide, meta);
-           		((Block16Fluid)b).setBlockIcon(id, meta, side, worldObj, x, y, z, icon, storedSide);
+           		((IStampableBlock)b).setBlockIcon(id, meta, side, worldObj, x, y, z, icon, storedSide);
        			return true;
        		}
        	}
@@ -118,6 +126,12 @@ public class ItemStamper extends Item
     public boolean getShareTag()
     {
         return true;
+    }
+    
+	@SideOnly(Side.CLIENT)
+    public void registerIcons(IconRegister par1IconRegister)
+    {
+        this.itemIcon = par1IconRegister.registerIcon("thutconcrete:wallstamper");
     }
 
     

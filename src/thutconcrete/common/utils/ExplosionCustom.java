@@ -10,6 +10,7 @@ import java.util.concurrent.CountDownLatch;
 
 import thutconcrete.common.ConcreteCore;
 import thutconcrete.common.blocks.BlockDust;
+import thutconcrete.common.blocks.BlockLava;
 
 import net.minecraft.block.Block;
 import net.minecraft.entity.Entity;
@@ -35,6 +36,16 @@ public class ExplosionCustom
 		    if(!worldObj.isRemote)
 		    sphericalExplosion(worldObj, x0, z0, y0, r0, vapourize, A, B, rMax);    
 		    
+	  }
+	  
+	  public static void doExplosion(World worldObj,double x0, double y0, double z0, double r0, boolean vapourize, short rMax)
+	  {
+		    double A = 128;
+		    double B = 0.1;
+		    double[] centre = { x0, z0, y0 };
+		    if(!worldObj.isRemote)
+		    sphericalExplosion(worldObj, x0, z0, y0, r0, vapourize, A, B, rMax);    
+		    worldObj.createExplosion(null, x0, y0, z0, (float) r0, false);
 	  }
 
 	  public static synchronized void sphericalExplosion(final World worldObj,final double x0,final double y0,final double z0, final double r0,final boolean vapourize, final double A, final double B, final int rMax)
@@ -102,7 +113,7 @@ public class ExplosionCustom
 
 	        try {latch.await();} catch (InterruptedException e1) {}
 	        long estimatedTime = System.nanoTime() - startTime;
-	     //   System.out.println("Total time "+estimatedTime/1000000000+"s");
+	        System.out.println("Total time "+estimatedTime/1000000000+"s");
 	        
 	        int n = things.get(4)[0] + stuff.get(4)[0]+morethings.get(4)[0] + morestuff.get(4)[0];
 	        
@@ -135,7 +146,79 @@ public class ExplosionCustom
 		  }
 	  }
 	  
-
+	  public void kineticImpactor(World worldObj, Vector3 velocity, Vector3 hitLocation, Vector3 acceleration, double mass, float energy)
+	  {
+		  if(mass<0||energy<=0)
+		  {
+			  return;
+		  }
+		  System.out.println("energy: "+energy+" Location: "+hitLocation.toString());
+		  int n = 0;
+		  List<Vector3> locations = new ArrayList<Vector3>();
+		  List<Float> blasts = new ArrayList<Float>();
+		  
+		  float resist = hitLocation.getExplosionResistance(worldObj);
+		  float blast = Math.min(resist, energy);
+		  
+		  if(resist>energy)
+		  {
+			  hitLocation = hitLocation.subtract(velocity.normalize().scalarMult(0.1));
+			  Cruncher.destroyInRangeV3(hitLocation, worldObj, 50, energy);
+			  return;
+		  }
+		  
+		  Vector3 absorbedLoc = new Vector3();
+		  float remainingEnergy = 0;
+		  int id = hitLocation.getBlockId(worldObj);
+		  energy-=resist;
+		  
+		  while(energy>0)
+		  {
+			  if(blast!=0&&id!=0)
+			  {
+				  locations.add(hitLocation);
+				  blasts.add(blast);
+			  }
+			  hitLocation = hitLocation.add(velocity.normalize());
+			  id = hitLocation.getBlockId(worldObj);
+			  velocity.add(acceleration);
+			  resist = (float) Math.max(hitLocation.getExplosionResistance(worldObj),0);
+			  if(resist<1&&id!=0)
+			  {
+				  resist = 1;
+			  }
+			  blast = Math.min(resist, energy);
+			  if(resist>energy)
+			  {
+				  absorbedLoc.set(hitLocation);
+				  remainingEnergy = energy;
+				  break;
+			  }
+			  energy-=(resist+0.1);
+			  System.out.println(energy);
+		  }
+		  System.out.println("done energy");
+		  n = locations.size();
+		  for(int i = 0; i<n;i++)
+		  {
+			  Vector3 source = locations.get(i);
+			  float strength = blasts.get(i)*blasts.get(i)*(((float)n-(float)i)/((float)n));
+			  if(i%2==0)
+			  source.doExplosion(worldObj, strength, false);
+			  
+			  Cruncher.destroyInRangeV3(source, worldObj, 10, strength);
+		  }
+		  System.out.println("done blasts "+n);
+		  if(remainingEnergy>10)
+		  {
+			  absorbedLoc = absorbedLoc.subtract(velocity.normalize());
+			  Cruncher.destroyInRangeV3(absorbedLoc, worldObj, 50, remainingEnergy);
+		  }
+		  System.out.println("done remainder");
+		  
+	  }
+	  
+	  
 	  public static class Cruncher
 	  {
 	    public Double[] set1 = new Double[]{123456d};
@@ -335,189 +418,6 @@ public class ExplosionCustom
 	    	return quadrant;
 	    }
 	    
-	    
-	    public static List<Integer[]> destroyInRange(List<Integer[]> list, Double[] centre,World worldObj,double scaleFactor,int rMax,double r0,int zMax,int zMin,int yMax,int yMin,int xMax,int xMin)
-	    {
-	      List<Integer> blastR = new ArrayList<Integer>();
-	      List<Integer> x0PosR = new ArrayList<Integer>();
-	      List<Integer> y0PosR = new ArrayList<Integer>();
-	      List<Integer> z0PosR = new ArrayList<Integer>();
-	    //  System.out.println("der");
-	      BitSet blockedLocations = new BitSet();
-	      
-	      IntMap map = new IntMap();
-	      IntMap resists = new IntMap();
-	      
-	      double x0 = centre[0];
-	      double y0 = centre[1];
-	      double z0 = centre[2];
-
-	      ThreadSafeWorldOperations world = new ThreadSafeWorldOperations();
-	      
-	      double vectMag, vHatx, vHaty, vHatz, reflect;
-	      int id=0,idTest=0, xtest, ytest, ztest, xtestprev, ytestprev,ztestprev,index,x,y,z,z1,vectMagSq,
-	    		  xVal = xMin+1,
-	    		  yVal = (yMin+yMax+1),
-	    		  zVal = 1+(zMax+zMin)*(zMax+zMin);
-	      Float prevDamp = 0.0F, damp = 0.0F, dj, blastResist,j,resist;
-	      
-	      int n = 0, meta, metaTest;
-	      
-	      boolean inRange;
-	      for (z = -zMin; z < zMax; z++) {
-	        for (y = -yMin; y < yMax; y++) {
-	          for (x = -xMin; x < xMax; x++) {
-	        	resist=0f;
-	        	damp = 0f;
-	        	prevDamp = 0.0f;
-	        	z1 = z;
-	            vectMagSq = (z1 * z1 + x * x + y * y);
-	            vectMag = Math.sqrt(z1 * z1 + x * x + y * y);
-	            vHatx = x / vectMag;
-	            vHaty = y / vectMag;
-	            vHatz = z1 / vectMag;
-	            if (vectMagSq <= rMax*rMax) {
-	            	//*
-	              if(world.safeLookUp(worldObj,x + x0, z1 + z0, y + y0)){
-	              
-	              
-	              id = world.ID;
-	              meta = world.meta;
-	              index =  x + xVal + (y + yMin) * (yVal) +  (z + zMin) * zVal;
-	              
-	            blastResist = world.blastResistance;
-	              
-            if(world.ID==Block.grass.blockID) blastResist/=2;
-
-            if(blastResist<=1) blastResist/=10;
-            
-            if (world.isLiquid(worldObj,(int)(x + x0), (int)(z1 + z0), (int)(y + y0))&&(vectMag < r0/5)){ 
-            	blastResist = 0.0F;
-            }
-            
-	              inRange = true;
-	              if ((id == 0) || (blastResist > r0 * scaleFactor / (vectMagSq))) { 
-	            	  
-	            	  inRange = false;
-	            	  if (map.contains(index) &&( map.get(index) <= vectMagSq)) {  
-		                    inRange = false;
-		                    
-		                    reflect = r0 * scaleFactor / (vectMagSq);
-		                    
-		                    if(!blockedLocations.get(index)&&reflect>30){
-			                    x0PosR.add((x));
-			                    y0PosR.add((y));
-			                    z0PosR.add((z));
-			                    blastR.add(((int)(1000.0D * reflect)));
-			                    blockedLocations.set(index, true);
-		                    }
-		                    
-		                  }
-	            	  
-	              } else {
-	            	  
-	            	  xtestprev = 0; ytestprev = 0; ztestprev=0;
-	            	  
-	            	  dj = (float)(1);
-	            	  for (j = 0F; j < vectMag; j+=dj) {
-	                  xtest = (int)(j * vHatx);
-	                  ytest = (int)(j * vHaty);
-	                  ztest = (int)(j * vHatz);
-	                  
-	                  if(!(xtest==xtestprev&&ytest==ytestprev&&ztest==ztestprev)){
-	                  
-	                index =  xtest + xVal + (ytest + yMin) * (yVal) +  (ztest + zMin) * zVal;
-	               
-	                  if (map.contains(index) &&( map.get(index) <= vectMagSq)) {  
-	                    inRange = false;
-	                    
-	                    reflect = r0 * scaleFactor / (vectMagSq);
-	                    
-	                    if(!blockedLocations.get(index)&&reflect>30){
-		                    x0PosR.add((xtest));
-		                    y0PosR.add((ytest));
-		                    z0PosR.add((ztest));
-		                    blastR.add(((int)(1000.0D * reflect)));
-		                    blockedLocations.set(index, true);
-	                    }
-	                    
-	                    break;
-	                  }
-	                  
-	                  if(world.safeLookUp(worldObj,xtest + x0, ztest + z0, ytest + y0)){
-	                  idTest = world.ID;
-	                  metaTest = world.meta;
-	                  if (idTest != 0) {
-	                    resist = world.blastResistance;
-	                    if(world.ID==Block.grass.blockID) resist/=2;
-	                    if(resist<=1) resist/=10;
-	                    if (world.isLiquid(worldObj,(int)(xtest + x0), (int)(ztest + z0), (int)(ytest + y0))&&(vectMag < r0/5)){ 
-	                    	resist = 0.0F; 
-	                    	world.safeSet(worldObj,xtest + x0, ztest + z0, ytest + y0, 0, 0);
-	                    }
-
-	                    damp = resist;
-	                    if (damp >= (r0 * scaleFactor / (vectMagSq))) {
-	                      inRange = false;
-	                      
-	                      map.put(index, vectMagSq);
-	                      
-	                      reflect = r0 * scaleFactor / (vectMagSq);
-	                      if(!blockedLocations.get(index)&&reflect>30){
-		                      blockedLocations.set(index, true);
-		                      x0PosR.add((xtest));
-		                      y0PosR.add((ytest));
-		                      z0PosR.add((ztest));
-		                      blastR.add(((int)(1000.0D * reflect)));
-	                      }
-	                      break;
-	                    }else{
-	                      
-		                  world.safeSet(worldObj,xtest+x0, ztest+z0, ytest+y0, 0, 0);
-		                  if(idTest == BlockDust.instance.blockID){
-		                	  n+=metaTest+1;
-		                  }else if(resist>1){
-		                	  n++;
-		                  }
-		                  
-	                    }
-	                  }
-	            	  }}
-	                 prevDamp = damp;
-	                  xtestprev = xtest; ytestprev=ytest;ztestprev=ztest;
-	                }
-	              }
-	              //*
-	              if(inRange){
-	            	  world.safeSet(worldObj,x+x0, z1+z0, y+y0, 0, 0);
-	            	  if(id == BlockDust.instance.blockID){
-	                	  n+=meta+1;
-	                  }else if(blastResist>1){
-	                	  n++;
-	                  }
-	              }
-	              //*/
-	              
-	            }}
-	            
-	            
-	          }
-	        }
-	      }
-	      
-	      blockedLocations.clear();
-	      world.setDead();
-	      list.add(blastR.toArray(new Integer[0]));
-	      blastR.clear();
-	      list.add(x0PosR.toArray(new Integer[0]));
-	      x0PosR.clear();
-	      list.add(y0PosR.toArray(new Integer[0]));
-	      y0PosR.clear();
-	      list.add(z0PosR.toArray(new Integer[0]));
-	      z0PosR.clear();
-	      list.add(new Integer[] {n});
-	      return list;
-	    }
 
 	    public static List<Integer[]> destroyInRangeV2(List<Integer[]> list, Double[] centre,World worldObj,double scaleFactor,int rMax,double r0,int zMax,int zMin,int yMax,int yMin,int xMax,int xMin,boolean vapourize)
 	    {
@@ -710,6 +610,75 @@ public class ExplosionCustom
 	      z0PosR.clear();
 	      list.add(new Integer[] {n});
 	      return list;
+	    }
+	    
+	    public static void destroyInRangeV3(Vector3 centre,World worldObj,int radius,double strength)
+	    {
+	      //Map<Integer, Integer> resists = new HashMap<Integer, Integer>();
+	      double scaleFactor = 10;
+	      double x0 = centre.x;
+	      double y0 = centre.y;
+	      double z0 = centre.z;
+	      double radSq = radius*radius;
+	      int n = 0;
+	      int l = 0;
+	      
+	      Map<Vector3, Integer[]> removed = new HashMap<Vector3, Integer[]>();
+	      
+	      for(int z = -radius; z<=radius; z++)
+	    	  for(int y = -radius; y<=radius; y++)
+	    		  for(int x = -radius; x<=radius; x++)
+	    		  {
+	    			  double rSq = x*x+y*y+z*z;
+	    			  if(rSq>radSq)
+	    				  continue;
+	    			  Vector3 r = new Vector3(x,y,z);
+	    			  if(r.add(centre).getBlockId(worldObj)==0&&!(x==0&&y==0&&z==0))
+	    				  continue;
+	    			  float resist = r.add(centre).getExplosionResistance(worldObj);
+	    			  if(resist>strength*scaleFactor/r.magSq())
+		    			  continue;
+	    			  
+	    			  Vector3 rHat = r.normalize();
+	    			  Vector3 rTest = centre;
+	    			  Vector3 rTestPrev = new Vector3();
+	    			  double rMag = r.mag();
+	    			  float damp = 0;
+	    			  boolean valid = true;
+	    			  
+	    			  for(double i = 0; i<rMag+1; i++)
+	    			  {
+	    				  rTest = centre.add(rHat.scalarMult(i));
+	    				  if(!rTest.sameBlock(rTestPrev))
+	    				  {
+	    					  n++;
+	    					  resist = rTest.getExplosionResistance(worldObj);
+	    					  damp += resist;
+	    					  if(damp>strength*scaleFactor/(rHat.scalarMult(i).magSq()))
+	    					  {
+	    						  valid = false;
+	    						  l++;
+	    						  break;
+	    					  }
+	    				  }
+	    				  rTestPrev = rTest.Copy();
+	    			  }
+	    			  if(valid&&r.getBlockId(worldObj)!=DUSTID)
+	    			  {
+	    				  if(!(x==0&&y==0&&z==0))
+	    					  removed.put(r.add(centre),new Integer[]{DUSTID,15});
+	    				  else
+	    					  removed.put(r.add(centre),new Integer[]{BlockLava.getInstance(0).blockID,0});
+	    				  
+	    			  }
+	    		  }
+	      System.out.println(removed.size()+" "+strength+" "+n+" "+l);
+	      for(Vector3 r: removed.keySet())
+	      {
+	    	  r.setBlock(worldObj, removed.get(r)[1], removed.get(r)[0]);
+	      }
+	      removed.clear();
+	      
 	    }
 	
 	

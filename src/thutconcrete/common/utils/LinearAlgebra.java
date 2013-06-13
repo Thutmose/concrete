@@ -390,7 +390,7 @@ public class LinearAlgebra {
 	   * @param MatrixA
 	   * @param MatrixB
 	   * @return
-	   */
+	   * /
 	  public static double[][] matrixMatrixMult(double[][] MatrixA, double[][] MatrixB){
 		  int n = MatrixA.length;
 		  int m = MatrixB[0].length;
@@ -403,6 +403,7 @@ public class LinearAlgebra {
 		  }
 		  return MatrixC;
 	  }
+	 // */
 	  
 	  /**
 	   * Adds MatrixA and MatrixB

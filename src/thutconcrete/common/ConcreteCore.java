@@ -13,9 +13,12 @@ import static net.minecraftforge.common.BiomeDictionary.Type;
 import thutconcrete.common.blocks.*;
 import thutconcrete.common.corehandlers.*;
 
+import thutconcrete.common.entity.EntityBeam;
 import thutconcrete.common.finiteWorld.WorldTypeCustom;
 import thutconcrete.common.ticks.TickHandler;
 import thutconcrete.common.tileentity.*;
+import thutconcrete.common.utils.EntityChunkLoader;
+import thutconcrete.common.utils.Vector3;
 
 import thutconcrete.common.worldgen.*;
 
@@ -25,9 +28,12 @@ import net.minecraft.entity.Entity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTBase;
+import net.minecraft.world.World;
 import net.minecraft.world.WorldType;
 import net.minecraft.world.biome.BiomeGenBase;
 import net.minecraftforge.common.*;
+import net.minecraftforge.event.ForgeSubscribe;
+import net.minecraftforge.event.world.WorldEvent;
 import net.minecraftforge.oredict.OreDictionary;
 import cpw.mods.fml.common.FMLLog;
 import cpw.mods.fml.common.Mod;
@@ -40,6 +46,7 @@ import cpw.mods.fml.common.event.FMLInitializationEvent;
 import cpw.mods.fml.common.event.FMLPostInitializationEvent;
 import cpw.mods.fml.common.event.FMLPreInitializationEvent;
 import cpw.mods.fml.common.network.NetworkMod;
+import cpw.mods.fml.common.network.NetworkRegistry;
 import cpw.mods.fml.common.registry.EntityRegistry;
 import cpw.mods.fml.common.registry.GameRegistry;
 import cpw.mods.fml.common.registry.LanguageRegistry;
@@ -90,6 +97,8 @@ public class ConcreteCore {
 	public BlockHandler blockList;
 	public ItemHandler itemList;
 	public RecipeHandler recipes;
+	
+	public EntityChunkLoader chunks;
 
 	// Configuration Handler that handles the config file
 	public ConfigHandler config;
@@ -102,6 +111,7 @@ public class ConcreteCore {
 		
 		saveList = new TSaveHandler();
 		MinecraftForge.EVENT_BUS.register(saveList);
+		MinecraftForge.EVENT_BUS.register(this);
 		
 		if(config.ChunkSize>=20)
 		{
@@ -120,6 +130,9 @@ public class ConcreteCore {
 		liquidHndlr = new LiquidHandler();
 		MinecraftForge.EVENT_BUS.register(liquidHndlr);
 		
+		chunks = new EntityChunkLoader();
+		MinecraftForge.EVENT_BUS.register(chunks);
+		
 		TickRegistry.registerTickHandler(tickHandler, Side.SERVER);
 		
 		LanguageRegistry.instance().addStringLocalization("generator.FINITE", "en_US", "Finite World");
@@ -127,14 +140,13 @@ public class ConcreteCore {
 		
 		GameRegistry.registerWorldGenerator(new TrassWorldGen());
 		GameRegistry.registerWorldGenerator(new VolcanoWorldGen());
-	//	GameRegistry.registerWorldGenerator(new LimestoneWorldGen());
 		
-		
-		GameRegistry.registerTileEntity(TileEntityBlock16Fluid.class, "Fluid16BlockTE");
-		GameRegistry.registerTileEntity(TileEntityVolcano.class, "VolcanoTE");
-		
+		commproxy.registerEntities();
+		commproxy.registerTEs();
 		
 		populateMap();
+		LanguageRegistry.instance().addStringLocalization("thutconcrete.container.limekiln", "Lime Kiln");
+		NetworkRegistry.instance().registerGuiHandler(this, commproxy);
 		
 		blockList = new BlockHandler(config);
 		itemList = new ItemHandler(config);
@@ -167,12 +179,18 @@ public class ConcreteCore {
 		registerEntity(clas, name, 1);
 	}
 	
-	
+    @ForgeSubscribe
+    public void onWorldUnLoad(WorldEvent.Unload event)
+    {
+         EntityChunkLoader.onWorldUnloaded();
+    }
+    
 	public static Map<Short, Byte> colourMap = new HashMap<Short, Byte>();
 	public static Map<String, Integer> oreMap0 = new HashMap<String, Integer>();
 	public static Map<String, Integer> oreMap1 = new HashMap<String, Integer>();
 	public static Map<String, Integer> oreMap2 = new HashMap<String, Integer>();
 	public static List<String> ores = new ArrayList<String>();
+	public static final Vector3 g = new Vector3(0,-0.06,0);
 	
 	void populateMap(){
 		

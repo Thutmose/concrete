@@ -3,13 +3,13 @@ package thutconcrete.common.blocks;
 import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 
-import thutconcrete.client.BlockRenderHandler;
+import thutconcrete.client.render.BlockRenderHandler;
 import thutconcrete.common.ConcreteCore;
 import thutconcrete.common.corehandlers.TSaveHandler;
 import thutconcrete.common.items.ItemConcreteDust;
 import thutconcrete.common.tileentity.TileEntityBlock16Fluid;
-import thutconcrete.common.utils.IMultiPaintableBlock;
 import thutconcrete.common.utils.ISaveable;
+import thutconcrete.common.utils.IStampableBlock;
 
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
@@ -29,7 +29,7 @@ import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
 import net.minecraftforge.common.ForgeDirection;
 
-public class BlockConcrete extends Block16Fluid implements ITileEntityProvider//, IMultiPaintableBlock
+public class BlockConcrete extends Block16Fluid implements ITileEntityProvider, IStampableBlock
 {
 	
 
@@ -45,6 +45,7 @@ public class BlockConcrete extends Block16Fluid implements ITileEntityProvider//
 		this.instance = this;
 		this.setStepSound(soundStoneFootstep);
 		this.solid = true;
+		this.stampable = true;
 		setData();
 	}
 	
@@ -134,14 +135,9 @@ public class BlockConcrete extends Block16Fluid implements ITileEntityProvider//
 	    /**
 	     * Retrieves the block texture to use based on the display side. Args: iBlockAccess, x, y, z, side
 	     */
-	    public Icon getBlockTexture(IBlockAccess par1IBlockAccess, int x, int y, int z, int par5)
+	    public Icon getBlockTexture(IBlockAccess par1IBlockAccess, int x, int y, int z, int side)
 	    {
-		 TileEntityBlock16Fluid te = (TileEntityBlock16Fluid) par1IBlockAccess.getBlockTileEntity(x, y, z);
-		 if(te.icons[par5]==null)
-		 {
-			 te.icons[par5]=this.iconArray[te.metaArray[par5]&15];
-		 }
-		 return te.icons[par5];
+		 	return getSideIcon(par1IBlockAccess, x, y, z, side);
 	    }
 	
 	    /**
@@ -161,4 +157,39 @@ public class BlockConcrete extends Block16Fluid implements ITileEntityProvider//
 		 {
 		    return new TileEntityBlock16Fluid();
 		 }
+
+		@Override
+		public Icon getSideIcon(IBlockAccess par1IBlockAccess, int x, int y,
+				int z, int side) {
+			 TileEntityBlock16Fluid te = (TileEntityBlock16Fluid) par1IBlockAccess.getBlockTileEntity(x, y, z);
+			 if(te.icons[side]==null)
+			 {
+				 te.icons[side]=this.iconArray[te.metaArray[side]&15];
+			 }
+			 return te.icons[side];
+		}
+
+		@Override
+		public int sideIconBlockId(IBlockAccess world, int x, int y, int z,
+				int side) {
+			TileEntityBlock16Fluid te = (TileEntityBlock16Fluid) world.getBlockTileEntity(x, y, z);
+			
+			return te.iconIDs[side];
+		}
+
+		@Override
+		public int sideIconMetadata(IBlockAccess world, int x, int y, int z,
+				int side) {
+			TileEntityBlock16Fluid te = (TileEntityBlock16Fluid) world.getBlockTileEntity(x, y, z);
+			
+			return te.metaArray[side];
+		}
+
+		@Override
+		public int sideIconSide(IBlockAccess world, int x, int y, int z,
+				int side) {
+			TileEntityBlock16Fluid te = (TileEntityBlock16Fluid) world.getBlockTileEntity(x, y, z);
+			
+			return te.sideArray[side];
+		}
 }

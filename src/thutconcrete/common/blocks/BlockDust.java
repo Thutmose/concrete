@@ -145,7 +145,7 @@ public class BlockDust extends Block16Fluid
         Block block = Block.blocksList[id];
         float f = 0.0625F;
         if(!(safe.isLiquid(par1World, par2,par3-1,par4)||
-        		par1World.isAirBlock(par2, par3-1, par4)||(block instanceof Block16Fluid&&meta!=15))){
+        		par1World.isAirBlock(par2, par3-1, par4)||(block instanceof Block16Fluid&&meta!=0))){
         return AxisAlignedBB.getAABBPool().getAABB((double)par2 + this.minX, (double)par3 + this.minY, (double)par4 + this.minZ, (double)par2 + this.maxX, (double)((float)par3 + (float)l * f), (double)par4 + this.maxZ);
         }
         else{

@@ -1,18 +1,37 @@
 package thutconcrete.common.utils;
 
+import java.awt.Color;
+import java.io.DataOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+
+import com.google.common.io.ByteArrayDataInput;
+import com.google.common.io.ByteArrayDataOutput;
+
 
 import net.minecraft.block.Block;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLiving;
+import net.minecraft.entity.item.EntityItem;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.AxisAlignedBB;
+import net.minecraft.util.Vec3;
 import net.minecraft.world.World;
+import net.minecraftforge.liquids.ILiquid;
+import net.minecraftforge.liquids.LiquidContainerRegistry;
+import net.minecraftforge.liquids.LiquidStack;
 
 public class Vector3 
 {
-	double x,  y,  z;
-	final int length = 3;
+	public double x;
+	public double y;
+	public double z;
+	public static final int length = 3;
+	public static final int dataSize = 12;
+	public boolean valid = true;
 	
 	public static double sqrt3 = Math.sqrt(3);
 	public static double sqrt2 = Math.sqrt(2);
@@ -28,12 +47,231 @@ public class Vector3
 		this.y = y;
 		this.z = z;
 	}
+	/**
+	 *  This takes degrees then converts to radians, as it seems most people like to work with degrees.
+	 * @param pitch
+	 * @param yaw
+	 */
+	public Vector3(double pitch, double yaw)
+	{
+		this.x = 1;
+		this.y = Math.toRadians(pitch);
+		this.z = Math.toRadians(yaw);
+	}
 	
 	public Vector3()
 	{
 		this.x = this.y = this.z = 0;
 	}
 	
+	public Vector3 (Entity e)
+	{
+		if(e!=null)
+		{
+			this.x = e.posX;
+			this.y = e.posY;
+			this.z = e.posZ;
+		}
+	}
+	
+	public Vector3 (Vec3 vec)
+	{
+		this.x = vec.xCoord;
+		this.y = vec.yCoord;
+		this.z = vec.zCoord;
+	}
+	
+	public Vec3 toVec3()
+	{
+		return Vec3.createVectorHelper(x, y, z);
+	}
+	
+	public Vector3 (Entity e, boolean bool)
+	{
+		if(e!=null&&bool)
+		{
+			this.x = e.posX;
+			this.y = e.posY+e.height/2;
+			this.z = e.posZ;
+		}
+		else if(e!=null)
+		{
+			this.x = e.posX;
+			this.y = e.posY+e.height;
+			this.z = e.posZ;
+		}
+	}
+	
+	public Vector3 (TileEntity e)
+	{
+		this(e.xCoord,e.yCoord,e.zCoord);
+	}
+	
+	public Vector3(double[] a) {
+		this(a[0],a[1],a[2]);
+	}
+	
+	public Vector3(Object a, Object b)
+	{
+		this();
+		Vector3 A = new Vector3(a);
+		Vector3 B = new Vector3(b);
+		this.set(B.subtract(A));
+	}
+	
+	public Vector3(Object a)
+	{
+		this();
+		if(a instanceof Entity)
+		{
+			 this.set(new Vector3((Entity)a));
+		}
+		else if(a instanceof TileEntity)
+		{
+			this.set(new Vector3((TileEntity)a));
+		}
+		else if(a instanceof double[])
+		{
+			this.set(new Vector3((double[])a));
+		}
+	}
+
+	public List<Entity> livingEntityInBox(World worldObj)
+	{
+		int x0 = intX(), y0 = intY(), z0 = intZ();
+		List<Entity> targets = worldObj.getEntitiesWithinAABB(EntityLiving.class, AxisAlignedBB.getBoundingBox(x0, y0, z0, x0+1, y0+1, z0+1));
+		return targets;
+	}
+	
+	public List<Entity> livingEntityAtPoint(World worldObj)
+	{
+		int x0 = intX(), y0 = intY(), z0 = intZ();
+		List<Entity> ret = new ArrayList<Entity>();
+		List<Entity> targets = worldObj.getEntitiesWithinAABB(EntityLiving.class, AxisAlignedBB.getBoundingBox(x0, y0, z0, x0+1, y0+1, z0+1));
+		for(Entity e:targets)
+		{
+			if(!isPointClearOfEntity(x, y, z, e))
+			{
+				ret.add(e);
+			}
+		}
+		return ret;
+	}
+
+	public List<Entity> livingEntityAtPointExcludingEntity(World worldObj, Entity entity)
+	{
+		int x0 = intX(), y0 = intY(), z0 = intZ();
+		List<Entity> ret = new ArrayList<Entity>();
+		List<Entity> targets = worldObj.getEntitiesWithinAABB(EntityLiving.class, AxisAlignedBB.getBoundingBox(x0, y0, z0, x0+1, y0+1, z0+1));
+		for(Entity e:targets)
+		{
+			if(!isPointClearOfEntity(x, y, z, e)&&e!=entity)
+			{
+				ret.add(e);
+			}
+		}
+		return ret;
+	}
+	
+	public void setBlock(World worldObj, int meta, int id)
+	{
+		worldObj.setBlock(intX(), intY(), intZ(), id, meta, 3);
+	}
+	public void setBlock(World worldObj,int id)
+	{
+		worldObj.setBlock(intX(), intY(), intZ(),id);
+	}
+	
+	public boolean aabbClear(AxisAlignedBB aabb)
+	{
+		if(y<=aabb.maxY&&y>=aabb.minY)
+			return false;
+		if(z<=aabb.maxZ&&z>=aabb.minZ)
+			return false;
+		if(x<=aabb.maxX&&x>=aabb.minX)
+			return false;
+		
+		return true;
+	}
+	
+	public boolean inMatBox(Matrix3 box)
+	{
+		Vector3 min = box.get(0);
+		Vector3 max = box.get(1);
+		boolean ycheck = false, xcheck = false, zcheck = false;
+		
+		if(y<=max.y&&y>=min.y)
+			ycheck = true;
+		if(z<=max.z&&z>=min.z)
+			zcheck = true;
+		if(x<=max.x&&x>=min.x)
+			xcheck = true;
+		
+		return ycheck&&zcheck&&xcheck;
+	}
+	
+	public double perpendicularDistance(Vector3 vec)
+	{
+		Vector3 a = this.subtract(vec);
+		Vector3 b = this.normalize().scalarMult(this.normalize().dot(a));
+		
+		return (a.subtract(b)).mag();
+		
+	}
+	
+	public List<Entity> anyEntity(World worldObj)
+	{
+		int x0 = intX(), y0 = intY(), z0 = intZ();
+		List<Entity> targets = worldObj.getEntitiesWithinAABB(Entity.class, AxisAlignedBB.getBoundingBox(x0, y0, z0, x0+1, y0+1, z0+1));
+
+		return targets;
+	}
+	
+	public TileEntity tileEntity(World worldObj)
+	{	
+		return worldObj.getBlockTileEntity(intX(), intY(), intZ());
+	}	
+	
+	public void setTileEntity(World worldObj, TileEntity te)
+	{
+		worldObj.setBlockTileEntity(intX(), intY(), intZ(), te);
+	}
+	
+	public double distToEntity(Entity e)
+	{
+		return vectorMag(vectorSubtract(this, entity(e)));
+	}
+	
+	public double distanceTo(Vector3 vec)
+	{
+		return vectorMag(vectorSubtract(this, vec));
+	}
+	
+	public boolean equals(Vector3 vec)
+	{
+		return this.x == vec.x && this.y == vec.y && this.z == vec.z;
+	}
+	
+	public boolean sameBlock(Vector3 vec)
+	{
+		return this.intX() == vec.intX() && this.intY() == vec.intY() && this.intZ() == vec.intZ();
+	}
+	
+	public Vector3 set(Vector3 vec)
+	{
+		this.x = vec.x;
+		this.y = vec.y;
+		this.z = vec.z;
+		
+		return this;
+	}
+	
+	public void set(double[] vec)
+	{
+		this.x = vec[0];
+		this.y = vec[1];
+		this.z = vec[2];
+	}
 	
 	public double get(int i)
 	{
@@ -73,19 +311,42 @@ public class Vector3
 		}
 	}
 	
-	public double[] getLocationArray()
-	{
-		return new double[] {x,y,z};
-	}
 	
 	public Block getBlock(World worldObj)
 	{
 		return Block.blocksList[worldObj.getBlockId(intX(), intY(), intZ())];
 	}
 	
+	public float getExplosionResistance(World worldObj)
+	{
+		Block block = getBlock(worldObj);
+		
+		if(block!=null&&block.blockID!=0)
+		{
+			return block.getExplosionResistance((Entity)null, worldObj, (int)x,(int)y, (int)z, 0d, 0d, 0d);
+		}
+		return 0;
+		
+	}
+	
+	public void doExplosion(World worldObj, float strength, boolean real)
+	{
+		worldObj.createExplosion(null, x, y, z, strength, real);
+	}
+	
+	public TileEntity getTileEntity(World worldObj)
+	{
+		return worldObj.getBlockTileEntity(intX(), intY(), intZ());
+	}
+	
 	public int getBlockId(World worldObj)
 	{
 		return worldObj.getBlockId(intX(), intY(), intZ());
+	}
+	
+	public int getBlockMetadata(World worldObj)
+	{
+		return worldObj.getBlockMetadata(intX(), intY(), intZ());
 	}
 	
 	public int intX()
@@ -115,19 +376,45 @@ public class Vector3
 		return new Vector3(a[0],a[1],a[2]);
 	}
 	
+	public static Vector3 entity(Entity e)
+	{
+		if(e!=null)
+			return new Vector3(e.posX,e.posY,e.posZ);
+		return null;
+	}
+	
 	public double[] toArray()
 	{
 		return new double[] {x,y,z};
 	}
 	
-	private ThreadSafeWorldOperations look = new ThreadSafeWorldOperations();
+	public Double[] toArrayD()
+	{
+		return new Double[] {x,y,z};
+	}
+	
+	public static int Int(double x)
+	{
+		return (x>0?(int)x:(int)x-1);
+	}
+	
+	public String toString()
+	{
+		return "x:"+x+" y:"+y+" z:"+z;
+	}
+	
+	public double HorizonalDist(Vector3 vec)
+	{
+		return Math.sqrt((x-vec.x)*(x-vec.x)+(z-vec.z)*(z-vec.z));
+	}
 	
 	  /**
 	   * Returns the unit vector in with the same direction as vector.
 	   * @param vector
 	   * @return unit vector in direction of vector.
 	   */
-	  public static Vector3 vectorNormalize(Vector3 vector){
+	  public static Vector3 vectorNormalize(Vector3 vector)
+	  {
 			double vmag = vectorMag(vector);
 		  	Vector3 vhat = vectorScalarMult(vector, 1/vmag);
 			return vhat;
@@ -138,19 +425,74 @@ public class Vector3
 	   * @param vector
 	   * @return unit vector in direction of vector.
 	   */
-	  public Vector3 vectorToSpherical(Vector3 vector, boolean minecraft){
+	  public Vector3 normalize()
+	  {
+			double vmag = vectorMag(this);
+		  	Vector3 vhat = vectorScalarMult(this, 1/vmag);
+			return vhat;
+	  }
+	  
+	  /**
+	   * Returns the unit vector in with the same direction as vector.
+	   * @param vector
+	   * @return unit vector in direction of vector.
+	   */
+	  public static Vector3 vectorToSpherical(Vector3 vector, boolean minecraft)
+	  {
 		  Vector3 vectorSpher = new Vector3();
 		  vectorSpher.x = vectorMag(vector);
 		  vectorSpher.y = Math.acos(vector.get(minecraft?1:2)/vectorSpher.x)-pi/2;
 		  vectorSpher.z = Math.atan2(vector.get(minecraft?2:1),vector.x);
-		  //TODO
+		  
+		  
 		  return vectorSpher;
 	  }
 	  
-	  private Vector3 horizonalPerp(Vector3 vector)
+	  /**
+	   * Returns the unit vector in with the same direction as vector.
+	   * @param vector
+	   * @return unit vector in direction of vector.
+	   */
+	  public Vector3 toSpherical()
 	  {
-		  Vector3 vectorH = new Vector3(vector.x, 0, vector.y);
+		  Vector3 vectorSpher = new Vector3();
+		  vectorSpher.x = vectorMag(this);
+		  vectorSpher.y = Math.acos(this.get(1)/vectorSpher.x)-pi/2;
+		  vectorSpher.z = Math.atan2(this.get(2),this.x);
+		  return vectorSpher;
+	  }
+	  
+	  /**
+	   * Returns the unit vector in with the same direction as vector.
+	   * @param vector
+	   * @return unit vector in direction of vector.
+	   */
+	  public Vector3 toCartesian()
+	  {
+		  Vector3 vectorCart = new Vector3();
+		  vectorCart.x = x*Math.cos(y)*Math.cos(z);
+		  vectorCart.z = x*Math.cos(y)*Math.sin(z);
+		  vectorCart.y = x*Math.sin(y);
+		  return vectorCart;
+	  }
+	  
+	  public Vector3 anglesTo(Vector3 target)
+	  {
+		  Vector3 ret = new Vector3();
+		  ret = (this.toSpherical()).subtract(target.toSpherical());
+		  return ret;
+	  }
+	  
+	  public static Vector3 horizonalPerp(Vector3 vector)
+	  {
+		  Vector3 vectorH = new Vector3(vector.x, 0, vector.z);
 		  return vectorRotateAboutLine(vectorH, secondAxis, pi/2);
+	  }
+	  
+	  public Vector3 horizonalPerp()
+	  {
+		  Vector3 vectorH = new Vector3(x, 0, z);
+		  return vectorNormalize(vectorRotateAboutLine(vectorH, secondAxis, pi/2));
 	  }
 	  
 	  /**
@@ -159,9 +501,23 @@ public class Vector3
 	   * @param vectorB
 	   * @return
 	   */
-	  public static Vector3 vectorAdd(Vector3 vectorA, Vector3 vectorB){
+	  public static Vector3 vectorAdd(Vector3 vectorA, Vector3 vectorB)
+	  {
 		  	Vector3 vectorC = new Vector3();
 			for(int i=0; i < vectorA.length; i++){vectorC.set(i, vectorA.get(i)+vectorB.get(i));}
+			return vectorC;
+	  }
+	  
+	  /**
+	   * Adds vectorA to vectorB
+	   * @param vectorA
+	   * @param vectorB
+	   * @return
+	   */
+	  public Vector3 add(Vector3 vectorB)
+	  {
+		  	Vector3 vectorC = new Vector3();
+			for(int i=0; i < 3; i++){vectorC.set(i, this.get(i)+vectorB.get(i));}
 			return vectorC;
 	  }
 	  
@@ -171,20 +527,32 @@ public class Vector3
 	   * @param vectorB
 	   * @return
 	   */
-	  public Vector3 vectorSubtract(Vector3 vectorA, Vector3 vectorB){
+	  public static Vector3 vectorSubtract(Vector3 vectorA, Vector3 vectorB){
 		  	Vector3 vectorC = new Vector3();
 			for(int i=0; i < vectorA.length; i++){vectorC.set(i, vectorA.get(i)-vectorB.get(i));}
 			return vectorC;
 	  }
 	  
-	  public double moduloPi(double num)
+	  
+	  /**
+	   * Subtracts vectorB from vectorA
+	   * @param vectorA
+	   * @param vectorB
+	   * @return
+	   */
+	  public Vector3 subtract(Vector3 vectorB){
+		  	Vector3 vectorC = new Vector3();
+			for(int i=0; i < 3; i++){vectorC.set(i, this.get(i)-vectorB.get(i));}
+			return vectorC;
+	  }
+	  
+	  public static double moduloPi(double num)
 	  {
 		  double newnum = num;
 		  if(num>pi)
 		  {
 			  while(newnum>pi)
 			  {
-			//	  System.out.println(num+" "+newnum+" "+(newnum-pi));
 				  newnum-=pi;
 			  }
 		  }
@@ -192,7 +560,6 @@ public class Vector3
 		  {
 			  while(newnum<-pi)
 			  {
-			//	  System.out.println(num+" "+newnum+" "+(newnum+pi));
 				  newnum+=pi;
 			  }
 		  }
@@ -223,6 +590,27 @@ public class Vector3
 	  }
 	  
 	  /**
+	   * Returns the magnitude of vector
+	   * @param vector
+	   * @return
+	   */
+	  public double mag(){
+			double vmag = Math.sqrt(magSq());
+			return vmag;
+	  }
+	  
+	  /**
+	   * Returns the magnitude of vector squared
+	   * @param vector
+	   * @return
+	   */
+	  public double magSq(){
+			double vmag = 0;
+			for(int i=0; i < this.length; i = i+1){vmag = vmag + this.get(i)*this.get(i);}
+			return vmag;
+	  }
+	  
+	  /**
 	   * Multiplies the vector by the constant.
 	   * @param vector
 	   * @param constant
@@ -233,6 +621,19 @@ public class Vector3
 		  	for(int i=0; i < vector.length; i = i+1){newVector.set(i, constant*vector.get(i));}
 			return newVector;
 	  }
+	  
+	  /**
+	   * Multiplies the vector by the constant.
+	   * @param vector
+	   * @param constant
+	   * @return
+	   */
+	  public Vector3 scalarMult(double constant){
+			Vector3 newVector = new Vector3();
+		  	for(int i=0; i < this.length; i++){newVector.set(i, constant*this.get(i));}
+			return newVector;
+	  }
+	  
 	    
 	  /**
 	   * Left multiplies the Matrix by the Vector
@@ -240,7 +641,7 @@ public class Vector3
 	   * @param vector
 	   * @return
 	   */
-	  public Vector3 vectorMatrixMult(Matrix3 Matrix, Vector3 vector){
+	  public static Vector3 vectorMatrixMult(Matrix3 Matrix, Vector3 vector){
 		  Vector3 newVect = new Vector3();
 		  for(int i=0;i<3;i++){
 			  for(int j=0;j<vector.length;j++){
@@ -271,6 +672,11 @@ public class Vector3
 		  return vectorScalarMult(ret,vMag);
 	  }
 	  
+	  public static Vector3 linearInterpolate(Vector3 A, Vector3 B, double t)
+	  {
+		  return vectorAdd(A,vectorScalarMult(vectorSubtract(B, A), t));
+	  }
+	  
 	  /**
 	   * Rotates the given vector around the given line by the given angle.
 	   * This internally normalizes the line incase it is not already normalized
@@ -279,7 +685,38 @@ public class Vector3
 	   * @param angle
 	   * @return
 	   */
-	  public Vector3 vectorRotateAboutLine(Vector3 vector, Vector3 line, double angle){
+	  public static Vector3 vectorRotateAboutLine(Vector3 vector, Vector3 line, double angle){
+		  line = line.normalize();
+		  Vector3 ret;
+		  
+		  Matrix3 TransMatrix = new Matrix3();
+		  
+		  TransMatrix.get(0).x = line.get(0)*line.get(0)*(1-Math.cos(angle))+Math.cos(angle);
+		  TransMatrix.get(0).y = line.get(0)*line.get(1)*(1-Math.cos(angle))-line.get(2)*Math.sin(angle);
+		  TransMatrix.get(0).z = line.get(0)*line.get(2)*(1-Math.cos(angle))+line.get(1)*Math.sin(angle);
+		  
+		  TransMatrix.get(1).x = line.get(1)*line.get(0)*(1-Math.cos(angle))+line.get(2)*Math.sin(angle);
+		  TransMatrix.get(1).y = line.get(1)*line.get(1)*(1-Math.cos(angle))+Math.cos(angle);
+		  TransMatrix.get(1).z = line.get(1)*line.get(2)*(1-Math.cos(angle))-line.get(0)*Math.sin(angle);
+		  
+		  TransMatrix.get(2).x = line.get(2)*line.get(0)*(1-Math.cos(angle))-line.get(1)*Math.sin(angle);
+		  TransMatrix.get(2).y = line.get(2)*line.get(1)*(1-Math.cos(angle))+line.get(0)*Math.sin(angle);
+		  TransMatrix.get(2).z = line.get(2)*line.get(2)*(1-Math.cos(angle))+Math.cos(angle);
+		  
+		  ret = vectorMatrixMult(TransMatrix, vector);
+		  
+		  return ret;
+	  }
+	  
+	  /**
+	   * Rotates the given vector around the given line by the given angle.
+	   * This internally normalizes the line incase it is not already normalized
+	   * @param vectorH
+	   * @param line
+	   * @param angle
+	   * @return
+	   */
+	  public Vector3 rotateAboutLine(Vector3 line, double angle){
 		  line = vectorNormalize(line);
 		  Vector3 ret;
 		  Matrix3 TransMatrix = new Matrix3();
@@ -296,7 +733,7 @@ public class Vector3
 		  TransMatrix.get(2).y = line.get(2)*line.get(1)*(1-Math.cos(angle))+line.get(0)*Math.sin(angle);
 		  TransMatrix.get(2).z = line.get(2)*line.get(2)*(1-Math.cos(angle))+Math.cos(angle);
 		  
-		  ret = vectorMatrixMult(TransMatrix, vector);
+		  ret = vectorMatrixMult(TransMatrix, this);
 		  return ret;
 	  }
 	  
@@ -307,8 +744,19 @@ public class Vector3
 	   * @param yaw
 	   * @return
 	   */
-	  public Vector3 vectorRotateAboutAngles(Vector3 vector, double pitch, double yaw){
+	  public static Vector3 vectorRotateAboutAngles(Vector3 vector, double pitch, double yaw){
 		  return vectorRotateAboutLine(vectorRotateAboutLine(vector, secondAxis, yaw),horizonalPerp(vector), pitch);
+	  }
+	  
+	  /**
+	   *  Rotates the given vector by the given amounts of pitch and yaw.
+	   * @param vector
+	   * @param pitch
+	   * @param yaw
+	   * @return
+	   */
+	  public Vector3 rotateAboutAngles(double pitch, double yaw){
+		  return vectorRotateAboutLine(vectorRotateAboutLine(this, secondAxis, yaw),horizonalPerp(this), pitch);
 	  }
 	  
 	  /**
@@ -326,6 +774,20 @@ public class Vector3
 	  }
 	  
 	  /**
+	   * Returns the dot (scalar) product of the two vectors
+	   * @param vector1
+	   * @param vector2
+	   * @return
+	   */
+	  public double dot(Vector3 vector2){
+		  double dot = 0;
+		  for(int i=0; i<3;i++){
+			  dot += this.get(i)*vector2.get(i);
+		  }
+		  return dot;
+	  }
+	  
+	  /**
 	   * Returns the angle between two vectors
 	   * @param vector1
 	   * @param vector2
@@ -336,13 +798,13 @@ public class Vector3
 	  }
 	  
 	  /**
-	   * Returns the dot (scalar) product of the two vectors
+	   * Returns the angle between two vectors
 	   * @param vector1
 	   * @param vector2
 	   * @return
 	   */
-	  public  static float vectorComponentDot(float x, float x1, float y, float y1, float z, float z1){
-		  return x*x1+y*y1+z*z1;
+	  public double angle(Vector3 vector2){
+		 return Math.acos(vectorDot(vectorNormalize(this),vectorNormalize(vector2)));
 	  }
 	  
 	  /**
@@ -353,11 +815,23 @@ public class Vector3
 	   * @param j
 	   * @return
 	   */
-	  public  static double[] vectorSwap(double[] vector, int i, int j){
-		  double temp = vector[i];
-		  vector[i] = vector[j];
-		  vector[j] = temp;
+	  public static Vector3 vectorSwap(Vector3 vector, int i, int j){
+		  Vector3 ret = new Vector3();
+		  ret.set(i, vector.get(j));
+		  ret.set(j, vector.get(i));
 		  return vector;
+	  }
+	  
+	  /**
+	   * Swaps the ith and jth element of the vector
+	   * useful for converting from x,y,z to x,z,y
+	   * @param i
+	   * @param j
+	   * @return
+	   */
+	  public void swap(int i, int j){
+		  this.set(i, this.get(j));
+		  this.set(j, this.get(i));
 	  }
 	  
 	  /**
@@ -366,17 +840,29 @@ public class Vector3
 	   * @param vector2
 	   * @return
 	   */
-	  public  static double[] vectorCross(double[] vector1, double[] vector2){
-		  double[] vector3 = new double[] {0,0,0};
-		  for(int i=0;i<vector1.length;i++){
-			  vector3[i]=vector1[(i+1)%3]*vector2[(i+2)%3]-vector1[(i+2)%3]*vector2[(i+1)%3];
+	  public  static Vector3 vectorCross(Vector3 vector1, Vector3 vector2){
+		  Vector3 vector3 = new Vector3();
+		  for(int i=0;i<3;i++){
+			  vector3.set(i, vector1.get((i+1)%3)*vector2.get((i+2)%3)-vector1.get((i+2)%3)*vector2.get((i+1)%3));
 		  }
 		  return vector3;
 	  }
-
-
 	  
-	  public static Vector3 findMidPoint(List<Double[]> points){
+	  /**
+	   * Returns the cross (vector) product of the two vectors.
+	   * @param vector1
+	   * @param vector2
+	   * @return
+	   */
+	  public Vector3 cross(Vector3 vector2){
+		  Vector3 vector3 = new Vector3();
+		  for(int i=0;i<3;i++){
+			  vector3.set(i, this.get((i+1)%3)*vector2.get((i+2)%3)-this.get((i+2)%3)*vector2.get((i+1)%3));
+		  }
+		  return vector3;
+	  }
+	  
+	  public static Vector3 findMidPointD(List<Double[]> points){
 		  Vector3 mid = new Vector3();
 		  for(int j=0;j<points.size();j++){
 			  mid=vectorAdd(Vector3.ArrayTo(points.get(j)),mid);
@@ -387,32 +873,87 @@ public class Vector3
 		  return mid;
 	  }
 	  
-	  public  static double distBetween(Vector3 pointA, double[] pointB){
+	  public static Vector3 findMidPoint(List<Vector3> points){
+		  Vector3 mid = new Vector3();
+		  for(int j=0;j<points.size();j++){
+			  mid=vectorAdd(points.get(j),mid);
+		  }
+		  if(points.size()!=0){
+		  mid = vectorScalarMult(mid, 1/points.size());
+		  }
+		  return mid;
+	  }
+	  
+	  public  static double distBetween(Vector3 pointA, Vector3 pointB){
 		  return vectorMag(vectorSubtract(pointA,pointB));
 	  }
 	  
-	  public  static double distToEntity(double[] pointA, Entity target)
-	  {
-		  if(target!=null)
-		  return vectorMag(vectorSubtract(pointA, new double[]{target.posX,target.posY,target.posZ}));
-		  return 0;
+	  public  double distTo(Vector3 pointB){
+		  return vectorMag(vectorSubtract(this,pointB));
 	  }
 	  
-	  public double[] vectorCopy(double[] vector){
-		  double[] newVector = new double[vector.length];
-		  for(int i=0;i<vector.length;i++){
-			  newVector[i]=vector[i];
-		  }
+	  public  static double distToEntity(Vector3 pointA, Entity target)
+	  {
+		  if(target!=null)
+		  return vectorMag(vectorSubtract(pointA, new Vector3(target.posX,target.posY,target.posZ)));
+		  return -1;
+	  }
+	  
+	  public Vector3 Copy(){
+		  Vector3 newVector = new Vector3(x,y,z);
 		  return newVector;
 	  }
 	  
+	  public void moveEntity(Entity e)
+	  {
+		  e.posX=x;
+		  e.posY=y;
+		  e.posZ=z;
+	  }
 	  
-	  public static double[] makePrimative(Double[] array){
-		  double[] primative = new double[array.length];
-		  for(int i=0;i<array.length;i++){
-			  primative[i]=array[i];
-		  }
-		  return primative;
+	  public void writeToNBT(NBTTagCompound nbt, String tag)
+	  {
+		  nbt.setDouble(tag+"x", x);
+		  nbt.setDouble(tag+"y", y);
+		  nbt.setDouble(tag+"z", z);
+	  }
+	  
+	  public static Vector3 readFromNBT(NBTTagCompound nbt, String tag)
+	  {
+		  Vector3 ret = new Vector3();
+		  ret.x = nbt.getDouble(tag+"x");
+		  ret.y = nbt.getDouble(tag+"y");
+		  ret.z = nbt.getDouble(tag+"z");
+		  return ret;
+	  }
+	  
+	  public void writeToOutputStream(DataOutputStream dos)
+	  {
+          try {
+        	  dos.writeDouble(x);
+	          dos.writeDouble(y);
+	          dos.writeDouble(z);
+		} catch (IOException e) {
+			System.err.println("error in writing Vector3 to stream");
+			e.printStackTrace();
+		}
+	  }
+	  
+
+		public void writeToOutputStream(ByteArrayDataOutput data) {
+			data.writeDouble(x);
+			data.writeDouble(y);
+			data.writeDouble(z);
+		}
+		
+	  
+	  public static Vector3 readFromInputSteam(ByteArrayDataInput dat)
+	  {
+		  Vector3 ret = new Vector3();
+		  ret.x = dat.readDouble();
+		  ret.y = dat.readDouble();
+		  ret.z = dat.readDouble();
+	        return ret;
 	  }
 	  
 	  /**
@@ -424,34 +965,45 @@ public class Vector3
 	   * @param range
 	   * @return
 	   */
-	  public double[] findNextSolidBlock(World worldObj,final double[] source,final double[] direction, double range){
-		  if(range==0){
-			  range = 320;
-		  }
-		  
-		  double[] location = new double[]{-1,-1,-1};
-		  
-		  for(double i=0;i<range;i+=0.0625){
-			  double  xtest = (source[0]+i*direction[0]),
-					  ytest = (source[1]+i*direction[1]),
-					  ztest = (source[2]+i*direction[2]);
-			  boolean check = look.checkAABB(worldObj,AxisAlignedBB.getBoundingBox(xtest-0.0, ytest-0.0, ztest-0.0,
-					  															   xtest+0.0, ytest+0.0, ztest+0.0));
+	  public  static Vector3 findNextSolidBlock(World worldObj,Vector3 source,Vector3 direction, double range){
+		  	direction = vectorNormalize(direction);
+			int n = 0;
+			double xprev = source.x, yprev = source.y, zprev = source.z;
+			double dx,dy,dz;
+			
+			for(double i=0;i<range;i+=0.0625)
+			{
+				dx = i*direction.x;
+				dy = i*direction.y;
+				dz = i*direction.z;
+				
+			  double  xtest = (source.x+dx),
+					  ytest = (source.y+dy),
+					  ztest = (source.z+dz);
 			  
-				  if(check){
-					  location = new double[] {xtest, ytest, ztest};
-					  break;
+			  if(!(Int(xtest)==Int(xprev)&&Int(ytest)==Int(yprev)&&Int(ztest)==Int(zprev)))
+			  {
+				  
+				  Block block = Block.blocksList[worldObj.getBlockId(Int(xtest), Int(ytest), Int(ztest))];
+				  
+				  boolean clear = block==null||block.isAirBlock(worldObj, Int(xtest), Int(ytest), Int(ztest))||isLiquid(worldObj, new Vector3(xtest, ytest, ztest));
+				  
+				  if(!clear){
+					  return new Vector3(Int(xtest), Int(ytest), Int(ztest));
 				  }
 			  }
-		  return location;
+			  
+			  yprev = ytest; xprev = xtest; zprev = ztest;
+			}
+			return null;
 	  }
 	
-	  public double[] getVectorToEntity(double[] source, Entity target)
+	  public static Vector3 getVectorToEntity(Vector3 source, Entity target)
 	  {
 		  if(target!=null)
-		  return vectorSubtract(new double[]{target.posX, target.posY, target.posZ}, source);
+		  return vectorSubtract(new Vector3(target.posX, target.posY, target.posZ), source);
 		  else
-			  return new double[]{0,0,0};
+			  return new Vector3();
 	  }
 	  
 	  /**
@@ -462,57 +1014,100 @@ public class Vector3
 	   * @param range
 	   * @return
 	   */
-	  public boolean isVisibleRange(World worldObj, double[] source, double[] direction, double range){
-		  
+	  public static boolean isVisibleRange(World worldObj, Vector3 source, Vector3 direction, double range){
 		  direction = vectorNormalize(direction);
-		  boolean visible = true;
-		  
-		  int 	xprev = (int)(source[0]),
-				yprev = (int)(source[1]),
-				zprev = (int)(source[2]);
-		//  range = 20;
-		  for(int i=0;i<range;i+=1){
-			  int	xtest = (int)(source[0]+i*direction[0]),
-					ytest = (int)(source[1]+i*direction[1]),
-					ztest = (int)(source[2]+i*direction[2]);
-			  if(!(xtest==xprev&&ytest==yprev&&ztest==zprev)){
-				  if(look.ID!=0){
-					  visible = false;
-					  break;
+			int n = 0;
+			double xprev = source.x, yprev = source.y, zprev = source.z;
+			double dx,dy,dz;
+			boolean notNull = true;
+			double closest = range;
+			double blocked = 0;
+			
+			for(double i=0;i<range;i+=0.0625)
+			{
+				dx = i*direction.x;
+				dy = i*direction.y;
+				dz = i*direction.z;
+				
+				  double  xtest = (source.x+dx),
+						  ytest = (source.y+dy),
+						  ztest = (source.z+dz);
+				  
+				  boolean check = isPointClearBlocks(xtest, ytest, ztest, worldObj);
+				  blocked = Math.sqrt(dx*dx+dy*dy+dz*dz);
+				  if(!check){
+					  return false;
 				  }
-			  }
-			  xprev = xtest;
-			  yprev = ytest;
-			  zprev = ztest;
-		  }
-		  return visible;
+				  yprev = ytest; xprev = xtest; zprev = ztest;
+			}
+			return true;
 	  }
 	  
-	  public boolean isVisibleEntityFromLocation(World worldObj, Entity target, double[] location){
-		  boolean[] visible = new boolean[27];
-		  if(target==null){return false;}
-		  AxisAlignedBB aabb = target.getBoundingBox();
-		  boolean ret = false;
-		  if(target.isDead){return false;}
-		  if(aabb!=null){
-			  System.out.println("Checking AABB");
-			  for(int i=0;i<3;i++)
-				  for(int j=0;j<3;j++)
-					  for(int k=0;k<3;k++){
-						  if(target.isDead){return false;}
-						  double[] targetLoc = {target.posX+(aabb.minX*i/3), target.posZ+(aabb.minZ*k/3), target.posY+(aabb.minY*j/3)};
-						  boolean vis = isVisibleLocation(worldObj, location, targetLoc);
-						  if(vis) return true;
-						  visible[9*i+3*j+k]=isVisibleLocation(worldObj, location, targetLoc);
-			  }
-			  for(int i=0;i<27;i++){ ret = ret||visible[i];}
-		  }else{
-			  double[] targetLoc = {target.posX, target.posZ, target.posY+target.height/2};
-			  ret = isVisibleLocation(worldObj, location, targetLoc);
-		  }
-		  return ret;
+	  /**
+	   * determines whether the source can see out as far as range in the given direction.
+	   * @param worldObj
+	   * @param source
+	   * @param direction
+	   * @param range
+	   * @return
+	   */
+	  public static Vector3 getNextSurfacePoint(World worldObj, Vector3 source, Vector3 direction, double range){
+		  direction = vectorNormalize(direction);
+		  
+			double xprev = source.x, yprev = source.y, zprev = source.z;
+			double dx,dy,dz;
+			
+			for(double i=0;i<range;i+=0.0625)
+			{
+				dx = i*direction.x;
+				dy = i*direction.y;
+				dz = i*direction.z;
+				
+				  double  xtest = (source.x+dx),
+						  ytest = (source.y+dy),
+						  ztest = (source.z+dz);
+				  
+				  boolean check = isPointClearBlocks(xtest, ytest, ztest, worldObj);
+				  if(!check){
+					  return new Vector3(xtest, ytest, ztest);
+				  }
+				  yprev = ytest; xprev = xtest; zprev = ztest;
+			}
+			return null;
 	  }
 	  
+	  /**
+	   * determines whether the source can see out as far as range in the given direction.
+	   * @param worldObj
+	   * @param source
+	   * @param direction
+	   * @param range
+	   * @return
+	   */
+	  public static Vector3 getNextSurfacePointFunction(World worldObj, Vector3 source, Vector3 direction, Vector3 acceleration, double range){
+		  direction = vectorNormalize(direction);
+		  
+			double xprev = source.x, yprev = source.y, zprev = source.z;
+			double dx,dy,dz;
+			
+			for(double i=0;i<range;i+=0.0625)
+			{
+				dx = i*(direction.x+i*acceleration.x/2);
+				dy = i*(direction.y+i*acceleration.y/2);
+				dz = i*(direction.z+i*acceleration.z/2);
+				
+				  double  xtest = (source.x+dx),
+						  ytest = (source.y+dy),
+						  ztest = (source.z+dz);
+				  
+				  boolean check = isPointClearBlocks(xtest, ytest, ztest, worldObj);
+				  if(!check){
+					  return new Vector3(xtest, ytest, ztest);
+				  }
+				  yprev = ytest; xprev = xtest; zprev = ztest;
+			}
+			return null;
+	  }
 	  
 	  /**
 	   * determines whether the location given is visible from source.
@@ -522,87 +1117,181 @@ public class Vector3
 	   * @param range
 	   * @return
 	   */
-	  public boolean isVisibleLocation(World worldObj, double[] source, double[] location){
-		  
-		  double[] direction = vectorSubtract(location,source);
-		  double range = vectorMag(direction);
-		  direction = vectorNormalize(direction);
-		  boolean visible = true;
-		//  range = 20;
-		  for(double i=0;i<range-0.0625;i+=0.0625){
-			  double  xtest = (source[0]+i*direction[0]),
-					  ztest = (source[1]+i*direction[1]),
-					  ytest = (source[2]+i*direction[2]);
-			  look.safeLookUp(worldObj,(int)xtest,(int)ytest,(int)ztest);
-			  
-			  boolean check = look.checkAABB(worldObj,AxisAlignedBB.getBoundingBox(xtest-0.0, ytest-0.0, ztest-0.0,
-					  															   xtest+0.0, ytest+0.0, ztest+0.0));
-			  
-			  if(check&&!look.isLiquid(worldObj,(int)xtest,(int)ytest,(int)ztest)){
-				  visible=false;
-				  break;
-			  }
-		  }
-		  return visible;
+	  public static boolean isVisibleLocation(World worldObj, Vector3 source, Vector3 location){
+		  Vector3 direction = vectorSubtract(location, source);
+		  double range = direction.mag();
+		  return isVisibleRange(worldObj, source, direction, range);
 	  }
 	  
-    public boolean isVisibleEntityFromEntity(Entity looker, Entity target, double rMax)
+    public static boolean isVisibleEntityFromEntity(Entity looker, Entity target, double rMax)
     {
-    	double[] location = {looker.posX, looker.posY, looker.posZ};
-    	return isVisibleEntityFromLocation(looker.worldObj, target, location);
+    	return isVisibleRange(looker.worldObj, entity(target), entity(looker), entity(looker).distToEntity(target));
     }
   
-
-    //TODO make this not continue checking each pixel if the block or aabb was null.
-	public List<Entity> firstEntityOnLine(double range, double[] direction, double[] source, World worldObj, boolean effect)
+	public static Vector3 firstEntityLocation(double range, Vector3 direction, Vector3 source, World worldObj, boolean effect)
 	{
+		direction = vectorNormalize(direction);
 		int n = 0;
-		double xprev = source[0], yprev = source[1], zprev = source[2];
+		double xprev = source.x, yprev = source.y, zprev = source.z;
+		double dx,dy,dz;
 		boolean notNull = true;
 		double closest = range;
 		double blocked = 0;
 		
+		Vector3 temp = new Vector3();
+		
 		for(double i=0;i<range;i+=0.0625)
 		{
-			  double  xtest = (source[0]+i*direction[0]),
-					  ytest = (source[1]+i*direction[1]),
-					  ztest = (source[2]+i*direction[2]);
+			dx = i*direction.x;
+			dy = i*direction.y;
+			dz = i*direction.z;
+			
+			  double  xtest = (source.x+dx),
+					  ytest = (source.y+dy),
+					  ztest = (source.z+dz);
 			  
 			  boolean check = isPointClearBlocks(xtest, ytest, ztest, worldObj);
-			  blocked = Math.sqrt(i*direction[0]*i*direction[0]+i*direction[1]*i*direction[1]+i*direction[2]*i*direction[2]);
-			  if(effect&&worldObj.isRemote)
-			  {
-				  worldObj.spawnParticle("flame",xtest, ytest, ztest, 0, 0, 0);
-			  }
+			  blocked = Math.sqrt(dx*dx+dy*dy+dz*dz);
+
 			  if(!check){
 				  break;
 			  }
+			  
+			  if(effect&&worldObj.isRemote)
+			  {
+				 worldObj.spawnParticle("flame",xtest, ytest, ztest, 0, 0, 0);
+			  }
+			  
 			  if(!((int)xtest==(int)xprev&&(int)ytest==(int)yprev&&(int)ztest==(int)zprev))
 			  {
 				  int x0 = (xtest>0?(int)xtest:(int)xtest-1), y0 = (ytest>0?(int)ytest:(int)ytest-1), z0 = (ztest>0?(int)ztest:(int)ztest-1);
 				  List<Entity> targets = worldObj.getEntitiesWithinAABB(EntityLiving.class, AxisAlignedBB.getBoundingBox(x0, y0, z0, x0+1, y0+1, z0+1));
 				  if(targets!=null&&targets.size()>0)
 				  {
-					  return targets;
+					  return new Vector3(xtest, ytest, ztest);
 				  }
-				  
 			  }
-			  
 			  yprev = ytest; xprev = xtest; zprev = ztest;
 		}
-
+		
 		return null;
 	}
 	
-	
-	public boolean isEntityVisiblefirstEntityOnLine(Entity target, Vector3 direction, Vector3 source, World worldObj)
+	public static Vector3 firstEntityLocationExcluding(double range, Vector3 direction, Vector3 source, World worldObj, boolean effect, Entity excluded)
 	{
 		direction = vectorNormalize(direction);
-		List<Entity> targets = firstEntityOnLine(distToEntity(source, target), direction, source, worldObj, false);
-		return target==null?false:targets==null?false:targets.contains(target);
+		int n = 0;
+		double xprev = source.x, yprev = source.y, zprev = source.z;
+		double dx,dy,dz;
+		double blocked = 0;
+		
+		Vector3 temp = new Vector3();
+		
+		for(double i=0;i<range;i+=0.0625)
+		{
+			dx = i*direction.x;
+			dy = i*direction.y;
+			dz = i*direction.z;
+			
+			  double  xtest = (source.x+dx),
+					  ytest = (source.y+dy),
+					  ztest = (source.z+dz);
+			  
+			  boolean check = isPointClearBlocks(xtest, ytest, ztest, worldObj);
+			  blocked = Math.sqrt(dx*dx+dy*dy+dz*dz);
+
+			  if(!check){
+				  break;
+			  }
+			  
+			  if(effect&&worldObj.isRemote)
+			  {
+				 worldObj.spawnParticle("flame",xtest, ytest, ztest, 0, 0, 0);
+			  }
+			  
+			  if(!((int)xtest==(int)xprev&&(int)ytest==(int)yprev&&(int)ztest==(int)zprev))
+			  {
+				  int x0 = (xtest>0?(int)xtest:(int)xtest-1), y0 = (ytest>0?(int)ytest:(int)ytest-1), z0 = (ztest>0?(int)ztest:(int)ztest-1);
+				  List<Entity> targets = worldObj.getEntitiesWithinAABBExcludingEntity(excluded, AxisAlignedBB.getBoundingBox(x0, y0, z0, x0+1, y0+1, z0+1));
+				  if(targets!=null&&targets.size()>0)
+				  {
+					  List<Entity> ret = new ArrayList<Entity>();
+					  for(Entity e: targets)
+					  {
+						  if(e instanceof EntityLiving)
+						  {
+							  ret.add(e);
+						  }
+					  }
+					  if(ret!=null&&ret.size()>0)
+						  return new Vector3(xtest, ytest, ztest);
+				  }
+			  }
+			  yprev = ytest; xprev = xtest; zprev = ztest;
+		}
+		
+		return null;
+	}
+	
+	public static Vector3 firstEntityLocationFunctionExcluding(double range, Vector3 direction, Vector3 source, Vector3 acceleration, World worldObj, boolean effect, Entity excluded)
+	{
+		Vector3 normalizedDirection = vectorNormalize(direction);
+		int n = 0;
+		double xprev = source.x, yprev = source.y, zprev = source.z;
+		double dx,dy,dz;
+		boolean notNull = true;
+		double closest = range;
+		double blocked = 0;
+		
+		Vector3 temp = new Vector3();
+		
+		for(double i=0;i<range;i+=0.0625)
+		{
+			dx = i*(normalizedDirection.x);
+			dy = i*(normalizedDirection.y);
+			dz = i*(normalizedDirection.z);
+			direction = direction.add(acceleration);
+			normalizedDirection = vectorNormalize(direction);
+			  double  xtest = (source.x+dx),
+					  ytest = (source.y+dy),
+					  ztest = (source.z+dz);
+			  
+			  boolean check = isPointClearBlocks(xtest, ytest, ztest, worldObj);
+			  blocked = Math.sqrt(dx*dx+dy*dy+dz*dz);
+
+			  if(!check){
+				  break;
+			  }
+			  
+			  if(effect&&worldObj.isRemote)
+			  {
+				 worldObj.spawnParticle("flame",xtest, ytest, ztest, 0, 0, 0);
+			  }
+			  
+			  if(!((int)xtest==(int)xprev&&(int)ytest==(int)yprev&&(int)ztest==(int)zprev))
+			  {
+				  int x0 = (xtest>0?(int)xtest:(int)xtest-1), y0 = (ytest>0?(int)ytest:(int)ytest-1), z0 = (ztest>0?(int)ztest:(int)ztest-1);
+				  List<Entity> targets = worldObj.getEntitiesWithinAABB(EntityLiving.class, AxisAlignedBB.getBoundingBox(x0, y0, z0, x0+1, y0+1, z0+1));
+				  if(targets!=null&&targets.size()>0)
+				  {
+					  if(!(targets.size()==1&&targets.contains(excluded)))
+					  return new Vector3(xtest, ytest, ztest);
+				  }
+			  }
+			  yprev = ytest; xprev = xtest; zprev = ztest;
+		}
+		
+		return null;
+	}
+	
+	public  static boolean isEntityVisibleInDirection(Entity target, Vector3 direction, Vector3 source, World worldObj)
+	{
+		direction = vectorNormalize(direction);
+		Vector3 vec = firstEntityLocation(distToEntity(source, target), direction, source, worldObj, false);
+		return target==null?false:vec==null?false:vec.livingEntityInBox(worldObj)==null?false:vec.livingEntityInBox(worldObj).contains(target);
 	}
 	  
-	public boolean isPointClearBlocks(double x, double y, double z, World worldObj)
+	public static boolean isPointClearBlocks(double x, double y, double z, World worldObj)
 	{
 		int x0 = (x>0?(int)x:(int)x-1), y0 = (y>0?(int)y:(int)y-1), z0 = (z>0?(int)z:(int)z-1);
 		
@@ -614,7 +1303,6 @@ public class Vector3
 		List<AxisAlignedBB> aabbs = new ArrayList();
 		block.addCollisionBoxesToList(worldObj, x0, y0, z0, AxisAlignedBB.getBoundingBox(x, y, z, x, y, z), aabbs, null);
 		
-		//AxisAlignedBB aabb = block.getCollisionBoundingBoxFromPool(worldObj, x0, y0, z0);
 		for(AxisAlignedBB aabb: aabbs)
 		{
 			if(aabb!=null)
@@ -631,7 +1319,21 @@ public class Vector3
 		return true;
 	}
 	
+	public boolean clearOfBlocks(World worldObj)
+	{
+		return isPointClearBlocks(x, y, z, worldObj);
+	}
+	
+	public boolean pointClear(World worldObj)
+	{
+		return isPointClearBlocks(x, y, z, worldObj)&&livingEntityAtPoint(worldObj)==null;
+	}
 	  
+	public boolean pointClearExcludingEntity(World worldObj, Entity e)
+	{
+		return isPointClearBlocks(x, y, z, worldObj)&&livingEntityAtPointExcludingEntity(worldObj, e)==null;
+	}
+	
 	public boolean isPointClearOfaabb(double x, double y, double z, AxisAlignedBB aabb)
 	{
 		if(y<=aabb.maxY&&y>=aabb.minY)
@@ -643,7 +1345,19 @@ public class Vector3
 		
 		return true;
 	}
-	  
+	public boolean isPointClearOfEntity(double x, double y, double z, Entity e)
+	{
+		AxisAlignedBB aabb = e.boundingBox;
+		
+		if(y<=aabb.maxY&&y>=aabb.minY)
+			return false;
+		if(z<=aabb.maxZ&&z>=aabb.minZ)
+			return false;
+		if(x<=aabb.maxX&&x>=aabb.minX)
+			return false;
+		
+		return true;
+	}
 	
 	public static class Matrix3
 	{
@@ -663,6 +1377,18 @@ public class Vector3
 			Rows[1] = Vector3.ArrayTo(b);
 			Rows[2] = Vector3.ArrayTo(c);
 		}
+		
+		public Matrix3(Vector3 a, Vector3 b, Vector3 c)
+		{
+			Rows[0] = a;
+			Rows[1] = b;
+			Rows[2] = c;
+		}
+		
+		public Matrix3(Vector3 a, Vector3 b)
+		{
+			this(a,b,new Vector3(0,0,0));
+		}
 	
 		public Vector3 get(int i)
 		{
@@ -670,10 +1396,37 @@ public class Vector3
 			return Rows[i];
 		}
 		
+		public Vector3 boxMin()
+		{
+			return Rows[0];
+		}
+		
+		public Vector3 boxMax()
+		{
+			return Rows[1];
+		}		
+		public Vector3 boxRotation()
+		{
+			return Rows[2];
+		}
+		
 		public double get(int i, int j)
 		{
 			assert(i<3);
 			return Rows[i].get(j);
+		}
+		
+		public double boxZLength()
+		{
+			return get(1, 2)-get(0, 2);
+		}
+		public double boxYLength()
+		{
+			return get(1, 1)-get(0, 1);
+		}
+		public double boxXLength()
+		{
+			return get(1, 0)-get(0, 0);
 		}
 		
 		public void set(int i, Vector3 j)
@@ -692,6 +1445,16 @@ public class Vector3
 			return new double[][] {Rows[0].toArray(),Rows[1].toArray(),Rows[2].toArray()};
 		}
 		
+		public Matrix3 addToRows(Vector3 vec)
+		{
+			return new Matrix3(Rows[0].add(vec),Rows[1].add(vec),Rows[2].add(vec));
+		}
+		
+		public String toString()
+		{
+			String eol = System.getProperty("line.separator");
+			return eol+"0: "+Rows[0].toString()+eol+"1: "+Rows[1].toString()+eol+"2 : "+Rows[2].toString();
+		}
 
 		  /**
 		   * Multiplies MatrixA by MatrixB in the form AB.
@@ -846,7 +1609,223 @@ public class Vector3
 			  }
 			  return ret;
 		  }
-		
+		  
+		  public boolean pushOutOfBox(Entity pusher, Entity e, Vector3 offset)
+		    {
+			  	boolean ret = false;
+			  	Vector3 entity = new Vector3(e);
+			  	
+			 // 	if(e instanceof EntityPlayer)
+			//  	{
+			  		offset.y += e.yOffset;
+			 // 	}
+			  	
+			  	Vector3 push = new Vector3(pusher);
+			  	Vector3 r = (entity.subtract(offset).subtract(push));
+			//  	System.out.println(push.toString()+" "+e.toString());
+			  	boolean rot = false;
+		    	Vector3 rotation = boxRotation();	
+		    	
+		    	if(!(rotation.y==0&&rotation.z==0))
+		    	{
+		    		rot = true;
+		    		r = r.rotateAboutAngles(rotation.y, rotation.z);
+		    	}
+		    	
+
+		    	Vector3 min = boxMin();
+		    	min.y =- e.yOffset;
+		    	Vector3 max = boxMax();
+
+	    		if(!r.inMatBox(this))
+	    		{
+	    			return ret;
+	    		}
+	    		
+		    	Vector3 pushDir = new Vector3();
+		    	
+				double x = (r.x - (boxXLength())/2)/(boxXLength());
+				double y = (r.y - (boxYLength())/2)/(boxYLength());
+				double z = (r.z - (boxZLength())/2)/(boxZLength());
+				double yoffset = 0;
+				boolean flag = (e.isSneaking());
+				
+				double yDiff = push.y+max.y+offset.y;
+				double rho = Math.sqrt(r.x*r.x+r.z*r.z);
+
+				if(rot)
+				{
+					yDiff += rho*Math.sin(-rotation.y);
+				}
+				
+				boolean movedx = false, movedy = false, movedz = false;
+				
+				Vector3 location = new Vector3(x,y,z);
+
+			  //	if(e instanceof EntityPlayer)
+			  //	{
+			  	//	System.out.println("player"+min.toString()+" "+max.toString()+" "+location.toString());
+			  	//	((EntityPlayer)e).
+			  //	}
+
+			//	else
+				{
+					boolean entitymovingup = (e.motionY-pusher.motionY)>0;
+					
+					
+					boolean xpositive = location.x>0&&location.x>=Math.abs(location.z);
+					boolean xnegative = location.x<0&&-location.x>=Math.abs(location.z);
+					
+					boolean zpositive = location.z>0&&location.z>=Math.abs(location.x);
+					boolean znegative = location.z<0&&-location.z>=Math.abs(location.x);
+
+					boolean ynegative = entitymovingup&&location.y<0||(e.motionY-pusher.motionY)>0.2;
+					boolean ypositive = (yDiff-e.posY)<=e.stepHeight||(e.motionY-pusher.motionY)<-0.2;//&&!entitymovingup;//||(((pusher.motionY)<0)&&(yDiff-e.posY)<=e.stepHeight)||(flag&&(yDiff-e.posY)<=e.stepHeight);
+					
+				//	System.out.println(location.toString());
+					
+					double f = 0.2;
+					
+					if(ypositive)
+					{
+					//	System.out.println(yDiff+" "+push.y+" "+max.y+" "+offset.y+" "+(Math.sqrt(r.x*r.x+r.z*r.z)*Math.sin(-rotation.y))+" "+(-rotation.y));
+						pushDir.y  = pusher.motionY>0? pusher.motionY:0;
+						e.motionY = pusher.motionY>0? pusher.motionY:0;
+						e.setPosition(e.posX, yDiff, e.posZ);
+						e.isAirBorne = false;
+						e.onGround = true;
+						e.fallDistance = 0;
+						movedy = true;
+					//	System.out.println("pushed+y");
+					}					
+					else if(ynegative)
+					{
+						pushDir.y = -e.motionY-f;
+						movedy = true;
+					//	System.out.println("pushed-y");
+					}
+					
+					
+					if(!movedy)
+					{
+						if(xnegative)
+						{
+							pushDir.x = -f;
+						//	System.out.println("pushed1");
+							movedx = true;
+						}
+						else if(xpositive)
+						{
+							pushDir.x = f;
+						//	System.out.println("pushed2");
+							movedx = true;
+						}
+						if(znegative)
+						{
+							pushDir.z = -f;
+						//	System.out.println("pushed3");
+							movedz = true;
+						}
+						else if(zpositive)
+						{
+							pushDir.z = f;
+						//	System.out.println("pushed4");
+							movedz = true;
+						}
+					}
+
+				}
+				
+				if(rot)
+				{
+					pushDir = pushDir.rotateAboutAngles(-rotation.y, -rotation.z);
+				}
+				
+
+				
+				if(movedy||movedx||movedz)
+				{
+				//	System.out.println("pushDir"+pushDir);
+					if(pushDir.y!=0&&!Double.isNaN(pushDir.y))
+						e.motionY = pushDir.y;
+
+					if(pushDir.x!=0&&!Double.isNaN(pushDir.x))
+						e.motionX = pushDir.x;
+
+					if(pushDir.z!=0&&!Double.isNaN(pushDir.z))
+						e.motionZ = pushDir.z;
+					
+					ret = movedx||movedz||movedy;
+				}
+				if(e instanceof EntityItem)
+				{
+					if(movedy)
+					{
+						e.motionX = 0;
+						e.motionZ = 0;
+					}
+				}
+				
+				
+		    	return ret;
+		    }
 	}
 	
+	
+	 /**
+     * Whether or not a certain block is considered a liquid.
+     * @param world - world the block is in
+     * @param (int)d - x coordinate
+     * @param e - y coordinate
+     * @param f - z coordinate
+     * @return if the block is a liquid
+     */
+    public static boolean isLiquid(World world, Vector3 vec)
+    {
+    	return getLiquid(world, vec.intX(),vec.intY(),vec.intZ()) != null;
+    }
+    
+    /**
+     * Gets a liquid from a certain location.
+     * @param world - world the block is in
+     * @param x - x coordinate
+     * @param y - y coordinate
+     * @param z - z coordinate
+     * @return the liquid at the certain location, null if it doesn't exist
+     */
+    public static synchronized LiquidStack getLiquid(World world, int x, int y, int z)
+    {
+    	int id = world.getBlockId(x, y, z);
+    	int meta = world.getBlockMetadata(x, y, z);
+    	
+    	if(id == 0)
+    	{
+    		return null;
+    	}
+    	
+    	if((id == Block.waterStill.blockID || id == Block.waterMoving.blockID) && meta == 0)
+    	{
+    		return new LiquidStack(Block.waterStill.blockID, LiquidContainerRegistry.BUCKET_VOLUME, 0);
+    	}
+    	else if((id == Block.lavaStill.blockID || id == Block.lavaMoving.blockID) && meta == 0)
+    	{
+    		return new LiquidStack(Block.lavaStill.blockID, LiquidContainerRegistry.BUCKET_VOLUME, 0);
+    	}
+    	else if(Block.blocksList[id] instanceof ILiquid)
+    	{
+    		ILiquid liquid = (ILiquid)Block.blocksList[id];
+    	
+    		if(liquid.isMetaSensitive())
+    		{
+    			return new LiquidStack(liquid.stillLiquidId(), LiquidContainerRegistry.BUCKET_VOLUME, liquid.stillLiquidMeta());
+    		}
+    		else if(meta == 0)
+    		{
+    			return new LiquidStack(liquid.stillLiquidId(), LiquidContainerRegistry.BUCKET_VOLUME, 0);
+    		}
+    	}
+    	
+    	return null;
+    }
+
 }

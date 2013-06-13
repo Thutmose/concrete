@@ -38,6 +38,7 @@ public class ItemHandler {
 			"Cement",
 			"Bucket of Concrete",
 			"Stamper",
+			"Lift Controller",
 		};
 	
 	private final static String[] genNames = {
@@ -87,6 +88,7 @@ public class ItemHandler {
 		itemList.add(new ItemCement(id++));
 		itemList.add(new ItemBucketConcrete(id++));
 		itemList.add(new ItemStamper(id++));
+		itemList.add(new ItemLiftController(id++));
 		
 		items = itemList.toArray(new Item[0]);
 

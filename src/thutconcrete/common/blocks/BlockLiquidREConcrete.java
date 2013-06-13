@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 
-import thutconcrete.client.BlockRenderHandler;
+import thutconcrete.client.render.BlockRenderHandler;
 import thutconcrete.common.ConcreteCore;
 import thutconcrete.common.blocks.Block16Fluid.WetConcrete;
 import thutconcrete.common.corehandlers.TSaveHandler;

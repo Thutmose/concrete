@@ -74,9 +74,10 @@ public class Block16Fluid extends Block
 	public boolean dust = false;
 	public boolean solid = false;
 	public int placeamount = 16;
+	public boolean stampable = false;
 	
-    @SideOnly(Side.CLIENT)
-	public Icon[] iconArray;
+   // @SideOnly(Side.CLIENT)
+	public Icon[] iconArray = new Icon[16];
 	
 	public static double SOLIDIFY_CHANCE = 0.0004;
 	
@@ -225,14 +226,16 @@ public class Block16Fluid extends Block
         
     }
     
-    public void setBlockIcon(int id, int meta, int side, World worldObj, int x, int y, int z, Icon icon, int iconSide)
+    public boolean setBlockIcon(int id, int meta, int side, World worldObj, int x, int y, int z, Icon icon, int iconSide)
     {
     	TileEntityBlock16Fluid te = (TileEntityBlock16Fluid)worldObj.getBlockTileEntity(x, y, z);
     	if(te!=null)
     	{
 			te.setIcon(side, meta, id, icon, iconSide);
 			te.sendUpdate();
+			return true;
     	}
+    	return false;
     }
     
     
@@ -881,7 +884,7 @@ public class Block16Fluid extends Block
 	 public void setColourMetaData(World worldObj, int x, int y, int z, byte meta, int side)
 	 {
 		 TileEntityBlock16Fluid te = (TileEntityBlock16Fluid) safe.safeGetTE(worldObj, x, y, z);
-		 if(te!=null)
+		 if(te!=null&&iconArray!=null)
 		 {
 			 te.metaArray[side] = meta;
 			 te.iconIDs[side] = worldObj.getBlockId(x, y, z);
@@ -1045,6 +1048,18 @@ public class Block16Fluid extends Block
 		        	}
 		        }
 		   }
+		    
+			@SideOnly(Side.CLIENT)
+		    public void registerIcons(IconRegister par1IconRegister)
+		    {
+		        this.iconArray = new Icon[16];
+		        super.registerIcons(par1IconRegister);
+		        this.blockIcon = par1IconRegister.registerIcon("thutconcrete:" + "dryConcrete_"+8);
+		        for (int i = 0; i < this.iconArray.length; ++i)
+		        {
+		            this.iconArray[i] = par1IconRegister.registerIcon("thutconcrete:" + "dryConcrete_"+i);
+		        }
+		    }
 		 
 		    
 		    /**

@@ -1,5 +1,6 @@
 package thutconcrete.common.items;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import net.minecraft.block.Block;
@@ -42,6 +43,7 @@ public class Items
 	public static ItemStack solidLava1Stack = new ItemStack(BlockSolidLava.getInstance(1),1,0);
 	public static ItemStack solidLava2Stack = new ItemStack(BlockSolidLava.getInstance(2),1,0);
 
+	public static ItemStack stamperStack = new ItemStack(items[7]);
 	
 	public static Item lime = items[2];
 	public static Item trass = items[4];
@@ -49,11 +51,14 @@ public class Items
 	public static Item cement = items[5];
 	public static Item carbonate = items[3];
 	public static Item grinder = items[0];
-
+	
+	public static List<ItemStack> cookable = new ArrayList<ItemStack>();
 	
 	public static LiquidStack lava0Full = new LiquidStack(BlockLava.getInstance(0),1000);
 	public static LiquidStack lava1Full = new LiquidStack(BlockLava.getInstance(1),1000);
 	public static LiquidStack lava2Full = new LiquidStack(BlockLava.getInstance(2),1000);
 	
 	public static LiquidStack concrete = new LiquidStack(BlockLiquidConcrete.instance,1000);
+	
+
 }

@@ -28,8 +28,12 @@ public class TCPacket
 	
 	public TCPacket()
 	{
-		packetTypes.put(0, new PacketTEB16F());
+		packetTypes.put(0, new PacketStampable());
 		packetTypes.put(1, new PacketTPMount());
+		packetTypes.put(2, new PacketBeam());
+		packetTypes.put(3, new PacketInt());
+		packetTypes.put(4, new PacketMountedCommand());
+		packetTypes.put(5, new PacketLift());
 	}
 	
 	public void handlePacket(ByteArrayDataInput dat,Player player,World world)

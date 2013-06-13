@@ -5,7 +5,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 
-import thutconcrete.client.BlockRenderHandler;
+import thutconcrete.client.render.BlockRenderHandler;
 import thutconcrete.common.ConcreteCore;
 import thutconcrete.common.utils.IRebar;
 import thutconcrete.common.utils.ThreadSafeWorldOperations;

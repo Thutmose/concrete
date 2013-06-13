@@ -103,5 +103,11 @@ public class ConfigHandler {
 			conf.save();
 		}
 	}
+	
+	
+	public static class GUIIDs
+	{
+		public static int limekiln = 0;
+	}
 
 }

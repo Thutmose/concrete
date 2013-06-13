@@ -14,6 +14,7 @@ import thutconcrete.common.network.PacketTPMount;
 import net.minecraft.block.Block;
 import net.minecraft.block.material.Material;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.EntityLiving;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.network.packet.Packet13PlayerLookMove;
 import net.minecraft.network.packet.Packet30Entity;
@@ -46,9 +47,10 @@ public class ChunkloadFinite {
 	public void onLivingUpdate(LivingEvent evt)
 	{
 		
-		if(!(evt.entityLiving instanceof EntityPlayerMP)) return;
+	//	if(!(evt.entityLiving instanceof EntityPlayerMP)) return;
 		
-		EntityPlayerMP player = (EntityPlayerMP) evt.entityLiving;
+		//EntityPlayerMP player = (EntityPlayerMP) evt.entityLiving;
+		EntityLiving player = evt.entityLiving;
 		World world = player.worldObj;
 		if(!world.provider.terrainType.getWorldTypeName().contentEquals("FINITE")) return;
 
@@ -107,7 +109,7 @@ public class ChunkloadFinite {
 					if(mount!=null)
 					{
 						mount.setPosition(-x2,y2,z2);
-						PacketTPMount.sendToClient(PacketTPMount.getPacketMount(player,mount,-x2,y2,z2),player);
+						//PacketTPMount.sendToClient(PacketTPMount.getPacketMount(player,mount,-x2,y2,z2),player);
 					}
 				}
 				else
@@ -139,7 +141,7 @@ public class ChunkloadFinite {
 		}
 	}
 	
-	public void TPhere(EntityPlayerMP player)
+	public void TPhere(EntityLiving player)
 	{
 		if(player.getCanSpawnHere()&&blockBelowSolid(player))
 		{
@@ -171,7 +173,7 @@ public class ChunkloadFinite {
 	}
 	
 	
-	public boolean blockBelowSolid(EntityPlayerMP player)
+	public boolean blockBelowSolid(EntityLiving player)
 	{
 		return player.worldObj.isBlockSolidOnSide((int)player.posX, (int)player.posY-1, (int)player.posZ, ForgeDirection.UP, false);
 	}

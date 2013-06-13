@@ -63,7 +63,7 @@ public class TileEntityVolcano extends TileEntity
     private Vect mainVent = new Vect(0,1,0);
     
     private static ThreadSafeWorldOperations safe = new ThreadSafeWorldOperations();
-    private static LinearAlgebra vec;
+    
 	public List<PlumeParticle> particles = new ArrayList<PlumeParticle>();
 	public List<PlumeParticle> deadParticles = new ArrayList<PlumeParticle>();
 	
@@ -133,7 +133,7 @@ public class TileEntityVolcano extends TileEntity
 			if(ConfigHandler.debugPrints)
 			System.out.println(types[typeid]);
 			r0 = height/2;
-			n = ashAmount*(typeid+1);
+			n = ashAmount*(typeid*typeid+1);
 			ventCount = (int) (10*Math.random());
 			mainVent.i = height+64-yCoord;
 			mainVent.r = ConfigHandler.CoolRate;
@@ -462,10 +462,10 @@ public class TileEntityVolcano extends TileEntity
 	    	worldObj.playSoundEffect(xCoord+i*x, yCoord+i*y+h, getZCoord()+i*z, "random.explode", 10.0F, 1.0F);
 	    	x0 = xCoord+i*x; y0 =  yCoord+i*y+h; z0 = getZCoord()+i*z;
 	    	r0 = e;
-	    	n = (int) (vent==mainVent?ashAmount*(typeid+1):0.1*ashAmount*(typeid+1));
+	    	n = (int) (vent==mainVent?ashAmount*(typeid*typeid+1):0.1*ashAmount*(typeid*typeid+1));
 	    	addPlumeParticles(vent==mainVent?1:0.5, BlockDust.instance.blockID);
 	    	doop = false;
-		    	erupted = true;
+		    erupted = true;
 		}
 		
 	}

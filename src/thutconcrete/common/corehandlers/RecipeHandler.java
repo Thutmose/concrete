@@ -40,17 +40,36 @@ public class RecipeHandler
 		registerSpecialRecipes();
 		registerShapedRecipes();
 		registerShapeless();
+		initCookable();
 	}
 	
 	public void registerSpecialRecipes()
 	{
 
 		GameRegistry.addSmelting(Items.carbonate.itemID, Items.limeStack, 0);
+
 	}
 
+	public void initCookable()
+	{
+		Items.cookable.add(Items.chalkOreStack);
+		Items.cookable.add(Items.limestoneOreStack);
+		Items.cookable.add(Items.carbonateStack);
+		
+		for(Item item : Item.itemsList)
+		{
+			if(item!=null&&item.getUnlocalizedName().toLowerCase().contains("bone"))
+			{
+				Items.cookable.add(new ItemStack(item.itemID,1,0));
+			}
+		}
+		
+	}
+	
+	
 	public void registerShapedRecipes()
 	{
-		
+
 		GameRegistry.addRecipe(Items.rebarStack,"x  "," x ","  x", 'x', Item.ingotIron);
 		
 		for (ItemStack steel : OreDictionary.getOres("ingotSteel")) 
@@ -66,6 +85,13 @@ public class RecipeHandler
 		for(int i = 0; i<16; i++)
 		{
 			GameRegistry.addRecipe(brushes[16].copy()," x "," y "," z ", 'x',new ItemStack(Block.cloth,1,i), 'y', Item.ingotIron, 'z', Item.stick);
+			
+			for (ItemStack red : OreDictionary.getOres("dyeRed")) 
+				for (ItemStack green : OreDictionary.getOres("dyeGreen")) 
+					for (ItemStack blue : OreDictionary.getOres("dyeBlue")) 
+						GameRegistry.addRecipe(Items.stamperStack," s ","gwr"," b ", 's', Item.stick, 'w',new ItemStack(Block.cloth,1,i), 'g', green, 'r', red, 'b', blue);
+			
+			
 		}
 		
 	}

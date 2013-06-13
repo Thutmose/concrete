@@ -38,7 +38,13 @@ public class BlockHandler {
 			"Felsic Lava",
 			"Rhyolite",
 			"Volcano Spawner",
-			"flame thrower"
+			"uGoBoom",
+			"Lime Kiln",
+			"you should not have this block",
+			"Lift Rails",
+			"",
+			"",
+			"",
 		};
 	
 	
@@ -71,7 +77,9 @@ public class BlockHandler {
 
 		blockList.add(new BlockVolcano(id++));
 		blockList.add(new BlockBoom(id++));
-		//blockList.add(new BlockWater(idWorld+1));
+		blockList.add(new BlockLimekiln(id++));
+		blockList.add(new BlockLimekilnDummy(id++));
+		blockList.add(new BlockLiftRail(id++));
 		
 		blocks = blockList.toArray(new Block[0]);
 

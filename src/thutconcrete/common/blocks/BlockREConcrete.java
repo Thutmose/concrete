@@ -4,12 +4,13 @@ import java.util.List;
 import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 
-import thutconcrete.client.BlockRenderHandler;
+import thutconcrete.client.render.BlockRenderHandler;
 import thutconcrete.common.ConcreteCore;
 import thutconcrete.common.corehandlers.TSaveHandler;
 import thutconcrete.common.tileentity.TileEntityBlock16Fluid;
 import thutconcrete.common.utils.IRebar;
 import thutconcrete.common.utils.ISaveable;
+import thutconcrete.common.utils.IStampableBlock;
 
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
@@ -31,7 +32,7 @@ import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
 import net.minecraftforge.common.ForgeDirection;
 
-public class BlockREConcrete extends Block16Fluid implements IRebar, ITileEntityProvider
+public class BlockREConcrete extends Block16Fluid implements IRebar, ITileEntityProvider, IStampableBlock
 {
 	
 	public static Block instance;
@@ -50,6 +51,7 @@ public class BlockREConcrete extends Block16Fluid implements IRebar, ITileEntity
 		this.instance = this;
 		this.setStepSound(soundStoneFootstep);
 		this.solid = true;
+		this.stampable = true;
 		setData();
 	}
 	
@@ -268,9 +270,6 @@ public class BlockREConcrete extends Block16Fluid implements IRebar, ITileEntity
 	}
 	
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    @SideOnly(Side.CLIENT)
-    private Icon[] iconArray;
 	
 	@SideOnly(Side.CLIENT)
 	public void registerIcons(IconRegister par1IconRegister)
@@ -338,22 +337,53 @@ public class BlockREConcrete extends Block16Fluid implements IRebar, ITileEntity
 		return this.blockIcon;
 	}
 	
-
 	 @SideOnly(Side.CLIENT)
-
-    /**
-     * Retrieves the block texture to use based on the display side. Args: iBlockAccess, x, y, z, side
-     */
-    public Icon getBlockTexture(IBlockAccess par1IBlockAccess, int x, int y, int z, int par5)
-    {
-	 TileEntityBlock16Fluid te = (TileEntityBlock16Fluid) par1IBlockAccess.getBlockTileEntity(x, y, z);
-	 return this.iconArray[te.metaArray[par5]&15];
-	 	
-    }
+	    /**
+	     * Retrieves the block texture to use based on the display side. Args: iBlockAccess, x, y, z, side
+	     */
+	    public Icon getBlockTexture(IBlockAccess par1IBlockAccess, int x, int y, int z, int side)
+	    {
+		 	return getSideIcon(par1IBlockAccess, x, y, z, side);
+	    }
 	 
 	 public TileEntity createNewTileEntity(World world)
 	 {
 	    return new TileEntityBlock16Fluid();
 	 }
+
+	@Override
+	public Icon getSideIcon(IBlockAccess par1IBlockAccess, int x, int y, int z,
+			int side) {
+		 TileEntityBlock16Fluid te = (TileEntityBlock16Fluid) par1IBlockAccess.getBlockTileEntity(x, y, z);
+		 if(te.icons[side]==null)
+		 {
+			 te.icons[side]=this.iconArray[te.metaArray[side]&15];
+		 }
+		 return te.icons[side];
+	}
+
+	@Override
+	public int sideIconBlockId(IBlockAccess world, int x, int y, int z,
+			int side) {
+		TileEntityBlock16Fluid te = (TileEntityBlock16Fluid) world.getBlockTileEntity(x, y, z);
+		
+		return te.iconIDs[side];
+	}
+
+	@Override
+	public int sideIconMetadata(IBlockAccess world, int x, int y, int z,
+			int side) {
+		TileEntityBlock16Fluid te = (TileEntityBlock16Fluid) world.getBlockTileEntity(x, y, z);
+		
+		return te.metaArray[side];
+	}
+
+	@Override
+	public int sideIconSide(IBlockAccess world, int x, int y, int z,
+			int side) {
+		TileEntityBlock16Fluid te = (TileEntityBlock16Fluid) world.getBlockTileEntity(x, y, z);
+		
+		return te.sideArray[side];
+	}
 	 
 }

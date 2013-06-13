@@ -1,9 +1,10 @@
-package thutconcrete.client;
+package thutconcrete.client.render;
 
 
 import org.lwjgl.opengl.GL11;
 
 import thutconcrete.common.blocks.*;
+import thutconcrete.common.tileentity.TileEntityLiftRail;
 import thutconcrete.common.utils.*;
 import net.minecraft.block.Block;
 import net.minecraft.client.renderer.EntityRenderer;
@@ -20,10 +21,12 @@ public class BlockRenderHandler implements ISimpleBlockRenderingHandler{
 	public static final int ID = RenderingRegistry.getNextAvailableRenderId();
 
 	private RenderIRebar rebarRender = new RenderIRebar();
+	private RenderTurret turret = new RenderTurret();
 
 	
 	@Override
-	public void renderInventoryBlock(Block parblock, int meta, int modelID,RenderBlocks renderer) {
+	public void renderInventoryBlock(Block parblock, int meta, int modelID,RenderBlocks renderer) 
+	{
 		
 	}
 
@@ -38,6 +41,7 @@ public class BlockRenderHandler implements ISimpleBlockRenderingHandler{
 		Icon icon = parblock.getIcon(0, 0);
 		Icon icon1 = parblock.getIcon(0, 0);
 		Icon[] icons = new Icon[6];
+		
 		
 		if(parblock instanceof IRebar)
 		{
@@ -58,8 +62,7 @@ public class BlockRenderHandler implements ISimpleBlockRenderingHandler{
 	        	concrete = true;
 	        	rebar = true;
 	        }
-			
-	        if(parblock instanceof BlockREConcrete)
+			else if(parblock instanceof BlockREConcrete)
 	        {
 	        	BlockREConcrete block = (BlockREConcrete)parblock;
 	        	icon = block.getBlockTexture(world, x, y, z, 0);
@@ -73,8 +76,14 @@ public class BlockRenderHandler implements ISimpleBlockRenderingHandler{
 	        	concrete = true;
 	        	rebar = true;
 	        }
-	        
-	        if(parblock instanceof BlockRebar)
+	        else if(parblock instanceof BlockLiftRail)
+	        {
+	        	BlockLiftRail block = (BlockLiftRail)parblock;
+	        	icon = block.getIcon(0, 0);
+	        	icon1 = block.getIcon(0, 0);
+	        	rebar = true;
+	        }
+	        else if(parblock instanceof BlockRebar)
 	        {
 	        	BlockRebar block = (BlockRebar)parblock;
 	        	icon = block.getIcon(0, 0);

@@ -12,8 +12,9 @@ import net.minecraft.network.packet.Packet250CustomPayload;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.world.World;
 import thutconcrete.common.tileentity.TileEntityBlock16Fluid;
+import thutconcrete.common.tileentity.TileEntityLiftRail;
 
-public class PacketTEB16F implements IPacketProcessor
+public class PacketStampable implements IPacketProcessor
 {
 
 
@@ -23,15 +24,21 @@ public class PacketTEB16F implements IPacketProcessor
 	   int x = te.xCoord;
        int y = te.yCoord;
        int z = te.zCoord;
-       TileEntityBlock16Fluid teb16f = (TileEntityBlock16Fluid) te;
-       int[] items = teb16f.metaArray;
-       int[] ids = teb16f.iconIDs;
-       int[] sides = teb16f.sideArray;
+       int[] items = new int[6];
+       int[] ids = new int[6];
+       int[] sides = new int[6];
+       if(te instanceof TileEntityBlock16Fluid)
+       {
+	       TileEntityBlock16Fluid teb16f = (TileEntityBlock16Fluid) te;
+	       items = teb16f.metaArray;
+	       ids = teb16f.iconIDs;
+	       sides = teb16f.sideArray;
+       }
        
        if(!(isMetaSame(items,x,y,z)&&isIDSame(ids, x, y, z)))
 	        {
        	
-		 	ByteArrayOutputStream bos = new ByteArrayOutputStream(16+(3*4*items.length));
+		 	ByteArrayOutputStream bos = new ByteArrayOutputStream(16+(3*4*6));
 		 	DataOutputStream dos = new DataOutputStream(bos);
 	        
 	        try
@@ -113,7 +120,7 @@ public class PacketTEB16F implements IPacketProcessor
         	TileEntityBlock16Fluid teb16f = (TileEntityBlock16Fluid) te;
         	teb16f.metaArray=intArray;
         	teb16f.iconIDs=idArray;
-        	teb16f.sideArray = sideArray;
+        	teb16f.sideArray =sideArray;
         	teb16f.setIconArray();
         }
 	}
