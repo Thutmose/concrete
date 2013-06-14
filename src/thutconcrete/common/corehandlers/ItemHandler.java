@@ -29,18 +29,6 @@ public class ItemHandler {
 	
 	public static ItemStack[] brushes = new ItemStack[17];
 	
-	private final static String[] genNames = {
-		"Chalk",
-    	"Trass",
-    	"Limestone",
-    };	
-	
-	private final static String[] liftNames = {
-		"liftSpawner",
-    	"liftController",
-    };
-
-
 	public ItemHandler(ConfigHandler handler){
 		config = handler;
 		// Initalizes all mod items
@@ -63,16 +51,6 @@ public class ItemHandler {
 		items = itemList.toArray(new Item[0]);
 
 		registerItems();
-		
-		//Item item = new ItemWorldGenBlock(BlockWorldGen.instance.blockID-256);
-		
-		//ITem item = new ItemLiftBlocks(BlockLift.instance.blockID-256);
-		
-		for(int i = 0;i<liftNames.length;i++)
-		{
-		//	ItemStack stack = new ItemStack(item, 1, i);
-		//	LanguageRegistry.addName(stack, item.getUnlocalizedName(stack));
-		}
 		
 		for(int i = 0; i<17;i++)
 		{

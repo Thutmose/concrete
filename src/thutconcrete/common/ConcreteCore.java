@@ -74,7 +74,7 @@ public class ConcreteCore {
 	
 	public static String modid = "ThutConcrete";
 	
-	private static final String[]  LANGUAGES_SUPPORTED	= new String[] { "en_UK" };
+	private static final String[]  LANGUAGES_SUPPORTED	= new String[] { "en_UK", "en_US" };
     
     public static CreativeTabConcrete tabThut = new CreativeTabConcrete();
     
