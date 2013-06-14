@@ -47,6 +47,7 @@ public class EntityLift extends EntityLiving implements IEntityAdditionalSpawnDa
 	public boolean axis = true;
 	public boolean hasPassenger = false;
 	int n = 0;
+	int passengertime = 10;
 	boolean first = true;
 	Random r = new Random();
 	public double destinationY = 0;
@@ -94,7 +95,7 @@ public class EntityLift extends EntityLiving implements IEntityAdditionalSpawnDa
 	public void onUpdate()
 	{
 		this.prevPosY = posY;
-		speedDown = hasPassenger?PASSENDERSPEEDDOWN:NOPASSENGERSPEEDDOWN;
+		speedDown = passengertime>0?PASSENDERSPEEDDOWN:NOPASSENGERSPEEDDOWN;
 		
 		checkBlocks(0);
 		accelerate();
@@ -106,8 +107,15 @@ public class EntityLift extends EntityLiving implements IEntityAdditionalSpawnDa
 		{
 			setPosition(posX, called&&Math.abs(posY-destinationY)<0.5?destinationY:Math.floor(posY), posZ);
 			called = false;
+			if(current!=null)
+			{
+				current.setCalled(false);
+				worldObj.scheduleBlockUpdate(current.xCoord, current.yCoord, current.zCoord, current.getBlockId(), 5);
+				current = null;
+			}
 		}
 		checkCollision();
+		passengertime = hasPassenger?10:passengertime-1;
 		n++;
 	}
 	
@@ -132,6 +140,9 @@ public class EntityLift extends EntityLiving implements IEntityAdditionalSpawnDa
 					if(worldObj.getBlockTileEntity(x, y, z)!=null && worldObj.getBlockTileEntity(x, y, z) instanceof TileEntityLiftAccess)
 					{
 						destinationY = worldObj.getBlockTileEntity(x, y, z).yCoord - 2;
+						current = (TileEntityLiftAccess)worldObj.getBlockTileEntity(x, y, z);
+						current.called = true;
+						worldObj.scheduleBlockUpdate(x, y, z, worldObj.getBlockId(x, y, z), 5);
 						up = destinationY > posY;
 						move = true;
 						called = true;
@@ -142,28 +153,6 @@ public class EntityLift extends EntityLiving implements IEntityAdditionalSpawnDa
 				}
 			}
 		}
-/*/
-		if(!worldObj.isRemote&&floors[floor-1]!=null)
-		{
-			int i = -1;
-			for(int j = 0; j<4;j++)
-			{
-				if(floors[floor-1][j]!=null)
-				{
-					i = j;
-					break;
-				}
-			}
-			if(i == -1||floors[floor-1][i]==null)
-				return;
-			destinationY = floors[floor-1][i].yCoord - 2;
-			up = destinationY > posY;
-			move = true;
-			called = true;
-			System.out.println(destinationY+" "+posY+" "+up+" "+move);
-			PacketDispatcher.sendPacketToAllAround(posX, posY, posZ, 100, this.dimension, PacketLift.getPacket(this, 3,destinationY));
-			
-		}//*/
 	}
 	
 	public void callClient(double destinationY)
@@ -173,24 +162,6 @@ public class EntityLift extends EntityLiving implements IEntityAdditionalSpawnDa
 		move = true;
 		called = true;
 	}
-	
-	/*/
-	public void call(int floor, TileEntityLiftAccess te)
-	{
-		if(floorMap.containsKey(te)&&floorMap.get(te).intValue()==floor)
-		{
-			destinationY = te.yCoord - 1;
-			up = destinationY > posY;
-			move = true;
-			called = true;
-			System.out.println(destinationY+" "+posY+" "+up+" "+move);
-			if(!worldObj.isRemote)
-			{
-				PacketDispatcher.sendPacketToAllAround(posX, posY, posZ, 100, this.dimension, PacketLift.getPacket(this, 3, floor));
-			}
-		}
-	}
-	//*/
 	
 	public void accelerate()
 	{
@@ -233,6 +204,12 @@ public class EntityLift extends EntityLiving implements IEntityAdditionalSpawnDa
 					System.out.println("blocked up");
 					setPosition(posX, called&&Math.abs(posY-destinationY)<0.5?destinationY:Math.floor(posY), posZ);
 					called = false;
+					if(current!=null)
+					{
+						current.setCalled(false);
+						worldObj.scheduleBlockUpdate(current.xCoord, current.yCoord, current.zCoord, current.getBlockId(), 5);
+						current = null;
+					}
 					motionY = 0;
 					move = false;
 					moved = false;
@@ -265,6 +242,12 @@ public class EntityLift extends EntityLiving implements IEntityAdditionalSpawnDa
 					System.out.println("blocked down");
 					setPosition(posX, called&&Math.abs(posY-destinationY)<0.5?destinationY:Math.floor(posY), posZ);
 					called = false;
+					if(current!=null)
+					{
+						current.setCalled(false);
+						worldObj.scheduleBlockUpdate(current.xCoord, current.yCoord, current.zCoord, current.getBlockId(), 5);
+						current = null;
+					}
 					motionY = 0;
 					move = false;
 					moved = false;
@@ -315,7 +298,7 @@ public class EntityLift extends EntityLiving implements IEntityAdditionalSpawnDa
 		
 		boolean ret = true;
 		
-		for(int i = 0; i<4; i++)
+		for(int i = 0; i<size; i++)
 		{
 			ret = ret&&worldObj.getBlockId((int)Math.floor(posX)+sides[axis?2:0][0],(int)Math.floor(posY+dir+i),(int)Math.floor(posZ)+sides[axis?2:0][1])==BlockLiftRail.staticBlock.blockID;
 			ret = ret&&worldObj.getBlockId((int)Math.floor(posX)+sides[axis?3:1][0],(int)Math.floor(posY+dir+i),(int)Math.floor(posZ)+sides[axis?3:1][1])==BlockLiftRail.staticBlock.blockID;

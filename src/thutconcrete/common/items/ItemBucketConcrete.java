@@ -23,6 +23,7 @@ public class ItemBucketConcrete extends ItemBucket{
 		super(par1, BlockLiquidConcrete.instance.blockID);
 		isFull = BlockLiquidConcrete.instance.blockID;
 		this.setCreativeTab(ConcreteCore.tabThut);
+		this.setUnlocalizedName("bucketOconcrete");
 		instance = this;
 	}
 

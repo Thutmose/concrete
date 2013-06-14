@@ -23,32 +23,6 @@ import thutconcrete.common.items.ItemWorldGenBlock;
 public class BlockHandler {
 
 	private ConfigHandler config;
-	
-	public static final String[] names = 
-		{
-			"Dust",
-			"Rebar",
-			"Re-Enforced Concrete",
-			"Liquid Re-Enforced Concrete",
-			"Concrete",
-			"Liquid Concrete",
-			"Mafic Lava",
-			"Basalt",
-			"Intermediate Lava",
-			"Andesite",
-			"Felsic Lava",
-			"Rhyolite",
-			"Volcano Spawner",
-			"uGoBoom",
-			"Lime Kiln",
-			"you should not have this block",
-			"Lift Rails",
-			"",
-			"",
-			"",
-		};
-	
-	
 	public static Block[] blocks;
 	public static Map<Block, ItemBlock> itemBlocks = new HashMap<Block, ItemBlock>();
 	private static List<Block> blockList = new ArrayList<Block>();
@@ -86,19 +60,17 @@ public class BlockHandler {
 		blocks = blockList.toArray(new Block[0]);
 
 		registerBlocks();
-		registerNames();
 		
 		BlockWorldGen worldGenBlock = new BlockWorldGen(idWorld);
 		BlockLift lift = new BlockLift(id++);
 		blockList.add(lift);
 		
 		GameRegistry.registerBlock(lift, ItemLiftBlocks.class, "liftBlocks");
-		LanguageRegistry.addName(lift, "lift Block");
+		GameRegistry.registerBlock(worldGenBlock, ItemWorldGenBlock.class, "worldGenBlock");
 		
 		blockList.add(worldGenBlock);
 		blocks = blockList.toArray(new Block[0]);
 		
-		registerBlockDrops(worldGenBlock);
 		changeFlamibility();
 	}
 
@@ -107,19 +79,6 @@ public class BlockHandler {
 			GameRegistry.registerBlock(block, block.getLocalizedName().substring(5));
 		}
 		
-	}
-	
-	public void registerBlockDrops(Block block){
-			GameRegistry.registerBlock(block, ItemWorldGenBlock.class, "worldGenBlock");
-			LanguageRegistry.addName(block, "Natural Block");
-	}
-	
-	public void registerNames(){
-		int n = 0;
-		for(Block block : blocks){
-			LanguageRegistry.addName(block, names[n]);
-			n++;
-		}
 	}
 	
 	public void changeFlamibility()

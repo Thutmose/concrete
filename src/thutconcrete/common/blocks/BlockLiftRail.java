@@ -46,10 +46,6 @@ public class BlockLiftRail extends BlockRebar implements ITileEntityProvider
     	boolean placed = false;
     	ItemStack item = player.getHeldItem();
     	
-    	int meta = world.getBlockMetadata(x, y, z);
-    	
-    	world.setBlockMetadataWithNotify(x, y, z, meta==0?1:0, 3);
-    	
     	world.scheduleBlockUpdate(x, y, z, blockID, 5);
     	if(item!=null)
     	{
@@ -76,26 +72,6 @@ public class BlockLiftRail extends BlockRebar implements ITileEntityProvider
 		return new TileEntityLiftAccess();
 	}
 	
-	@Override
-	public void updateTick(World worldObj, int x, int y, int z, Random par5Random)
-	{
-		List<Entity> lifts = worldObj.getEntitiesWithinAABB(EntityLift.class, AxisAlignedBB.getBoundingBox(x-1,y-0.5, z-1, x+1, y+0.5, z+1));
-		if(lifts == null || lifts.isEmpty())
-		{
-	//		System.out.println("empty");
-		}
-		else
-		{
-	//		System.out.println("has lift");
-		}
-    }
-	
-	public int tickRate(World worldObj)
-	{
-		return 10;
-	}
-	 
-	
 	//////////////////////////////////////////////////////RedStone stuff/////////////////////////////////////////////////
     /**
      * Can this block provide power. Only wire currently seems to have this change based on its state.
@@ -112,10 +88,15 @@ public class BlockLiftRail extends BlockRebar implements ITileEntityProvider
      */
     public int isProvidingWeakPower(IBlockAccess par1IBlockAccess, int par2, int par3, int par4, int par5)
     {
-    	
-    	TileEntityLiftAccess rail = (TileEntityLiftAccess)par1IBlockAccess.getBlockTileEntity(par2, par3, par4);
-    	int meta = par1IBlockAccess.getBlockMetadata(par2, par3, par4);
-        return meta>0 ? 15 : 0;
+
+		TileEntityLiftAccess controller = (TileEntityLiftAccess)par1IBlockAccess.getBlockTileEntity(par2, par3, par4);
+		if(controller!=null)
+		{
+	//		System.out.println(controller.called);
+			return controller.called?15:0;
+		}
+    
+        return 0;
     }
     
     /**
@@ -126,6 +107,7 @@ public class BlockLiftRail extends BlockRebar implements ITileEntityProvider
     {
         return isProvidingWeakPower(par1IBlockAccess, par2, par3, par4, par5);
     }
+	
 	
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	

@@ -12,6 +12,7 @@ import net.minecraftforge.liquids.LiquidDictionary;
 import net.minecraftforge.oredict.OreDictionary;
 import thutconcrete.common.blocks.BlockConcrete;
 import thutconcrete.common.blocks.BlockLava;
+import thutconcrete.common.blocks.BlockLiftRail;
 import thutconcrete.common.blocks.BlockLiquidConcrete;
 import thutconcrete.common.blocks.BlockLiquidREConcrete;
 import thutconcrete.common.blocks.BlockRebar;
@@ -146,6 +147,11 @@ public class RecipeHandler
 		{
 			GameRegistry.addShapelessRecipe(new ItemStack(BlockRebar.instance,1,0), item);
 		}
+		for (ItemStack item : OreDictionary.getOres("rebar")) 
+		{
+			GameRegistry.addShapelessRecipe(new ItemStack(BlockLiftRail.instance,1,0), item, new ItemStack(Item.redstone));
+		}
+		
 		for(Item i : Item.itemsList)
 		{
 			if(i!=null&&i.itemID!=Items.rebarStack.itemID&&i.getUnlocalizedName().toLowerCase().contains("rebar"))

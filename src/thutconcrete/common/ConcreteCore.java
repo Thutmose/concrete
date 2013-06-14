@@ -73,6 +73,8 @@ public class ConcreteCore {
 	public static ConcreteCore instance;
 	
 	public static String modid = "ThutConcrete";
+	
+	private static final String[]  LANGUAGES_SUPPORTED	= new String[] { "en_UK" };
     
     public static CreativeTabConcrete tabThut = new CreativeTabConcrete();
     
@@ -160,6 +162,7 @@ public class ConcreteCore {
 
 		liquidHndlr.registerLiquids();
 		initOreMap();
+		registerLanguages();
 	//*/	
 	}
 	
@@ -220,6 +223,45 @@ public class ConcreteCore {
 		
 		
 	}
+	
+	public void registerLanguages()
+	{
+		/**
+		 * Handle language support
+		 */
+		int languages = 0;
+
+		for (String language : LANGUAGES_SUPPORTED)
+		{
+			LanguageRegistry.instance().loadLocalization("/mods/thutconcrete/language/" + language + ".properties", language, false);
+
+			if (LanguageRegistry.instance().getStringLocalization("children", language) != "")
+			{
+				try
+				{
+					String[] children = LanguageRegistry.instance().getStringLocalization("children", language).split(",");
+
+					for (String child : children)
+					{
+						if (child != "" && child != null)
+						{
+							LanguageRegistry.instance().loadLocalization("/mods/thutconcrete/language/"+ language + ".properties", child, false);
+							languages++;
+						}
+					}
+				}
+				catch (Exception e)
+				{
+					e.printStackTrace();
+				}
+			}
+		}
+
+	}
+	
+	
+	
+	
 	
 	/*/
 	

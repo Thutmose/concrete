@@ -1724,6 +1724,13 @@ public class Vector3
 					{
 						pushDir.y = -e.motionY-f;
 						movedy = true;
+
+						if(e instanceof EntityLiving)
+						{
+							int damage = Math.max((int)((e.motionY+pusher.motionY+0.15)*(e.motionY+pusher.motionY+0.15)),0);
+						//	System.out.println(damage+" "+(-e.motionY+pusher.motionY)+" "+pusher.motionY);
+							((EntityLiving)e).attackEntityFrom(DamageSource.fall, damage);
+						}
 					//	System.out.println("pushed-y");
 					}
 					

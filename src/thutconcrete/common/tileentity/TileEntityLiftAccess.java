@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import javax.print.attribute.standard.SheetCollate;
+
 import cpw.mods.fml.common.network.PacketDispatcher;
 
 import thutconcrete.common.blocks.BlockLiftRail;
@@ -31,8 +33,15 @@ public class TileEntityLiftAccess extends TileEntity
 	public int power = 0;
 	public int prevPower = 1;
 	public EntityLift lift;
+	
+	boolean listNull = false;
+	List<Entity> list = new ArrayList<Entity>();
+	
 	public long time = 0;
 	public int metaData = 0;
+	public int blockID = 0;
+	
+	boolean loaded = false;
 	
 	public boolean called = false;
 	public int floor;
@@ -48,16 +57,15 @@ public class TileEntityLiftAccess extends TileEntity
 	{
 		if(first)
 		{
-			metaData = worldObj.getBlockMetadata(xCoord, yCoord, zCoord);
+			blockID = worldObj.getBlockId(xCoord, yCoord, zCoord);
 			first = false;
 		}
-
+		//System.out.println(called);
 		if(!worldObj.isRemote && lift == null && liftID!=-1)
 		{
 			if(EntityLift.lifts.containsKey(liftID))
 			{
 				lift = EntityLift.lifts.get(liftID);
-			//	System.out.println("found lift: "+lift);
 				PacketDispatcher.sendPacketToAllAround(xCoord, yCoord, zCoord, 50, worldObj.provider.dimensionId, PacketLift.getPacket(this, 2, liftID));
 			}
 			else
@@ -66,20 +74,37 @@ public class TileEntityLiftAccess extends TileEntity
 				liftID = -1;
 			}
 		}
+		
 		if(side==0)
 		{
 			worldObj.markBlockForUpdate(xCoord, yCoord, zCoord);
 		}
 		
-		
-		if(metaData==0&&time%10==0)
+		if(blockID == BlockLiftRail.staticBlock.blockID&&time%10==0)
 		{
-			power = checkSides()?1:0;
-			if(power!=prevPower)
+			
+			if(!loaded||listNull||time%1000==0)
 			{
-				worldObj.setBlockMetadataWithNotify(xCoord, yCoord, zCoord, power, 3);
+				list = worldObj.getEntitiesWithinAABB(EntityLift.class, AxisAlignedBB.getBoundingBox(xCoord+0.5-2, 0, zCoord+0.5-2, xCoord+0.5+2, 255, zCoord+0.5+2));
+				loaded = true;
 			}
-			prevPower = power;
+			boolean check = false;
+		//	boolean toUpdate = false;
+			for(Entity e:list)
+			{
+			//	System.out.println("rail check");
+				if(e!=null)
+				{
+					check  = check || ((int)e.posY) == yCoord;
+				//	toUpdate = toUpdate || e.motionY!=0;
+				}
+				else
+				{
+					listNull = true;
+				}
+			}
+		//	if(toUpdate)
+				setCalled(check);
 		}
 		time++;
 	}
@@ -114,6 +139,7 @@ public class TileEntityLiftAccess extends TileEntity
 	   {
 		   super.writeToNBT(par1);
 		   par1.setInteger("meta", metaData);
+		   par1.setInteger("block id", blockID);
 		   par1.setInteger("side", side);
 		   par1.setInteger("floor", floor);
 		   if(lift!=null)
@@ -121,16 +147,15 @@ public class TileEntityLiftAccess extends TileEntity
 			   liftID = lift.id;
 		   }
 		   par1.setInteger("lift", liftID);
-		   par1.setBoolean("first", first);
 	   }
 	
 	   public void readFromNBT(NBTTagCompound par1)
 	   {
 	      super.readFromNBT(par1);
 	      metaData = par1.getInteger("meta");
+	      blockID = par1.getInteger("block id");
 	      side = par1.getInteger("side");
 	      floor = par1.getInteger("floor");
-	      first = par1.getBoolean("first");
 	      liftID = par1.getInteger("lift");
 	      if(EntityLift.lifts.containsKey(liftID))
 	      {
@@ -149,12 +174,20 @@ public class TileEntityLiftAccess extends TileEntity
 				//   System.out.println(button+" "+hitX+" "+hitY+" "+hitZ+" "+side);
 				   if(button!=0&&lift!=null&&lift.floors[button-1]!=null)
 				   {
-					   this.called = true;
+					   if(button==floor)
+						   this.called = true;
 					   lift.call(button);
 				//	   System.out.println("floor called");
 				   }
 			   }
 		   }
+	   }
+	   
+	   public void setCalled(boolean called)
+	   {
+		   this.called = called;
+		   updateBlock();
+		   notifySurroundings();
 	   }
 	   
 	   public void setSide(int side)
@@ -209,7 +242,6 @@ public class TileEntityLiftAccess extends TileEntity
 	    @Override
 	    public Packet getDescriptionPacket()
 	    {
-	       /// PacketLift.getPacket(this, 2, liftID, side);
 	    	return PacketInt.getPacket(this);
 	    }
 
@@ -236,6 +268,19 @@ public class TileEntityLiftAccess extends TileEntity
 	    public int getBlockMetadata(ForgeDirection side)
 	    {
 	    	return worldObj.getBlockMetadata(xCoord+side.offsetX, yCoord+side.offsetY, zCoord+side.offsetZ);
+	    }
+	    public void updateBlock(ForgeDirection side)
+	    {
+	    	worldObj.notifyBlocksOfNeighborChange(xCoord+side.offsetX, yCoord+side.offsetY, zCoord+side.offsetZ,getBlockId());
+	    }
+	    public void notifySurroundings()
+	    {
+	    	worldObj.notifyBlocksOfNeighborChange(xCoord, yCoord, zCoord,getBlockId(),0);
+	    }
+	    
+	    public void updateBlock()
+	    {
+	    	worldObj.scheduleBlockUpdate(xCoord, yCoord, zCoord, getBlockId(),5);
 	    }
 	    public TileEntity getBlockTE(ForgeDirection side)
 	    {

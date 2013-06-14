@@ -35,6 +35,7 @@ public class BlockLift extends Block implements ITileEntityProvider
 		super(par1, Material.iron);
 		setHardness(3.5f);
 		setCreativeTab(ConcreteCore.tabThut);
+		this.setUnlocalizedName("Block");
 		instance = this;
 	}
 	
@@ -226,6 +227,45 @@ public class BlockLift extends Block implements ITileEntityProvider
 		return new TileEntityLiftAccess();
 	}
 	
+	//////////////////////////////////////////////////////RedStone stuff/////////////////////////////////////////////////
+    /**
+     * Can this block provide power. Only wire currently seems to have this change based on its state.
+     */
+    public boolean canProvidePower()
+    {
+        return true;
+    }
+
+    /**
+     * Returns true if the block is emitting indirect/weak redstone power on the specified side. If isBlockNormalCube
+     * returns true, standard redstone propagation rules will apply instead and this will not be called. Args: World, X,
+     * Y, Z, side. Note that the side is reversed - eg it is 1 (up) when checking the bottom of the block.
+     */
+    public int isProvidingWeakPower(IBlockAccess par1IBlockAccess, int par2, int par3, int par4, int par5)
+    {
+
+    	int meta = par1IBlockAccess.getBlockMetadata(par2, par3, par4);
+    	if(meta==1)
+    	{
+    		TileEntityLiftAccess controller = (TileEntityLiftAccess)par1IBlockAccess.getBlockTileEntity(par2, par3, par4);
+    		if(controller!=null)
+    		{
+    			return controller.called?15:0;
+    		}
+    	}
+        return 0;
+    }
+    
+    /**
+     * Returns true if the block is emitting direct/strong redstone power on the specified side. Args: World, X, Y, Z,
+     * side. Note that the side is reversed - eg it is 1 (up) when checking the bottom of the block.
+     */
+    public int isProvidingStrongPower(IBlockAccess par1IBlockAccess, int par2, int par3, int par4, int par5)
+    {
+        return isProvidingWeakPower(par1IBlockAccess, par2, par3, par4, par5);
+    }
+	
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     
     @SideOnly(Side.CLIENT)
 

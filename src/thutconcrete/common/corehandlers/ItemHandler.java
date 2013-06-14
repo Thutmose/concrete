@@ -29,19 +29,6 @@ public class ItemHandler {
 	
 	public static ItemStack[] brushes = new ItemStack[17];
 	
-	public static final String[] names = 
-		{
-			"Grinder",
-			"Dust",
-			"Quick Lime",
-			"Calcium Carbonate",
-			"Trass Dust",
-			"Cement",
-			"Bucket of Concrete",
-			"Stamper",
-			"Lift Controller",
-		};
-	
 	private final static String[] genNames = {
 		"Chalk",
     	"Trass",
@@ -52,29 +39,6 @@ public class ItemHandler {
 		"liftSpawner",
     	"liftController",
     };
-	
-	private static final String[] dyeNames = { "dyeBlack", "dyeRed", "dyeGreen", "dyeBrown", "dyeBlue", "dyePurple", "dyeCyan", "dyeLightGray", "dyeGray", "dyePink", "dyeLime", "dyeYellow", "dyeLightBlue", "dyeMagenta", "dyeOrange", "dyeWhite" };
-	 
-	
-	private final static String[] colourNames = { 
-		"Black",
-		"Red", 
-		"Green",
-		"Brown", 
-		"Blue",
-		"Purple",
-		"Cyan",
-		"Light Gray",
-		"Gray",
-		"Pink",
-		"Lime",
-		"Yellow",
-		"Light Blue",
-		"Magenta",
-		"Orange",
-		"White", 
-		"",
-		};
 
 
 	public ItemHandler(ConfigHandler handler){
@@ -99,29 +63,21 @@ public class ItemHandler {
 		items = itemList.toArray(new Item[0]);
 
 		registerItems();
-		registerNames();
 		
-		Item item = new ItemWorldGenBlock(BlockWorldGen.instance.blockID-256);
+		//Item item = new ItemWorldGenBlock(BlockWorldGen.instance.blockID-256);
 		
-		for(int i = 0;i<genNames.length;i++)
-		{
-			ItemStack stack = new ItemStack(item, 1, i);
-			LanguageRegistry.addName(stack, genNames[i]);
-		}
-		
-		item = new ItemLiftBlocks(BlockLift.instance.blockID-256);
+		//ITem item = new ItemLiftBlocks(BlockLift.instance.blockID-256);
 		
 		for(int i = 0;i<liftNames.length;i++)
 		{
-			ItemStack stack = new ItemStack(item, 1, i);
-			LanguageRegistry.addName(stack, liftNames[i]);
+		//	ItemStack stack = new ItemStack(item, 1, i);
+		//	LanguageRegistry.addName(stack, item.getUnlocalizedName(stack));
 		}
 		
 		for(int i = 0; i<17;i++)
 		{
 			Item painter = new ItemPaintBrush(id++, i);
 			ItemStack stack = new ItemStack(painter, 1,0);
-			LanguageRegistry.addName(stack, colourNames[i]+" Brush");
 			brushes[i] = stack;
 		}
 		ItemPaintBrush.emptyBrushID = id;
@@ -130,13 +86,6 @@ public class ItemHandler {
 	public void registerItems(){
 		for(Item item: items){
 			GameRegistry.registerItem(item, item.getUnlocalizedName().substring(5));
-		}
-	}
-	public void registerNames(){
-		int n = 0;
-		for(Item item: items){
-			LanguageRegistry.addName(item, names[n]);
-			n++;
 		}
 	}
 	

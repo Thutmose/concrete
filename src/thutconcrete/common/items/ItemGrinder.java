@@ -28,7 +28,7 @@ public class ItemGrinder extends Item {
 		this.maxStackSize = 1;
 		this.setMaxDamage(MAX_USES);
 		this.setCreativeTab(ConcreteCore.tabThut);
-		this.setUnlocalizedName("Smoother Thingy");
+		this.setUnlocalizedName("smoother");
 	}
 
     public boolean onItemUse(ItemStack par1ItemStack, EntityPlayer par2EntityPlayer, World par3World, int x, int y, int z, int side, float hitX, float hitY, float hitZ)
