@@ -4,7 +4,7 @@ package thutconcrete.client.render;
 import org.lwjgl.opengl.GL11;
 
 import thutconcrete.common.blocks.*;
-import thutconcrete.common.tileentity.TileEntityLiftRail;
+import thutconcrete.common.tileentity.TileEntityLiftAccess;
 import thutconcrete.common.utils.*;
 import net.minecraft.block.Block;
 import net.minecraft.client.renderer.EntityRenderer;
@@ -60,7 +60,7 @@ public class BlockRenderHandler implements ISimpleBlockRenderingHandler{
 	        	}
 	        	
 	        	concrete = true;
-	        	rebar = true;
+	        	rebar = world.getBlockMetadata(x, y, z)!=0;
 	        }
 			else if(parblock instanceof BlockREConcrete)
 	        {
@@ -74,7 +74,7 @@ public class BlockRenderHandler implements ISimpleBlockRenderingHandler{
 	        	}
 	        	
 	        	concrete = true;
-	        	rebar = true;
+	        	rebar = world.getBlockMetadata(x, y, z)!=0;
 	        }
 	        else if(parblock instanceof BlockLiftRail)
 	        {

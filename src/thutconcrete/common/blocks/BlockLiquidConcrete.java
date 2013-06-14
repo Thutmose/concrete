@@ -39,7 +39,7 @@ import net.minecraftforge.common.ForgeDirection;
 import net.minecraftforge.liquids.IBlockLiquid;
 import net.minecraftforge.liquids.ILiquid;
 
-public class BlockLiquidConcrete extends Block16Fluid implements IBlockLiquid, ITileEntityProvider, ISoldifiable
+public class BlockLiquidConcrete extends Block16Fluid implements IBlockLiquid, ISoldifiable
 {
 
 	public static BlockLiquidConcrete instance;
@@ -190,11 +190,6 @@ public class BlockLiquidConcrete extends Block16Fluid implements IBlockLiquid, I
 		public int stillLiquidMeta() {
 			return 0;
 		}
-		
-		 public TileEntity createNewTileEntity(World world)
-		 {
-		    return new TileEntityBlock16Fluid();
-		 }
 
 		@Override
 		public boolean willGenerateSources() {

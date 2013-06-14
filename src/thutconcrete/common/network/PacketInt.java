@@ -4,6 +4,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
+import thutconcrete.common.tileentity.TileEntityLiftAccess;
 import thutconcrete.common.tileentity.TileEntityLimekiln;
 import net.minecraft.network.packet.Packet250CustomPayload;
 import net.minecraft.tileentity.TileEntity;
@@ -23,8 +24,18 @@ public class PacketInt implements IPacketProcessor
         int y = dat.readInt();
         int z = dat.readInt();
         int f = dat.readInt();
-        TileEntityLimekiln tel = (TileEntityLimekiln)world.getBlockTileEntity(x, y, z);
-        tel.facing = ForgeDirection.getOrientation(f);
+        TileEntity te = world.getBlockTileEntity(x, y, z);
+        
+		if(te instanceof TileEntityLimekiln)
+		{
+	        TileEntityLimekiln tel = (TileEntityLimekiln)te;
+	        tel.facing = ForgeDirection.getOrientation(f);
+		}
+		else if(te instanceof TileEntityLiftAccess)
+		{
+			TileEntityLiftAccess tel = (TileEntityLiftAccess)te;
+			tel.side = f;
+		}
 	}
 	
 	public static Packet250CustomPayload getPacket(TileEntity te)
@@ -32,9 +43,18 @@ public class PacketInt implements IPacketProcessor
 			int x = te.xCoord;
 			int y = te.yCoord;
 			int z = te.zCoord;
-			TileEntityLimekiln tel = (TileEntityLimekiln)te;
-			int f = tel.facing.ordinal();
+			int f = 0;
 			
+			if(te instanceof TileEntityLimekiln)
+			{
+				TileEntityLimekiln tel = (TileEntityLimekiln)te;
+				f = tel.facing.ordinal();
+			}
+			else if(te instanceof TileEntityLiftAccess)
+			{
+				TileEntityLiftAccess tel = (TileEntityLiftAccess)te;
+				f = tel.side;
+			}
 		 	ByteArrayOutputStream bos = new ByteArrayOutputStream(20);
 		 	DataOutputStream dos = new DataOutputStream(bos);
 			

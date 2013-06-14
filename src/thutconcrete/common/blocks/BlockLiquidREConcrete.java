@@ -37,7 +37,7 @@ import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
 import net.minecraftforge.common.ForgeDirection;
 
-public class BlockLiquidREConcrete extends Block16Fluid implements IRebar, ITileEntityProvider, ISoldifiable
+public class BlockLiquidREConcrete extends Block16Fluid implements IRebar, ISoldifiable
 {
 	
 	public static Block instance;
@@ -247,7 +247,7 @@ public class BlockLiquidREConcrete extends Block16Fluid implements IRebar, ITile
 	@SideOnly(Side.CLIENT)
     public void registerIcons(IconRegister par1IconRegister)
     {
-        this.blockIcon = par1IconRegister.registerIcon("thutconcrete:wetConcrete_"+colourid);
+        this.blockIcon = par1IconRegister.registerIcon("thutconcrete:wetConcrete_"+8);
     	this.theIcon = par1IconRegister.registerIcon("thutconcrete:" + "rebar");
     	this.iconArray = new Icon[16];
     	for (int i = 0; i < this.iconArray.length; ++i)
@@ -319,10 +319,5 @@ public class BlockLiquidREConcrete extends Block16Fluid implements IRebar, ITile
 			 	
 		    }
 
-		 
-			 public TileEntity createNewTileEntity(World world)
-			 {
-			    return new TileEntityBlock16Fluid();
-			 }
 			 
 }

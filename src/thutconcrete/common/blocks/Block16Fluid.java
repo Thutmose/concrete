@@ -154,7 +154,7 @@ public class Block16Fluid extends Block
     {
 		worldObj.scheduleBlockUpdate(x, y, z, worldObj.getBlockId(x, y, z), 5);
 		tickSides(worldObj, x, y, z, 5);
-    	setTEUpdate(worldObj, x, y, z);
+    //	setTEUpdate(worldObj, x, y, z);
     }
     /**
      * Sets the block's bounds for rendering it as an item
@@ -232,7 +232,10 @@ public class Block16Fluid extends Block
     	if(te!=null)
     	{
 			te.setIcon(side, meta, id, icon, iconSide);
-			te.sendUpdate();
+			if(meta!=8&&!(Block.blocksList[id] instanceof Block16Fluid));
+			{
+				te.sendUpdate();
+			}
 			return true;
     	}
     	return false;
@@ -896,6 +899,7 @@ public class Block16Fluid extends Block
 			 te.metaArray[side] = meta;
 			 te.iconIDs[side] = worldObj.getBlockId(x, y, z);
 			 te.icons[side] = iconArray[meta];
+			 if(meta!=8)
 			 te.sendUpdate();
 		 }
 	 }
@@ -916,6 +920,7 @@ public class Block16Fluid extends Block
 			)
 		 {
 			 te.metaArray = new int[] {meta,meta,meta,meta,meta,meta};
+			 if(meta!=8)
 			 te.sendUpdate();
 		 }
 	 }

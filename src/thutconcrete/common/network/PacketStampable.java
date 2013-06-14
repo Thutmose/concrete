@@ -12,7 +12,7 @@ import net.minecraft.network.packet.Packet250CustomPayload;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.world.World;
 import thutconcrete.common.tileentity.TileEntityBlock16Fluid;
-import thutconcrete.common.tileentity.TileEntityLiftRail;
+import thutconcrete.common.tileentity.TileEntityLiftAccess;
 
 public class PacketStampable implements IPacketProcessor
 {

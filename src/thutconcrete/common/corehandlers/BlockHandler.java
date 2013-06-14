@@ -17,6 +17,7 @@ import net.minecraft.item.ItemBlock;
 import net.minecraft.world.World;
 import net.minecraftforge.oredict.OreDictionary;
 import thutconcrete.common.blocks.*;
+import thutconcrete.common.items.ItemLiftBlocks;
 import thutconcrete.common.items.ItemWorldGenBlock;
 
 public class BlockHandler {
@@ -65,6 +66,7 @@ public class BlockHandler {
 		blockList.add(new BlockRebar(id++));
 		
 		blockList.add(new BlockREConcrete(id++));
+		
 		blockList.add(new BlockLiquidREConcrete(id++));
 		
 
@@ -86,13 +88,17 @@ public class BlockHandler {
 		registerBlocks();
 		registerNames();
 		
-		BlockWorldGen block = new BlockWorldGen(idWorld);
-
+		BlockWorldGen worldGenBlock = new BlockWorldGen(idWorld);
+		BlockLift lift = new BlockLift(id++);
+		blockList.add(lift);
 		
-		blockList.add(block);
+		GameRegistry.registerBlock(lift, ItemLiftBlocks.class, "liftBlocks");
+		LanguageRegistry.addName(lift, "lift Block");
+		
+		blockList.add(worldGenBlock);
 		blocks = blockList.toArray(new Block[0]);
 		
-		registerBlockDrops(block);
+		registerBlockDrops(worldGenBlock);
 		changeFlamibility();
 	}
 

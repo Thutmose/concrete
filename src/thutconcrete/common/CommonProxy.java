@@ -34,7 +34,7 @@ public class CommonProxy  implements IGuiHandler
 		GameRegistry.registerTileEntity(TileEntityLimekiln.class, "tileEntityLimekiln");
 		GameRegistry.registerTileEntity(TileEntityLimekilnDummy.class, "tileEntityLimekilnDummy");
 
-		GameRegistry.registerTileEntity(TileEntityLiftRail.class, "tileEntityLiftRail");
+		GameRegistry.registerTileEntity(TileEntityLiftAccess.class, "tileEntityLiftRail");
     }
     
     public void registerEntities()

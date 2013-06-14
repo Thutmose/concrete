@@ -17,6 +17,8 @@ import thutconcrete.common.blocks.BlockLiquidREConcrete;
 import thutconcrete.common.blocks.BlockRebar;
 import thutconcrete.common.blocks.BlockSolidLava;
 import thutconcrete.common.blocks.BlockWorldGen;
+import thutconcrete.common.items.ItemLiftBlocks;
+import thutconcrete.common.items.ItemLiftController;
 import thutconcrete.common.items.Items;
 import cpw.mods.fml.common.registry.GameRegistry;
 
@@ -45,9 +47,7 @@ public class RecipeHandler
 	
 	public void registerSpecialRecipes()
 	{
-
 		GameRegistry.addSmelting(Items.carbonate.itemID, Items.limeStack, 0);
-
 	}
 
 	public void initCookable()
@@ -93,6 +93,13 @@ public class RecipeHandler
 			
 			
 		}
+		
+
+		GameRegistry.addRecipe(new ItemStack(ItemLiftController.instance),"xyx"," x ","   ", 'x', Item.ingotIron, 'y', Item.redstone);
+		GameRegistry.addRecipe(new ItemStack(ItemLiftBlocks.instance,1,0),"xyx","zxz","zzz", 'x', Item.ingotIron, 'y', Item.redstone, 'z', new ItemStack(Block.stone));
+		GameRegistry.addRecipe(new ItemStack(ItemLiftController.instance),"xyx","yxy","xyx", 'x', Item.ingotIron, 'y', Item.redstone);
+		
+		
 		
 	}
 	

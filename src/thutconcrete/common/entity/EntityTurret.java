@@ -222,6 +222,7 @@ public class EntityTurret  extends EntityLiving implements IEntityAdditionalSpaw
 	@Override
 	protected void entityInit() 
 	{
+		super.entityInit();
 		this.dataWatcher.addObject(31, Integer.valueOf((int)0));
 	}
 
@@ -235,6 +236,7 @@ public class EntityTurret  extends EntityLiving implements IEntityAdditionalSpaw
 
 	@Override
 	public void readEntityFromNBT(NBTTagCompound nbt) {
+		super.readEntityFromNBT(nbt);
 		mass = nbt.getFloat("mass");
 		size = nbt.getDouble("size")==0?5:nbt.getDouble("size");
 		turretDir = turretDir.readFromNBT(nbt, "turretDir");
@@ -244,6 +246,7 @@ public class EntityTurret  extends EntityLiving implements IEntityAdditionalSpaw
 
 	@Override
 	public void writeEntityToNBT(NBTTagCompound nbt) {
+		super.writeEntityToNBT(nbt);
 		nbt.setDouble("size", size);
 		nbt.setFloat("mass", mass);
 		turretDir.writeToNBT(nbt, "turretDir");

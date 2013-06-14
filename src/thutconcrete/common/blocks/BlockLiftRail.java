@@ -22,7 +22,7 @@ import net.minecraftforge.common.ForgeDirection;
 import thutconcrete.common.blocks.*;
 import thutconcrete.common.entity.EntityLift;
 import thutconcrete.common.tileentity.TileEntityBlock16Fluid;
-import thutconcrete.common.tileentity.TileEntityLiftRail;
+import thutconcrete.common.tileentity.TileEntityLiftAccess;
 import thutconcrete.common.utils.IRebar;
 import thutconcrete.common.utils.IStampableBlock;
 
@@ -66,7 +66,6 @@ public class BlockLiftRail extends BlockRebar implements ITileEntityProvider
 			    	}
 		    	}
 	    	}
-	    	
     	}
         return placed;
     }
@@ -74,7 +73,7 @@ public class BlockLiftRail extends BlockRebar implements ITileEntityProvider
 	@Override
 	public TileEntity createNewTileEntity(World world) 
 	{
-		return new TileEntityLiftRail();
+		return new TileEntityLiftAccess();
 	}
 	
 	@Override
@@ -114,7 +113,7 @@ public class BlockLiftRail extends BlockRebar implements ITileEntityProvider
     public int isProvidingWeakPower(IBlockAccess par1IBlockAccess, int par2, int par3, int par4, int par5)
     {
     	
-    	TileEntityLiftRail rail = (TileEntityLiftRail)par1IBlockAccess.getBlockTileEntity(par2, par3, par4);
+    	TileEntityLiftAccess rail = (TileEntityLiftAccess)par1IBlockAccess.getBlockTileEntity(par2, par3, par4);
     	int meta = par1IBlockAccess.getBlockMetadata(par2, par3, par4);
         return meta>0 ? 15 : 0;
     }
@@ -133,13 +132,7 @@ public class BlockLiftRail extends BlockRebar implements ITileEntityProvider
 	@SideOnly(Side.CLIENT)
 	public void registerIcons(IconRegister par1IconRegister)
 	{
-		this.blockIcon = par1IconRegister.registerIcon("thutconcrete:dryConcrete_8");
-		this.theIcon = par1IconRegister.registerIcon("thutconcrete:" + "rebarRusty");
-		this.iconArray = new Icon[16];
-    	for (int i = 0; i < this.iconArray.length; ++i)
-        {
-            this.iconArray[i] = par1IconRegister.registerIcon("thutconcrete:" + "dryConcrete_"+i);
-        }
+		this.blockIcon = par1IconRegister.registerIcon("thutconcrete:liftRails");
 	}
 
 	public boolean[] sides(IBlockAccess worldObj, int x, int y, int z) 

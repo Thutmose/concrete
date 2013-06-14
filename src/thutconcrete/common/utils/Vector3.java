@@ -18,6 +18,7 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.AxisAlignedBB;
+import net.minecraft.util.DamageSource;
 import net.minecraft.util.Vec3;
 import net.minecraft.world.World;
 import net.minecraftforge.liquids.ILiquid;
@@ -1690,6 +1691,12 @@ public class Vector3
 					{
 					//	System.out.println(yDiff+" "+push.y+" "+max.y+" "+offset.y+" "+(Math.sqrt(r.x*r.x+r.z*r.z)*Math.sin(-rotation.y))+" "+(-rotation.y));
 						pushDir.y  = pusher.motionY>0? pusher.motionY:0;
+						if(e instanceof EntityLiving)
+						{
+							int damage = Math.max((int)((-e.motionY+pusher.motionY+0.15)*(-e.motionY+pusher.motionY+0.15)),0);
+						//	System.out.println(damage+" "+(-e.motionY+pusher.motionY)+" "+pusher.motionY);
+							((EntityLiving)e).attackEntityFrom(DamageSource.fall, damage);
+						}
 						e.motionY = pusher.motionY>0? pusher.motionY:0;
 						e.setPosition(e.posX, yDiff, e.posZ);
 						e.isAirBorne = false;
@@ -1741,8 +1748,6 @@ public class Vector3
 					pushDir = pushDir.rotateAboutAngles(-rotation.y, -rotation.z);
 				}
 				
-
-				
 				if(movedy||movedx||movedz)
 				{
 				//	System.out.println("pushDir"+pushDir);
@@ -1769,6 +1774,19 @@ public class Vector3
 				
 		    	return ret;
 		    }
+
+		  public Vector3 getPushDirOutOfBlocks(Entity e, Vector3 offset)
+		  {
+			  Vector3 dir = new Vector3();
+			  
+			  
+			  
+			  
+			  return dir;
+		  }
+	
+	
+	
 	}
 	
 	

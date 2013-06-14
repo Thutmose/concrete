@@ -2,6 +2,9 @@ package thutconcrete.common.items;
 
 import cpw.mods.fml.common.network.PacketDispatcher;
 import cpw.mods.fml.common.network.Player;
+import cpw.mods.fml.relauncher.Side;
+import cpw.mods.fml.relauncher.SideOnly;
+import net.minecraft.client.renderer.texture.IconRegister;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.Item;
@@ -9,8 +12,10 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.world.World;
 import thutconcrete.common.ConcreteCore;
+import thutconcrete.common.blocks.BlockLift;
 import thutconcrete.common.entity.EntityLift;
 import thutconcrete.common.network.PacketLift;
+import thutconcrete.common.tileentity.TileEntityLiftAccess;
 
 public class ItemLiftController extends Item
 {
@@ -65,22 +70,20 @@ public class ItemLiftController extends Item
     	{
     		return false;
     	}
-       	boolean flag = player.isSneaking();
+       	
+       	int id = worldObj.getBlockId(x, y, z);
+       	int meta = worldObj.getBlockMetadata(x, y, z);
+       	
        	int liftId = itemstack.stackTagCompound.getInteger("lift");
        	Entity e = worldObj.getEntityByID(liftId);
-       	if(e!=null&&e instanceof EntityLift)
-       	{
-       		EntityLift lift = (EntityLift)e;
-       		if(lift.move)
-       		{
-	       		lift.move = false;
-	       		lift.up = !lift.up;
-       		}
-       		else
-       		{
-       			lift.move = true;
-       		}
-       	}
+       	
+		if(player.isSneaking()&&e!=null&&e instanceof EntityLift&&id==BlockLift.instance.blockID&&meta==1)
+		{
+			TileEntityLiftAccess te = (TileEntityLiftAccess)worldObj.getBlockTileEntity(x, y, z);
+			te.setLift((EntityLift)e);
+			te.setFloor(te.getButtonFromClick(side, hitX, hitY, hitZ));
+			player.addChatMessage("Set this Floor to "+te.floor);
+		}
     	return false;
     }
     
@@ -99,5 +102,11 @@ public class ItemLiftController extends Item
     public boolean getShareTag()
     {
         return true;
+    }
+    
+	@SideOnly(Side.CLIENT)
+    public void registerIcons(IconRegister par1IconRegister)
+    {
+        this.itemIcon = par1IconRegister.registerIcon("thutconcrete:liftController");
     }
 }

@@ -10,6 +10,7 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.FurnaceRecipes;
 import net.minecraftforge.oredict.OreDictionary;
+import thutconcrete.common.blocks.BlockLift;
 import thutconcrete.common.blocks.BlockLiquidConcrete;
 import thutconcrete.common.blocks.BlockLiquidREConcrete;
 import thutconcrete.common.blocks.BlockRebar;
@@ -45,6 +46,11 @@ public class ItemHandler {
 		"Chalk",
     	"Trass",
     	"Limestone",
+    };	
+	
+	private final static String[] liftNames = {
+		"liftSpawner",
+    	"liftController",
     };
 	
 	private static final String[] dyeNames = { "dyeBlack", "dyeRed", "dyeGreen", "dyeBrown", "dyeBlue", "dyePurple", "dyeCyan", "dyeLightGray", "dyeGray", "dyePink", "dyeLime", "dyeYellow", "dyeLightBlue", "dyeMagenta", "dyeOrange", "dyeWhite" };
@@ -101,6 +107,14 @@ public class ItemHandler {
 		{
 			ItemStack stack = new ItemStack(item, 1, i);
 			LanguageRegistry.addName(stack, genNames[i]);
+		}
+		
+		item = new ItemLiftBlocks(BlockLift.instance.blockID-256);
+		
+		for(int i = 0;i<liftNames.length;i++)
+		{
+			ItemStack stack = new ItemStack(item, 1, i);
+			LanguageRegistry.addName(stack, liftNames[i]);
 		}
 		
 		for(int i = 0; i<17;i++)

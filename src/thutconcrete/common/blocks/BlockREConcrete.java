@@ -274,7 +274,7 @@ public class BlockREConcrete extends Block16Fluid implements IRebar, ITileEntity
 	@SideOnly(Side.CLIENT)
 	public void registerIcons(IconRegister par1IconRegister)
 	{
-		this.blockIcon = par1IconRegister.registerIcon("thutconcrete:dryConcrete_"+colourid);
+		this.blockIcon = par1IconRegister.registerIcon("thutconcrete:dryConcrete_"+8);
 		this.theIcon = par1IconRegister.registerIcon("thutconcrete:" + "rebarRusty");
 		this.iconArray = new Icon[16];
     	for (int i = 0; i < this.iconArray.length; ++i)

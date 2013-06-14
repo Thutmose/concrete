@@ -23,7 +23,7 @@ public class RenderIRebar {
         
         if(rebar)
         {
-        	tessAddRebar(parblock,tessellator, icon1, x,y,z, sides);
+        	tessAddRebar(parblock,tessellator, icon1, x,y,z, sides, !concrete);
         }
         if(concrete)
         {
@@ -31,60 +31,126 @@ public class RenderIRebar {
         }
     }
 	
-	private void tessAddRebar(Block parblock, Tessellator tessellator, Icon icon, double x, double y, double z, boolean[] sides){
+	private void tessAddRebar(Block parblock, Tessellator tessellator, Icon icon, double x, double y, double z, boolean[] sides, boolean justRebar){
 		if(parblock instanceof IRebar)
 		{
 			boolean connected = false;
-			if(sides[0])
+			boolean[] renderSides = new boolean[7];
+			renderSides[6] = justRebar;
+			double dl = justRebar?0.005:0;
+			
+			if(sides[0]&&sides[1]&&sides[2]&&sides[3]&&sides[4]&&sides[5])
 			{
-				xHorizontalRebar(tessellator, icon, x, y, z, 1, 0.4);
+				crossColumnRebar(tessellator, icon, x, y, z,justRebar);
+				return;
+			}
+				
+			if(sides[0]&&sides[1]&&sides[2]&&sides[3]&&!sides[4]&&!sides[5])
+			{
+				connected = true;
+				crossRebar(tessellator, icon, x, y, z,justRebar);
+			}
+			else
+			{
+				if(sides[0]&&!sides[1])
+				{
+					renderSides[0] = true;
+					xHorizontalRebar(tessellator, icon, x, y, z, 1+dl, 0.4,renderSides);
+					renderSides[0] = false;
+					connected = true;
+				}
+				if(sides[1]&&!sides[0])
+				{
+					renderSides[1] = true;
+					xHorizontalRebar(tessellator, icon, x, y, z, 0-dl, 0.6,renderSides);
+					renderSides[1] = false;
+					connected = true;
+				}
+				if(sides[1]&&sides[0])
+				{
+					renderSides[0] = true;
+					renderSides[1] = true;
+					xHorizontalRebar(tessellator, icon, x, y, z, 1+dl, 0-dl,renderSides);
+					renderSides[0] = false;
+					renderSides[1] = false;
+					connected = true;
+				}
+				
+				if(sides[2]&&!sides[3])
+				{
+					renderSides[2] = true;
+					zHorizontalRebar(tessellator, icon, x, y, z, 1+dl, 0.4,renderSides);
+					renderSides[2] = false;
+					connected = true;
+				}
+				if(sides[3]&&!sides[2])
+				{
+					renderSides[3] = true;
+					zHorizontalRebar(tessellator, icon, x, y, z, 0-dl, 0.6,renderSides);
+					renderSides[3] = false;
+					connected = true;
+				}
+				if(sides[3]&&sides[2])
+				{
+					renderSides[3] = true;
+					renderSides[2] = true;
+					zHorizontalRebar(tessellator, icon, x, y, z, 1+dl, 0-dl,renderSides);
+					renderSides[3] = false;
+					renderSides[2] = false;
+					connected = true;
+				}
+			}
+			
+			if(sides[4]&&!sides[5])
+			{
+				renderSides[4] = true;
+				columnRebar(tessellator, icon, x, y, z, 1+dl, 0.4,renderSides);
 				connected = true;
 			}
-			if(sides[1])
+			if(sides[5]&&!sides[4])
 			{
-				xHorizontalRebar(tessellator, icon, x, y, z, 0, 0.6);
+				renderSides[5] = true;
+				columnRebar(tessellator, icon, x, y, z, 0-dl, 0.6,renderSides);
 				connected = true;
 			}
-			if(sides[2])
+			if(sides[5]&&sides[4])
 			{
-				zHorizontalRebar(tessellator, icon, x, y, z, 1, 0.4);
+				renderSides[4] = true;
+				renderSides[5] = true;
+				columnRebar(tessellator, icon, x, y, z, 1+dl, 0.0-dl,renderSides);
 				connected = true;
 			}
-			if(sides[3])
-			{
-				zHorizontalRebar(tessellator, icon, x, y, z, 0, 0.6);
-				connected = true;
-			}
-			if(sides[4])
-			{
-				columnRebar(tessellator, icon, x, y, z, 1, 0.4);
-				connected = true;
-			}
-			if(sides[5])
-			{
-				columnRebar(tessellator, icon, x, y, z, 0, 0.6);
-				connected = true;
-			}
+			
+			
 			if(!connected)
 			{
-				crossRebar(tessellator, icon, x, y, z);
+				crossRebar(tessellator, icon, x, y, z, justRebar);
 			}
 		}
 	}
 
-	private void crossRebar(Tessellator tessellator, Icon icon, double x, double y, double z){
-		xHorizontalRebar(tessellator, icon, x, y, z, 1,0);
-		zHorizontalRebar(tessellator, icon, x, y, z, 1,0);
-		columnRebar(tessellator, icon, x, y, z,0.6,0.4);
+	private void crossRebar(Tessellator tessellator, Icon icon, double x, double y, double z, boolean full){
+		boolean[] sides = {true,true,false,false,false,false};
+		double dl = full? 0.005:0;
+		xHorizontalRebar(tessellator, icon, x, y, z, 1+dl,0-dl, sides);
+		sides = new boolean[]{false,false,true,true,false,false};
+		zHorizontalRebar(tessellator, icon, x, y, z, 1+dl,0-dl,sides);
+	//	columnRebar(tessellator, icon, x, y, z,0.6,0.4,sides);
 	}
-	
-	
-	private void xHorizontalRebar(Tessellator tessellator, Icon icon, double x, double y, double z, double length, double min){
+	private void xHorizontalRebar(Tessellator tessellator, Icon icon, double x, double y, double z, double length, double min, boolean[] sides){
 
 		double dT = 0.05;
 		double dS = 0.1;
 		double dl = 0.005D;
 		
+		double 	yMin = y+(0.5-dS-dT),
+				xMin = x+dl+min,
+				zMin = z+(0.5-dS-dT),
+				yMax = y+(0.5+dS+dT),
+				xMax = x+length-dl,
+				zMax = z+(0.5+dS+dT);
+		tessAddCuboid(tessellator, icon, xMin, zMin, yMin, xMax, zMax, yMax, sides);
+		/*/
 		double 	yMin = y+(0.5-dS-dT),
 				xMin = x+dl+min,
 				zMin = z+(0.5-dS-dT),
@@ -116,14 +182,25 @@ public class RenderIRebar {
 		xMax = x+length-dl;
 		zMax = z+(0.5-dS+dT);
 		tessAddCuboid(tessellator, icon, xMin, zMin, yMin, xMax, zMax, yMax);
+		//*/
+		
 	}
 	
-	private void zHorizontalRebar(Tessellator tessellator, Icon icon, double x, double y, double z, double length, double min){
+	private void zHorizontalRebar(Tessellator tessellator, Icon icon, double x, double y, double z, double length, double min, boolean[] sides){
 
 		double dT = 0.05;
 		double dS = 0.1;
 		double dl = 0.005D;
 		
+		double 	yMin = y+(0.5-dS-dT),
+				zMin = z+dl+min,
+				xMin = x+(0.5-dS-dT),
+				yMax = y+(0.5+dS+dT),
+				zMax = z+length-dl,
+				xMax = x+(0.5+dS+dT);
+		tessAddCuboid(tessellator, icon, xMin, zMin, yMin, xMax, zMax, yMax, sides);
+		
+		/*/
 		double 	yMin = y+(0.5-dS-dT),
 				zMin = z+dl+min,
 				xMin = x+(0.5-dS-dT),
@@ -155,15 +232,26 @@ public class RenderIRebar {
 		zMax = z+length-dl;
 		xMax = x+(0.5-dS+dT);
 		tessAddCuboid(tessellator, icon, xMin, zMin, yMin, xMax, zMax, yMax);
+		//*/
 	}
 	
 	
-	private void columnRebar(Tessellator tessellator, Icon icon, double x, double y, double z, double length, double min){
+	private void columnRebar(Tessellator tessellator, Icon icon, double x, double y, double z, double length, double min, boolean[] sides){
 
 		double dT = 0.05;
 		double dS = 0.1;
 		double dl = 0.005D;
 		
+		double 	xMin = x+(0.5-dS-dT),
+				yMin = y+dl+min,
+				zMin = z+(0.5-dS-dT),
+				xMax = x+(0.5+dS+dT),
+				yMax = y+length-dl,
+				zMax = z+(0.5+dS+dT);
+		tessAddCuboid(tessellator, icon, xMin, zMin, yMin, xMax, zMax, yMax, sides);
+		
+		
+		/*/
 		double 	xMin = x+(0.5-dS-dT),
 				yMin = y+dl+min,
 				zMin = z+(0.5-dS-dT),
@@ -195,32 +283,31 @@ public class RenderIRebar {
 		yMax = y+length-dl;
 		zMax = z+(0.5-dS+dT);
 		tessAddCuboid(tessellator, icon, xMin, zMin, yMin, xMax, zMax, yMax);
+		//*/
 	}
 	
 	
-	private void crossColumnRebar(Tessellator tessellator, Icon icon, int x, int y, int z){
+	private void crossColumnRebar(Tessellator tessellator, Icon icon, double x, double y, double z, boolean full){
 
-		crossRebar(tessellator, icon, x, y, z);
-		columnRebar(tessellator, icon, x, y, z,1,0);
+		crossRebar(tessellator, icon, x, y, z, full);
+		boolean[] sides = {false,false,false,false,true,true};
+		double dl = full?0.005:0;
+		columnRebar(tessellator, icon, x, y, z,1+dl,0-dl,sides);
 		
 	}
 	
 	
 	
 	
-	private void tessAddCuboid(Tessellator tessellator, Icon icon, double xMin, double zMin, double yMin, double xMax, double zMax, double yMax){
+	private void tessAddCuboid(Tessellator tessellator, Icon icon, double xMin, double zMin, double yMin, double xMax, double zMax, double yMax, boolean[] sides){
 		
         double d0 = (double)icon.getMinU();
         double d1 = (double)icon.getMaxU();
         double d2 = (double)icon.getMaxU();
         double d3 = (double)icon.getMinV();
         double d4 = (double)icon.getMaxV();
-
-        double d5 = (double)icon.getInterpolatedU(7.0D);
-        double d6 = (double)icon.getInterpolatedU(9.0D);
-        double d7 = (double)icon.getMinV();
-        double d8 = (double)icon.getInterpolatedV(8.0D);
-        double d9 = (double)icon.getMaxV();
+        if(!sides[2])
+        {
         ///////////////side1///////////////
         tessellator.addVertexWithUV(xMin, yMax, zMax, d0, d3);
         tessellator.addVertexWithUV(xMin, yMin, zMax, d0, d4);
@@ -234,6 +321,9 @@ public class RenderIRebar {
         tessellator.addVertexWithUV(xMin, yMin, zMax, d1, d4);
         tessellator.addVertexWithUV(xMin, yMax, zMax, d1, d3);
 		////////////////////////////////////////* /
+        }
+        if(!sides[0])
+        {
         ///////////////side2///////////////
         tessellator.addVertexWithUV(xMax, yMax, zMin, d0, d3);
         tessellator.addVertexWithUV(xMax, yMin, zMin, d0, d4);
@@ -247,6 +337,9 @@ public class RenderIRebar {
         tessellator.addVertexWithUV(xMax, yMin, zMin, d1, d4);
         tessellator.addVertexWithUV(xMax, yMax, zMin, d1, d3);
 		////////////////////////////////////////* /
+        }
+        if(!sides[1])
+        {
         ///////////////side3///////////////
         tessellator.addVertexWithUV(xMin, yMax, zMax, d0, d3);
         tessellator.addVertexWithUV(xMin, yMin, zMax, d0, d4);
@@ -260,6 +353,9 @@ public class RenderIRebar {
         tessellator.addVertexWithUV(xMin, yMin, zMax, d1, d4);
         tessellator.addVertexWithUV(xMin, yMax, zMax, d1, d3);
 		////////////////////////////////////////*/
+        }
+        if(!sides[3])
+        {
         ///////////////side4///////////////
         tessellator.addVertexWithUV(xMax, yMax, zMin, d0, d3);
         tessellator.addVertexWithUV(xMax, yMin, zMin, d0, d4);
@@ -273,6 +369,9 @@ public class RenderIRebar {
         tessellator.addVertexWithUV(xMax, yMin, zMin, d1, d4);
         tessellator.addVertexWithUV(xMax, yMax, zMin, d1, d3);
 		////////////////////////////////////////*/
+        }
+        if(!sides[5])
+        {
         ///////////////side5///////////////
         
         tessellator.addVertexWithUV(xMax, yMin, zMax, d0, d3);
@@ -288,7 +387,10 @@ public class RenderIRebar {
         tessellator.addVertexWithUV(xMax, yMin, zMin, d0, d3);
         tessellator.addVertexWithUV(xMax, yMin, zMax, d0, d4);
        
-		////////////////////////////////////////*/       
+		////////////////////////////////////////*/   
+        }
+        if(!sides[4])
+        {
         ///////////////side6///////////////
         
         tessellator.addVertexWithUV(xMax, yMax, zMax, d0, d3);
@@ -304,109 +406,8 @@ public class RenderIRebar {
         tessellator.addVertexWithUV(xMax, yMax, zMin, d0, d3);
         tessellator.addVertexWithUV(xMax, yMax, zMax, d0, d4);
        
-		////////////////////////////////////////*/          
+		////////////////////////////////////////*/    
+        }
 	}
-	
-private void tessAddCuboidWithIconIndex(Tessellator tessellator, Icon icon, double xMin, double zMin, double yMin, double xMax, double zMax, double yMax, double minU, double minV){
-		
-        double d0 = (double)icon.getMinU();
-        double d1 = (double)icon.getMaxU();
-        double d2 = (double)icon.getMaxU();
-        double d3 = (double)icon.getMinV();
-        double d4 = (double)icon.getMaxV();
 
-        double d5 = (double)icon.getInterpolatedU(7.0D);
-        double d6 = (double)icon.getInterpolatedU(9.0D);
-        double d7 = (double)icon.getMinV();
-        double d8 = (double)icon.getInterpolatedV(8.0D);
-        double d9 = (double)icon.getMaxV();
-        ///////////////side1///////////////
-        tessellator.addVertexWithUV(xMin, yMax, zMax, d0, d3);
-        tessellator.addVertexWithUV(xMin, yMin, zMax, d0, d4);
-        
-        tessellator.addVertexWithUV(xMax, yMin, zMax, d1, d4);
-        tessellator.addVertexWithUV(xMax, yMax, zMax, d1, d3);
-        
-        tessellator.addVertexWithUV(xMax, yMax, zMax, d0, d3);
-        tessellator.addVertexWithUV(xMax, yMin, zMax, d0, d4);
-        
-        tessellator.addVertexWithUV(xMin, yMin, zMax, d1, d4);
-        tessellator.addVertexWithUV(xMin, yMax, zMax, d1, d3);
-		////////////////////////////////////////* /
-        ///////////////side2///////////////
-        tessellator.addVertexWithUV(xMax, yMax, zMin, d0, d3);
-        tessellator.addVertexWithUV(xMax, yMin, zMin, d0, d4);
-        
-        tessellator.addVertexWithUV(xMax, yMin, zMax, d1, d4);
-        tessellator.addVertexWithUV(xMax, yMax, zMax, d1, d3);
-        
-        tessellator.addVertexWithUV(xMax, yMax, zMax, d0, d3);
-        tessellator.addVertexWithUV(xMax, yMin, zMax, d0, d4);
-        
-        tessellator.addVertexWithUV(xMax, yMin, zMin, d1, d4);
-        tessellator.addVertexWithUV(xMax, yMax, zMin, d1, d3);
-		////////////////////////////////////////* /
-        ///////////////side3///////////////
-        tessellator.addVertexWithUV(xMin, yMax, zMax, d0, d3);
-        tessellator.addVertexWithUV(xMin, yMin, zMax, d0, d4);
-        
-        tessellator.addVertexWithUV(xMin, yMin, zMin, d1, d4);
-        tessellator.addVertexWithUV(xMin, yMax, zMin, d1, d3);
-        
-        tessellator.addVertexWithUV(xMin, yMax, zMin, d0, d3);
-        tessellator.addVertexWithUV(xMin, yMin, zMin, d0, d4);
-        
-        tessellator.addVertexWithUV(xMin, yMin, zMax, d1, d4);
-        tessellator.addVertexWithUV(xMin, yMax, zMax, d1, d3);
-		////////////////////////////////////////*/
-        ///////////////side4///////////////
-        tessellator.addVertexWithUV(xMax, yMax, zMin, d0, d3);
-        tessellator.addVertexWithUV(xMax, yMin, zMin, d0, d4);
-        
-        tessellator.addVertexWithUV(xMin, yMin, zMin, d1, d4);
-        tessellator.addVertexWithUV(xMin, yMax, zMin, d1, d3);
-        
-        tessellator.addVertexWithUV(xMin, yMax, zMin, d0, d3);
-        tessellator.addVertexWithUV(xMin, yMin, zMin, d0, d4);
-        
-        tessellator.addVertexWithUV(xMax, yMin, zMin, d1, d4);
-        tessellator.addVertexWithUV(xMax, yMax, zMin, d1, d3);
-		////////////////////////////////////////*/
-        ///////////////side5///////////////
-        
-        tessellator.addVertexWithUV(xMax, yMin, zMax, d0, d3);
-        tessellator.addVertexWithUV(xMax, yMin, zMin, d0, d4);
-        
-        tessellator.addVertexWithUV(xMin, yMin, zMin, d1, d4);
-        tessellator.addVertexWithUV(xMin, yMin, zMax, d1, d3);
-       //* 
-        
-        tessellator.addVertexWithUV(xMin, yMin, zMax, d1, d4);
-        tessellator.addVertexWithUV(xMin, yMin, zMin, d1, d3);
-        
-        tessellator.addVertexWithUV(xMax, yMin, zMin, d0, d3);
-        tessellator.addVertexWithUV(xMax, yMin, zMax, d0, d4);
-       
-		////////////////////////////////////////*/       
-        ///////////////side6///////////////
-        
-        tessellator.addVertexWithUV(xMax, yMax, zMax, d0, d3);
-        tessellator.addVertexWithUV(xMax, yMax, zMin, d0, d4);
-        
-        tessellator.addVertexWithUV(xMin, yMax, zMin, d1, d4);
-        tessellator.addVertexWithUV(xMin, yMax, zMax, d1, d3);
-       //* 
-        
-        tessellator.addVertexWithUV(xMin, yMax, zMax, d1, d4);
-        tessellator.addVertexWithUV(xMin, yMax, zMin, d1, d3);
-        
-        tessellator.addVertexWithUV(xMax, yMax, zMin, d0, d3);
-        tessellator.addVertexWithUV(xMax, yMax, zMax, d0, d4);
-       
-		////////////////////////////////////////*/          
-	}
-	
-	
-	
-	
 }
