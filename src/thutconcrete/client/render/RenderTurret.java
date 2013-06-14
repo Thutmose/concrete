@@ -92,7 +92,6 @@ public class RenderTurret  extends Render
         
         GL11.glScalef(scale, scale, scale);
     	
-    	
         FMLClientHandler.instance().getClient().renderEngine.bindTexture("/mods/thutconcrete/textures/models/turretBase.png");
     	modelTurret.renderPart("baseCube");
     	

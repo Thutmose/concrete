@@ -8,12 +8,14 @@ import thutconcrete.common.ConcreteCore;
 import thutconcrete.common.entity.EntityLift;
 import thutconcrete.common.items.ItemLiftController;
 import thutconcrete.common.tileentity.TileEntityLiftAccess;
+import thutconcrete.common.tileentity.TileEntityLimekiln;
 import thutconcrete.common.utils.Vector3;
 import net.minecraft.block.Block;
 import net.minecraft.block.ITileEntityProvider;
 import net.minecraft.block.material.Material;
 import net.minecraft.client.renderer.texture.IconRegister;
 import net.minecraft.creativetab.CreativeTabs;
+import net.minecraft.entity.EntityLiving;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
@@ -21,6 +23,7 @@ import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.Icon;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
+import net.minecraftforge.common.ForgeDirection;
 
 public class BlockLift extends Block implements ITileEntityProvider
 {
@@ -35,11 +38,53 @@ public class BlockLift extends Block implements ITileEntityProvider
 		instance = this;
 	}
 	
+	@Override
+	public void onBlockPlacedBy(World worldObj, int x, int y, int z, EntityLiving entity, ItemStack itemStack)
+	{
+		int meta = worldObj.getBlockMetadata(x, y, z);
+		 if(meta==1)
+		 {
+			 TileEntityLiftAccess te = (TileEntityLiftAccess)worldObj.getBlockTileEntity(x, y, z);
+			 if(te!=null)
+			 {
+				ForgeDirection side =  getFacingfromEntity(entity);
+				te.setSide(side.getOpposite().ordinal());
+			 }
+		 }
+	}
+	
+	public ForgeDirection getFacingfromEntity(EntityLiving e)
+	{
+		ForgeDirection side = null;
+		double angle = e.rotationYaw%360;
+			
+		if(angle>315||angle<=45)
+		{
+			return ForgeDirection.SOUTH;
+		}
+		if(angle>45&&angle<=135)
+		{
+			return ForgeDirection.WEST;
+		}
+		if(angle>135&&angle<=225)
+		{
+			return ForgeDirection.NORTH;
+		}
+		if(angle>225&&angle<=315)
+		{
+			return ForgeDirection.EAST;
+		}
+		
+		return side;
+	}
+	
 	public boolean onBlockActivated(World worldObj, int x, int y, int z, EntityPlayer player, int side, float hitX, float hitY, float hitZ)
     {
 		 int meta = worldObj.getBlockMetadata(x, y, z);
 		 
-		 if(player.getHeldItem()!=null&&player.getHeldItem().itemID==Item.axeWood.itemID)
+		 if(player.getHeldItem()!=null&&(player.getHeldItem().itemID==Item.axeWood.itemID
+				 ||player.getHeldItem().getItem().getUnlocalizedName().toLowerCase().contains("wrench")
+				 ||player.getHeldItem().getItem().getUnlocalizedName().toLowerCase().contains("screwdriver")))
 		 {
 			 if(meta==1)
 			 {
@@ -85,6 +130,7 @@ public class BlockLift extends Block implements ITileEntityProvider
 
 			 if(te!=null)
 				 te.doButtonClick(side, hitX, hitY, hitZ);
+			 ret = true;
 		 }
 		 
 		return ret;

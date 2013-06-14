@@ -4,9 +4,12 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import cpw.mods.fml.common.network.PacketDispatcher;
+
 import thutconcrete.common.blocks.BlockLiftRail;
 import thutconcrete.common.entity.EntityLift;
 import thutconcrete.common.network.PacketInt;
+import thutconcrete.common.network.PacketLift;
 import thutconcrete.common.network.PacketStampable;
 import thutconcrete.common.utils.IStampableTE;
 import net.minecraft.block.Block;
@@ -33,11 +36,11 @@ public class TileEntityLiftAccess extends TileEntity
 	
 	public boolean called = false;
 	public int floor;
-	int liftID = -123456;
+	int liftID = -1;
 	public int side = 0;
 	
 	public boolean first = true;
-	
+	public boolean read = false;
 	public boolean redstone = true;
 	public boolean powered = false;
 	
@@ -48,15 +51,27 @@ public class TileEntityLiftAccess extends TileEntity
 			metaData = worldObj.getBlockMetadata(xCoord, yCoord, zCoord);
 			first = false;
 		}
-		if(lift == null && liftID!=-123456)
+
+		if(!worldObj.isRemote && lift == null && liftID!=-1)
 		{
-			Entity e = worldObj.getEntityByID(liftID);
-			if(e instanceof EntityLift)
+			if(EntityLift.lifts.containsKey(liftID))
 			{
-				lift = (EntityLift)e;
+				lift = EntityLift.lifts.get(liftID);
+			//	System.out.println("found lift: "+lift);
+				PacketDispatcher.sendPacketToAllAround(xCoord, yCoord, zCoord, 50, worldObj.provider.dimensionId, PacketLift.getPacket(this, 2, liftID));
+			}
+			else
+			{
+			//System.out.println("lost lift");
+				liftID = -1;
 			}
 		}
-
+		if(side==0)
+		{
+			worldObj.markBlockForUpdate(xCoord, yCoord, zCoord);
+		}
+		
+		
 		if(metaData==0&&time%10==0)
 		{
 			power = checkSides()?1:0;
@@ -75,6 +90,7 @@ public class TileEntityLiftAccess extends TileEntity
 		if(check!=null&&check.size()>0)
 		{
 			lift = (EntityLift)check.get(0);
+			liftID = lift.id;
 		}
 		return !(check == null || check.isEmpty());
 	}
@@ -84,16 +100,7 @@ public class TileEntityLiftAccess extends TileEntity
 		assert(floor <=16 && floor > 0);
 		if(lift!=null)
 		{
-			int j = 0;
-			for(int i = 0; i<4; i++)
-			{
-				if(lift.floors[floor-1][i]==null)
-				{
-					j = i;
-					break;
-				}
-			}
-			lift.floors[floor-1][j]=this;
+			lift.setFoor(this, floor);
 			this.floor = floor;
 		}
 	}
@@ -109,15 +116,11 @@ public class TileEntityLiftAccess extends TileEntity
 		   par1.setInteger("meta", metaData);
 		   par1.setInteger("side", side);
 		   par1.setInteger("floor", floor);
-		      System.out.println("wrote "+side);
 		   if(lift!=null)
 		   {
-			   liftID = lift.entityId;
-			   par1.setInteger("lift", liftID);
-			   System.out.println("saved lift"+ " "+liftID);
+			   liftID = lift.id;
 		   }
-		   else
-			   par1.setInteger("lift", -123456);
+		   par1.setInteger("lift", liftID);
 		   par1.setBoolean("first", first);
 	   }
 	
@@ -129,36 +132,34 @@ public class TileEntityLiftAccess extends TileEntity
 	      floor = par1.getInteger("floor");
 	      first = par1.getBoolean("first");
 	      liftID = par1.getInteger("lift");
-	      
-	      System.out.println("read "+side+ " "+liftID);
-	      if(worldObj!=null&&liftID!=-123456)
-    	  if(worldObj.getEntityByID(liftID)!=null)
-    	  {
-    		  lift = (EntityLift)worldObj.getEntityByID(liftID);
-    		  System.out.println("found lift");
-    	  }
-	      
+	      if(EntityLift.lifts.containsKey(liftID))
+	      {
+	    	  lift = EntityLift.lifts.get(liftID);
+	      }
 	   }
 
 	   public void doButtonClick( int side, float hitX, float hitY, float hitZ)
 	   {
-		   System.out.println("click" +" "+side+" "+this.side);
-		   if(side == this.side)
+		   if(!worldObj.isRemote)
 		   {
-			int button = getButtonFromClick(side, hitX, hitY, hitZ);
-			   System.out.println(button+" "+hitX+" "+hitY+" "+hitZ+" "+side);
-			   if(lift!=null&&lift.floors[button-1]!=null)
+			   if(side == this.side)
 			   {
-				   this.called = true;
-				   lift.call(button);
-				   System.out.println("floor called");
+				//   System.out.println("click" +" "+side+" "+this.side+" "+lift);
+				   int button = getButtonFromClick(side, hitX, hitY, hitZ);
+				//   System.out.println(button+" "+hitX+" "+hitY+" "+hitZ+" "+side);
+				   if(button!=0&&lift!=null&&lift.floors[button-1]!=null)
+				   {
+					   this.called = true;
+					   lift.call(button);
+				//	   System.out.println("floor called");
+				   }
 			   }
 		   }
 	   }
 	   
 	   public void setSide(int side)
 	   {
-		   System.out.println("side set to "+side);
+		//   System.out.println("side set to "+side);
 		   this.side = side;
 	   }
 	   
@@ -208,7 +209,8 @@ public class TileEntityLiftAccess extends TileEntity
 	    @Override
 	    public Packet getDescriptionPacket()
 	    {
-	        return PacketInt.getPacket(this);
+	       /// PacketLift.getPacket(this, 2, liftID, side);
+	    	return PacketInt.getPacket(this);
 	    }
 
 	    public Block thisBlock()

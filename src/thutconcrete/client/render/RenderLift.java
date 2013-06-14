@@ -56,7 +56,7 @@ public class RenderLift  extends Render
 
         GL11.glTranslated(x, y, z);
    //     GL11.glDisable(GL11.GL_CULL_FACE);
-        GL11.glScalef(scale, scale, scale);
+        GL11.glScalef(scale, scale*1.2F, scale);
 
 
 		GL11.glRotatef(lift.axis?90:0, 0F, 1F, 0F);
@@ -93,6 +93,11 @@ public class RenderLift  extends Render
     	
     	
         FMLClientHandler.instance().getClient().renderEngine.bindTexture("/mods/thutconcrete/textures/models/turretBase.png");
+    	modelTurret.renderPart("base");    
+    	
+    	GL11.glScalef(1, 0.5F, 1);
+    	GL11.glTranslated(0, 2.15*scale, 0);
+    	FMLClientHandler.instance().getClient().renderEngine.bindTexture("/mods/thutconcrete/textures/models/turretBase.png");
     	modelTurret.renderPart("base");
     	
         GL11.glPopMatrix();

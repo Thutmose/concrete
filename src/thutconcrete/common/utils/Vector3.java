@@ -144,6 +144,11 @@ public class Vector3
 		return targets;
 	}
 	
+	public boolean isNaN()
+	{
+		return Double.isNaN(x)||Double.isNaN(z)||Double.isNaN(y);
+	}
+	
 	public List<Entity> livingEntityAtPoint(World worldObj)
 	{
 		int x0 = intX(), y0 = intY(), z0 = intZ();
@@ -1419,15 +1424,15 @@ public class Vector3
 		
 		public double boxZLength()
 		{
-			return get(1, 2)-get(0, 2);
+			return Math.abs(get(1, 2)-get(0, 2));
 		}
 		public double boxYLength()
 		{
-			return get(1, 1)-get(0, 1);
+			return Math.abs(get(1, 1)-get(0, 1));
 		}
 		public double boxXLength()
 		{
-			return get(1, 0)-get(0, 0);
+			return Math.abs(get(1, 0)-get(0, 0));
 		}
 		
 		public void set(int i, Vector3 j)
@@ -1637,13 +1642,23 @@ public class Vector3
 		    	Vector3 min = boxMin();
 		    	min.y =- e.yOffset;
 		    	Vector3 max = boxMax();
+		    	
+		    	
 
-	    		if(!r.inMatBox(this))
+	    		if(!(
+	    				  r.inMatBox(this)
+	    				||r.add(new Vector3(e.width/2,0,0)).inMatBox(this)
+	    				||r.add(new Vector3(-e.width/2,0,0)).inMatBox(this)
+	    				
+	    				||r.add(new Vector3(0,0,-e.width/2)).inMatBox(this)
+	    				||r.add(new Vector3(0,0,e.width/2)).inMatBox(this)
+	    				))
 	    		{
 	    			return ret;
 	    		}
 	    		
 		    	Vector3 pushDir = new Vector3();
+		    	Vector3 pushLoc = new Vector3();
 		    	
 				double x = (r.x - (boxXLength())/2)/(boxXLength());
 				double y = (r.y - (boxYLength())/2)/(boxYLength());
@@ -1672,7 +1687,7 @@ public class Vector3
 			//	else
 				{
 					boolean entitymovingup = (e.motionY-pusher.motionY)>0;
-					
+					location = location.add(new Vector3(0.5,0,0.5));
 					
 					boolean xpositive = location.x>0&&location.x>=Math.abs(location.z);
 					boolean xnegative = location.x<0&&-location.x>=Math.abs(location.z);
@@ -1718,25 +1733,29 @@ public class Vector3
 						if(xnegative)
 						{
 							pushDir.x = -f;
-						//	System.out.println("pushed1");
+							pushLoc.x = min.x;
+				//			System.out.println("pushed1"+location.toString());
 							movedx = true;
 						}
 						else if(xpositive)
 						{
 							pushDir.x = f;
-						//	System.out.println("pushed2");
+							pushLoc.x = max.x;
+				//			System.out.println("pushed2"+location.toString());
 							movedx = true;
 						}
 						if(znegative)
 						{
 							pushDir.z = -f;
-						//	System.out.println("pushed3");
+							pushLoc.x = min.z;
+				//			System.out.println("pushed3"+location.toString());
 							movedz = true;
 						}
 						else if(zpositive)
 						{
 							pushDir.z = f;
-						//	System.out.println("pushed4");
+							pushLoc.x = max.z;
+				//			System.out.println("pushed4"+location.toString());
 							movedz = true;
 						}
 					}
@@ -1746,20 +1765,34 @@ public class Vector3
 				if(rot)
 				{
 					pushDir = pushDir.rotateAboutAngles(-rotation.y, -rotation.z);
+					pushLoc = pushLoc.rotateAboutAngles(-rotation.y, -rotation.z);
 				}
-				
+				//System.out.println(pushLoc.toString()+" "+toString());
 				if(movedy||movedx||movedz)
 				{
 				//	System.out.println("pushDir"+pushDir);
 					if(pushDir.y!=0&&!Double.isNaN(pushDir.y))
+					{
 						e.motionY = pushDir.y;
-
+						
+					}
 					if(pushDir.x!=0&&!Double.isNaN(pushDir.x))
+					{
 						e.motionX = pushDir.x;
-
+						if(pushLoc.x!=0&&!pushLoc.isNaN())
+						{
+				//			e.setPosition(pusher.posX + pushLoc.x, e.posY + pushLoc.y, e.posZ + pushLoc.z);
+						}
+					}
 					if(pushDir.z!=0&&!Double.isNaN(pushDir.z))
+					{
 						e.motionZ = pushDir.z;
-					
+						if(pushLoc.x!=0&&!pushLoc.isNaN())
+						{
+					//		e.setPosition(e.posX + pushLoc.x, e.posY + pushLoc.y, pusher.posZ + pushLoc.z);
+						}
+						
+					}
 					ret = movedx||movedz||movedy;
 				}
 				if(e instanceof EntityItem)

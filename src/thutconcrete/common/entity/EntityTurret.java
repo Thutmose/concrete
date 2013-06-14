@@ -431,4 +431,16 @@ public class EntityTurret  extends EntityLiving implements IEntityAdditionalSpaw
     	
     }
     
+	@Override
+	public String getTranslatedEntityName()
+	{
+		return "railgun";
+	}
+    /**
+     * Gets the username of the entity.
+     */
+    public String getEntityName()
+    {
+    	return "railgun";
+    }
 }
