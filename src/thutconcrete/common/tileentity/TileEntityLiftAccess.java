@@ -8,6 +8,7 @@ import javax.print.attribute.standard.SheetCollate;
 
 import cpw.mods.fml.common.network.PacketDispatcher;
 
+import thutconcrete.common.blocks.BlockLift;
 import thutconcrete.common.blocks.BlockLiftRail;
 import thutconcrete.common.entity.EntityLift;
 import thutconcrete.common.network.PacketInt;
@@ -61,7 +62,7 @@ public class TileEntityLiftAccess extends TileEntity
 			first = false;
 		}
 		//System.out.println(called);
-		if(!worldObj.isRemote && lift == null && liftID!=-1)
+		if(!worldObj.isRemote && lift == null && liftID!=-1&&blockID==BlockLift.instance.blockID)
 		{
 			if(EntityLift.lifts.containsKey(liftID))
 			{

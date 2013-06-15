@@ -98,7 +98,7 @@ public class Vector3
 		else if(e!=null)
 		{
 			this.x = e.posX;
-			this.y = e.posY+e.height;
+			this.y = e.posY+e.yOffset;
 			this.z = e.posZ;
 		}
 	}
@@ -148,7 +148,10 @@ public class Vector3
 	{
 		return Double.isNaN(x)||Double.isNaN(z)||Double.isNaN(y);
 	}
-	
+	public boolean isEmpty()
+	{
+		return x==0&&z==0&&y==0;
+	}
 	public List<Entity> livingEntityAtPoint(World worldObj)
 	{
 		int x0 = intX(), y0 = intY(), z0 = intZ();
@@ -338,6 +341,11 @@ public class Vector3
 	public void doExplosion(World worldObj, float strength, boolean real)
 	{
 		worldObj.createExplosion(null, x, y, z, strength, real);
+	}
+	
+	public void playSoundEffect(World worldObj, float volume, float pitch, String sound)
+	{
+		worldObj.playSoundEffect(x, y, z, sound, volume, pitch);
 	}
 	
 	public TileEntity getTileEntity(World worldObj)
@@ -763,6 +771,22 @@ public class Vector3
 	   */
 	  public Vector3 rotateAboutAngles(double pitch, double yaw){
 		  return vectorRotateAboutLine(vectorRotateAboutLine(this, secondAxis, yaw),horizonalPerp(this), pitch);
+	  }
+	  
+	  public static void rotateAboutAngles(Vector3[] points, double pitch, double yaw)
+	  {
+		  for(Vector3 p:points)
+		  {
+			  p = p.rotateAboutAngles(pitch, yaw);
+		  }
+	  }
+	  
+	  public static void rotateAboutAngles(Vector3[] points, Vector3 angles)
+	  {
+		  for(Vector3 p:points)
+		  {
+			  p = p.rotateAboutAngles(angles.y, angles.z);
+		  }
 	  }
 	  
 	  /**
@@ -1386,9 +1410,9 @@ public class Vector3
 		
 		public Matrix3(Vector3 a, Vector3 b, Vector3 c)
 		{
-			Rows[0] = a;
-			Rows[1] = b;
-			Rows[2] = c;
+			Rows[0] = a.Copy();
+			Rows[1] = b.Copy();
+			Rows[2] = c.Copy();
 		}
 		
 		public Matrix3(Vector3 a, Vector3 b)
@@ -1433,6 +1457,44 @@ public class Vector3
 		public double boxXLength()
 		{
 			return Math.abs(get(1, 0)-get(0, 0));
+		}
+		
+		public Vector3[] corners()
+		{
+			Vector3[] corners = new Vector3[8];
+			
+			corners[0] = boxMin();
+			corners[1] = boxMax();
+			
+			corners[2] = new Vector3(boxMin().x, boxMin().y, boxMax().z);
+			corners[3] = new Vector3(boxMin().x, boxMax().y, boxMin().z);
+			corners[4] = new Vector3(boxMax().x, boxMin().y, boxMin().z);
+			
+			corners[5] = new Vector3(boxMin().x, boxMax().y, boxMax().z);
+			corners[6] = new Vector3(boxMax().x, boxMin().y, boxMax().z);
+			corners[7] = new Vector3(boxMax().x, boxMax().y, boxMin().z);
+
+			if(!boxRotation().isEmpty())
+			{
+				Vector3.rotateAboutAngles(corners, boxRotation().y, boxRotation().z);
+			}
+			
+			
+			return corners;
+		}
+		
+		public Matrix3 addOffset(Vector3 offset)
+		{
+			Matrix3 ret = this.copy();
+			ret.Rows[0] = ret.Rows[0].add(offset);
+			ret.Rows[1] = ret.Rows[1].add(offset);
+			return ret;
+		}
+		
+		public Matrix3 copy()
+		{
+			Matrix3 ret = new Matrix3(Rows[0], Rows[1], Rows[2]);
+			return ret;
 		}
 		
 		public void set(int i, Vector3 j)
@@ -1617,18 +1679,32 @@ public class Vector3
 		  }
 		  
 		  public boolean pushOutOfBox(Entity pusher, Entity e, Vector3 offset)
-		    {
+		  {
+			  boolean ret = false;
+			  ret = doEntityCollision(pusher, e, offset);
+			  return ret;
+		  }
+		  
+		  public boolean doEntityCollision(Entity pusher, Entity e, Vector3 offset)
+		  {
+			  return doEntityCollision(pusher, e, offset, new Vector3());
+		  }
+		  
+		  public boolean doEntityCollision(Entity pusher, Entity e, Vector3 offset, Vector3 entity)
+		  {
 			  	boolean ret = false;
-			  	Vector3 entity = new Vector3(e);
 			  	
-			 // 	if(e instanceof EntityPlayer)
-			//  	{
-			  		offset.y += e.yOffset;
-			 // 	}
+			  	offset.y += e.yOffset;
+			  	if(entity.isNaN())
+			  	{
+			  		System.out.println("HOW DIS NAN "+entity.toString());
+			  		entity.clear();
+			  	}
+			  	
 			  	
 			  	Vector3 push = new Vector3(pusher);
-			  	Vector3 r = (entity.subtract(offset).subtract(push));
-			//  	System.out.println(push.toString()+" "+e.toString());
+			  	Vector3 r = ((new Vector3(e)).subtract(offset).subtract(push)).add(entity);
+
 			  	boolean rot = false;
 		    	Vector3 rotation = boxRotation();	
 		    	
@@ -1638,23 +1714,51 @@ public class Vector3
 		    		r = r.rotateAboutAngles(rotation.y, rotation.z);
 		    	}
 		    	
-
 		    	Vector3 min = boxMin();
 		    	min.y =- e.yOffset;
 		    	Vector3 max = boxMax();
 		    	
+		    	boolean flag = !(e instanceof IMultiBox);
 		    	
+		    	double posxOffset =  flag? e.width/2:((IMultiBox)e).bounds(push).boxMax().x;
+		    	double negxOffset =  flag? -e.width/2:((IMultiBox)e).bounds(push).boxMin().x;		    	
+		    	double posyOffset =  flag? 0:((IMultiBox)e).bounds(push).boxMax().y;
+		    	double negyOffset =  flag? 0:((IMultiBox)e).bounds(push).boxMin().y;		    	
+		    	double poszOffset =  flag? e.width/2:((IMultiBox)e).bounds(push).boxMax().z;
+		    	double negzOffset =  flag? -e.width/2:((IMultiBox)e).bounds(push).boxMin().z;
 
-	    		if(!(
-	    				  r.inMatBox(this)
-	    				||r.add(new Vector3(e.width/2,0,0)).inMatBox(this)
-	    				||r.add(new Vector3(-e.width/2,0,0)).inMatBox(this)
+	    		if(flag&&
+	    				!(r.inMatBox(this)
+	    				||r.add(new Vector3(posxOffset,0,0)).inMatBox(this)
+	    				||r.add(new Vector3(negxOffset,0,0)).inMatBox(this)
 	    				
-	    				||r.add(new Vector3(0,0,-e.width/2)).inMatBox(this)
-	    				||r.add(new Vector3(0,0,e.width/2)).inMatBox(this)
+	    				||r.add(new Vector3(0,0,poszOffset)).inMatBox(this)
+	    				||r.add(new Vector3(0,0,negzOffset)).inMatBox(this)
+	    				)
+	    			)
+	    		{
+	    		//	System.out.println();
+	    			return ret;
+	    		}
+	    		else if(
+	    				!(r.inMatBox(this)
+	    				||r.add(new Vector3(posxOffset,0,0)).inMatBox(this)
+	    				||r.add(new Vector3(negxOffset,0,0)).inMatBox(this)
+	    				
+	    				||r.add(new Vector3(0,0,poszOffset)).inMatBox(this)
+	    				||r.add(new Vector3(0,0,negzOffset)).inMatBox(this)
+	    				
+	    				||r.add(new Vector3(0,posyOffset,0)).inMatBox(this)
+	    				||r.add(new Vector3(0,negyOffset,0)).inMatBox(this)
+	    				
 	    				))
+	    		
 	    		{
 	    			return ret;
+	    		}
+	    //		if(e instanceof IMultiBox)
+	    		{
+	    			
 	    		}
 	    		
 		    	Vector3 pushDir = new Vector3();
@@ -1664,7 +1768,6 @@ public class Vector3
 				double y = (r.y - (boxYLength())/2)/(boxYLength());
 				double z = (r.z - (boxZLength())/2)/(boxZLength());
 				double yoffset = 0;
-				boolean flag = (e.isSneaking());
 				
 				double yDiff = push.y+max.y+offset.y;
 				double rho = Math.sqrt(r.x*r.x+r.z*r.z);
@@ -1677,10 +1780,15 @@ public class Vector3
 				boolean movedx = false, movedy = false, movedz = false;
 				
 				Vector3 location = new Vector3(x,y,z);
+				
+				if(location.isNaN())
+				{
+					location.clear();
+				}
 
 			  //	if(e instanceof EntityPlayer)
 			  //	{
-			  	//	System.out.println("player"+min.toString()+" "+max.toString()+" "+location.toString());
+			  //		System.out.println("player"+min.toString()+" "+max.toString()+" "+location.toString());
 			  	//	((EntityPlayer)e).
 			  //	}
 
@@ -1695,24 +1803,28 @@ public class Vector3
 					boolean zpositive = location.z>0&&location.z>=Math.abs(location.x);
 					boolean znegative = location.z<0&&-location.z>=Math.abs(location.x);
 
-					boolean ynegative = entitymovingup&&location.y<0||(e.motionY-pusher.motionY)>0.2;
-					boolean ypositive = (yDiff-e.posY)<=e.stepHeight||(e.motionY-pusher.motionY)<-0.2;//&&!entitymovingup;//||(((pusher.motionY)<0)&&(yDiff-e.posY)<=e.stepHeight)||(flag&&(yDiff-e.posY)<=e.stepHeight);
+					boolean ynegative = (entitymovingup||(e.motionY-pusher.motionY)>0.2)&&location.y<0;
+					boolean ypositive = Math.abs(yDiff-e.posY)<=e.stepHeight||((e.motionY-pusher.motionY)<-0.2&&(e.posY-e.motionY > yDiff));//&&!entitymovingup;//||(((pusher.motionY)<0)&&(yDiff-e.posY)<=e.stepHeight)||(flag&&(yDiff-e.posY)<=e.stepHeight);
 					
 				//	System.out.println(location.toString());
 					
-					double f = 0.2;
+					double f = 0.1;
 					
 					if(ypositive)
 					{
 					//	System.out.println(yDiff+" "+push.y+" "+max.y+" "+offset.y+" "+(Math.sqrt(r.x*r.x+r.z*r.z)*Math.sin(-rotation.y))+" "+(-rotation.y));
 						pushDir.y  = pusher.motionY>0? pusher.motionY:0;
+					//	System.out.println((yDiff-e.posY)+" "+e.stepHeight+" "+(e.motionY-pusher.motionY));
 						if(e instanceof EntityLiving)
 						{
 							int damage = Math.max((int)((-e.motionY+pusher.motionY+0.15)*(-e.motionY+pusher.motionY+0.15)),0);
 						//	System.out.println(damage+" "+(-e.motionY+pusher.motionY)+" "+pusher.motionY);
-							((EntityLiving)e).attackEntityFrom(DamageSource.fall, damage);
+							if(damage>0)
+								((EntityLiving)e).attackEntityFrom(DamageSource.fall, damage);
 						}
 						e.motionY = pusher.motionY>0? pusher.motionY:0;
+						e.motionX += pusher.motionX;
+						e.motionZ += pusher.motionZ;
 						e.setPosition(e.posX, yDiff, e.posZ);
 						e.isAirBorne = false;
 						e.onGround = true;
@@ -1810,11 +1922,85 @@ public class Vector3
 						e.motionZ = 0;
 					}
 				}
-				
-				
-		    	return ret;
-		    }
+		    	return movedx||movedz||movedy;
+		  }
+		  
+		  public static boolean multiBoxIntersect(Entity pusher, Entity e, Vector3 offset, Vector3 intersect)
+		  {
+			  boolean ret = false;
+			  if(!(pusher instanceof IMultiBox && e instanceof IMultiBox))
+				  return ret;
+			  
+			  
+			  Vector3 entity = new Vector3(e, true);
+			  Vector3 push = new Vector3(pusher, true);
+			  
+			  for(String pusherKey:((IMultiBox)pusher).getBoxes().keySet())
+			  {
+				  for(String eKey:((IMultiBox)e).getBoxes().keySet())
+				  {
+					  Vector3 pushOffset = ((IMultiBox)pusher).getOffsets().contains(pusherKey)?((IMultiBox)pusher).getOffsets().get(pusherKey):new Vector3();
+					  Vector3 eOffset = ((IMultiBox)e).getOffsets().contains(eKey)?((IMultiBox)e).getOffsets().get(eKey):new Vector3();
+					  
+					  Matrix3 pushBox = ((IMultiBox)pusher).getBoxes().get(pusherKey).addOffset(pushOffset).addOffset(push);
+					  Matrix3 eBox = ((IMultiBox)e).getBoxes().get(eKey).addOffset(eOffset).addOffset(entity);
+					  
+					  ret = pushBox.intersects(eBox);
 
+					  if(ret)
+					  {
+						  intersect = pushBox.intersect(eBox).subtract(entity);
+						  break;
+					  }
+				  }
+				  if(ret)
+					  break;
+			  }
+			  
+			  return ret;
+		  }
+		  
+		  public boolean intersects(Matrix3 otherBox)
+		  {
+			  boolean ret = false;
+			  Vector3[] corners = otherBox.corners();
+			  Vector3.rotateAboutAngles(corners, boxRotation());
+			  for(Vector3 r : corners)
+			  {
+				  if(r.inMatBox(this))
+				  {
+					  ret = true;
+					  break;
+				  }
+			  }
+			  return ret;
+		  }
+		  
+		  public Vector3 intersect(Matrix3 otherBox)
+		  {
+			  Vector3 ret = new Vector3();
+			  Vector3[] corners = otherBox.corners();
+			  Vector3.rotateAboutAngles(corners, boxRotation());
+			  for(Vector3 r : corners)
+			  {
+				  if(r.inMatBox(this))
+				  {
+					  ret = r;
+					  break;
+				  }
+			  }
+			  return ret;
+		  }
+		  
+		  public Vector3 getMatrixPushDir(Matrix3 box)
+		  {
+			  Vector3 ret = new Vector3();
+			  
+			  
+			  
+			  return ret;
+		  }
+		  		  
 		  public Vector3 getPushDirOutOfBlocks(Entity e, Vector3 offset)
 		  {
 			  Vector3 dir = new Vector3();
@@ -1843,7 +2029,11 @@ public class Vector3
     	return getLiquid(world, vec.intX(),vec.intY(),vec.intZ()) != null;
     }
     
-    /**
+    public void clear() 
+    {
+		this.set(new Vector3());
+	}
+	/**
      * Gets a liquid from a certain location.
      * @param world - world the block is in
      * @param x - x coordinate

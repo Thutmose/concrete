@@ -2,11 +2,9 @@ package thutconcrete.client;
 
 import thutconcrete.client.gui.GuiLimekiln;
 import thutconcrete.client.render.*;
-import thutconcrete.client.render.RenderBeam;
-import thutconcrete.client.render.RenderRocket;
 import thutconcrete.common.CommonProxy;
+import thutconcrete.common.ConcreteCore;
 import thutconcrete.common.entity.*;
-import thutconcrete.common.entity.EntityRocket;
 import thutconcrete.common.tileentity.*;
 import cpw.mods.fml.client.FMLClientHandler;
 import cpw.mods.fml.client.registry.ClientRegistry;
@@ -17,6 +15,9 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.world.World;
+import net.minecraftforge.client.event.sound.SoundLoadEvent;
+import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.event.ForgeSubscribe;
 
 public class ClientProxy extends CommonProxy{
 	
@@ -60,6 +61,21 @@ public class ClientProxy extends CommonProxy{
 		}
 		
 		return null;
+	}
+	
+	@Override
+	public void loadSounds(){
+		try{
+			MinecraftForge.EVENT_BUS.register(new ClientProxy.sounds());}
+		catch(Exception e){
+			e.printStackTrace();
+		}
+	}
+	public static class sounds{
+		@ForgeSubscribe
+		public void onSound(SoundLoadEvent event){
+			event.manager.soundPoolSounds.addSound("railgun.ogg", ConcreteCore.class.getResource("/mods/thutconcrete/sounds/railgun.ogg"));
+		}
 	}
 	
 }

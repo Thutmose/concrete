@@ -74,7 +74,7 @@ public class ConcreteCore {
 	
 	public static String modid = "ThutConcrete";
 	
-	private static final String[]  LANGUAGES_SUPPORTED	= new String[] { "en_UK", "en_US" };
+	private static final String[]  LANGUAGES_SUPPORTED	= new String[] { "en_UK", "en_US" , "de_DE"};
     
     public static CreativeTabConcrete tabThut = new CreativeTabConcrete();
     
@@ -108,7 +108,7 @@ public class ConcreteCore {
 	@PreInit
 	public void preInit(FMLPreInitializationEvent e){
 		config = new ConfigHandler(e.getSuggestedConfigurationFile());
-		
+		commproxy.loadSounds();
 		customWorldType = new WorldTypeCustom(config.worldID, "FINITE");
 		
 		saveList = new TSaveHandler();

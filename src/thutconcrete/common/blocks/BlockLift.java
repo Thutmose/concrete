@@ -83,7 +83,7 @@ public class BlockLift extends Block implements ITileEntityProvider
     {
 		 int meta = worldObj.getBlockMetadata(x, y, z);
 		 
-		 if(player.getHeldItem()!=null&&(player.getHeldItem().itemID==Item.axeWood.itemID
+		 if(player.getHeldItem()!=null&&(player.getHeldItem().itemID==BlockBoom.instance.blockID
 				 ||player.getHeldItem().getItem().getUnlocalizedName().toLowerCase().contains("wrench")
 				 ||player.getHeldItem().getItem().getUnlocalizedName().toLowerCase().contains("screwdriver")))
 		 {
@@ -140,13 +140,19 @@ public class BlockLift extends Block implements ITileEntityProvider
 	public boolean checkRailsForSpawn(World worldObj, boolean axis, int x, int y, int z)
 	{
 		int[][] sides = {{3,0},{-3,0},{0,3},{0,-3}};
+		int[][] colm =  {{2,0},{-2,0},{0,2},{0,-2}};
 		
 		boolean ret = true;
 		
-		for(int i = 0; i<4; i++)
+		for(int i = 0; i<5; i++)
 		{
 			ret = ret&&worldObj.getBlockId(x+sides[axis?2:0][0],y+i,z+sides[axis?2:0][1])==BlockLiftRail.staticBlock.blockID;
 			ret = ret&&worldObj.getBlockId(x+sides[axis?3:1][0],y+i,z+sides[axis?3:1][1])==BlockLiftRail.staticBlock.blockID;
+			
+
+			ret = ret&&worldObj.getBlockId(x+colm[axis?2:0][0],y+i,z+colm[axis?2:0][1])==Block.blockIron.blockID;
+			ret = ret&&worldObj.getBlockId(x+colm[axis?3:1][0],y+i,z+colm[axis?3:1][1])==Block.blockIron.blockID;
+			
 		}
 		
 		return ret;
@@ -162,6 +168,7 @@ public class BlockLift extends Block implements ITileEntityProvider
 				{
 					ret = ret && worldObj.getBlockId(x+i, y, z+j)==Block.blockIron.blockID;
 				}
+				ret = ret && worldObj.getBlockId(x+i, y+4, z+j)==Block.blockIron.blockID;
 			}
 		return ret;
 	}
@@ -170,10 +177,10 @@ public class BlockLift extends Block implements ITileEntityProvider
 	{
 		for(int i = -2; i<=2;i++)
 			for(int j = -2;j<=2;j++)
-			{
-				System.out.println("set air"+" "+(x+i)+" "+y+" "+(z+j));
-				worldObj.setBlock(x+i, y, z+j,0,0,3);
-			}
+				for(int k = 0; k<5; k++)
+				{
+					worldObj.setBlock(x+i, y+k, z+j,0,0,3);
+				}
 		
 	}
 

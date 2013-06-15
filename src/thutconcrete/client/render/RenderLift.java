@@ -55,30 +55,18 @@ public class RenderLift  extends Render
         GL11.glPushMatrix();
 
         GL11.glTranslated(x, y, z);
-   //     GL11.glDisable(GL11.GL_CULL_FACE);
-        GL11.glScalef(scale, scale*1.2F, scale);
+
+        GL11.glScalef(scale, scale*1.25F, scale);
 
 
 		GL11.glRotatef(lift.axis?90:0, 0F, 1F, 0F);
 
 		FMLClientHandler.instance().getClient().renderEngine.bindTexture("/mods/thutconcrete/textures/models/railAttatchment.png");
 		modelTurret.renderPart("railAttatchment2");
-		
-	//	GL11.glTranslated(0, 2.0, 0);
-	//	GL11.glRotatef(-pitch, 0f, 0F, 1f);
-	//	GL11.glTranslated(0, -(2.0), 0);
-		
-		/*/
-		if(laser.riddenByEntity==null)
-			FMLClientHandler.instance().getClient().renderEngine.bindTexture("/mods/thutconcrete/textures/models/sphere.png");
-		else
-			FMLClientHandler.instance().getClient().renderEngine.bindTexture("/mods/thutconcrete/textures/models/sphereClear.png");
-		//*/	
 
 		FMLClientHandler.instance().getClient().renderEngine.bindTexture("/mods/thutconcrete/textures/models/railAttatchment.png");
     	modelTurret.renderPart("railAttatchment1");
          
-   //     GL11.glEnable(GL11.GL_CULL_FACE);
         GL11.glPopMatrix();
 
 	}
@@ -91,13 +79,12 @@ public class RenderLift  extends Render
         
         GL11.glScalef(scale, scale, scale);
     	
-    	
-        FMLClientHandler.instance().getClient().renderEngine.bindTexture("/mods/thutconcrete/textures/models/turretBase.png");
+        FMLClientHandler.instance().getClient().renderEngine.bindTexture("/mods/thutconcrete/textures/models/liftFloor.png");
     	modelTurret.renderPart("base");    
     	
     	GL11.glScalef(1, 0.5F, 1);
-    	GL11.glTranslated(0, 2.15*scale, 0);
-    	FMLClientHandler.instance().getClient().renderEngine.bindTexture("/mods/thutconcrete/textures/models/turretBase.png");
+    	GL11.glTranslated(0, 2.25*scale, 0);
+    	FMLClientHandler.instance().getClient().renderEngine.bindTexture("/mods/thutconcrete/textures/models/liftRoof.png");
     	modelTurret.renderPart("base");
     	
         GL11.glPopMatrix();

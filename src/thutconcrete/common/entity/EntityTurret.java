@@ -2,11 +2,14 @@ package thutconcrete.common.entity;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import thutconcrete.common.ConcreteCore;
 import thutconcrete.common.blocks.BlockBoom;
 import thutconcrete.common.network.PacketBeam;
 import thutconcrete.common.network.PacketMountedCommand;
+import thutconcrete.common.utils.IMultiBox;
 import thutconcrete.common.utils.LinearAlgebra;
 import thutconcrete.common.utils.Vector3;
 import thutconcrete.common.utils.Vector3.Matrix3;
@@ -19,9 +22,11 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLiving;
 import net.minecraft.entity.item.EntityMinecartEmpty;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemAxe;
 import net.minecraft.item.ItemDye;
 import net.minecraft.item.ItemStack;
+import net.minecraft.item.ItemSword;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.AxisAlignedBB;
 import net.minecraft.world.World;
@@ -33,7 +38,7 @@ import cpw.mods.fml.common.registry.IEntityAdditionalSpawnData;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
 
-public class EntityTurret  extends EntityLiving implements IEntityAdditionalSpawnData
+public class EntityTurret  extends EntityLiving implements IEntityAdditionalSpawnData, IMultiBox
 {
 	int notfired = 0;
 
@@ -62,8 +67,11 @@ public class EntityTurret  extends EntityLiving implements IEntityAdditionalSpaw
 	public boolean toDismount;
 	public boolean fire;
 	
-	public List<Matrix3> boxes = new ArrayList<Matrix3>();
-	public List<Vector3> offsets = new ArrayList<Vector3>();
+	public ConcurrentHashMap<String, Matrix3> boxes = new ConcurrentHashMap<String, Matrix3>();
+	public ConcurrentHashMap<String, Vector3> offsets = new ConcurrentHashMap<String, Vector3>();
+	
+//	public List<Matrix3> boxes = new ArrayList<Matrix3>();
+//  List<Vector3> offsets = new ArrayList<Vector3>();
 	
 	public Matrix3 turretBox = new Matrix3();
 	
@@ -93,7 +101,7 @@ public class EntityTurret  extends EntityLiving implements IEntityAdditionalSpaw
         this.prevPosZ = this.posZ;
         if(motionY<0.03)
         {
-        this.motionY -= 0.03999999910593033D;
+        this.motionY -= 0.01D;
         }
         else
         {
@@ -187,6 +195,7 @@ public class EntityTurret  extends EntityLiving implements IEntityAdditionalSpaw
 			EntityBeam beam = new EntityBeam(worldObj, origin.add(turretDir.scalarMult(size)), turretDir, true,mass,v);
 			worldObj.spawnEntityInWorld(beam);
 		}
+		origin.add(turretDir.scalarMult(size)).playSoundEffect(worldObj, 300, 1, "railgun");
 	}
 	
 	public void rotationAngles()
@@ -274,7 +283,7 @@ public class EntityTurret  extends EntityLiving implements IEntityAdditionalSpaw
      */
     public double getMountedYOffset()
     {
-        return (double)this.height/1.25;
+        return (double)this.height+1.5;
     }
     
     /**
@@ -322,33 +331,24 @@ public class EntityTurret  extends EntityLiving implements IEntityAdditionalSpaw
      */
     public void applyEntityCollision(Entity entity)
     {
-    	Vector3 e = new Vector3(entity);
+    //	Vector3 e = new Vector3(entity);
     	
-    	Vector3 de = e.subtract(new Vector3(this)).normalize().scalarMult(0.1);
-    	int k = 0;
-    	for(Matrix3 box: boxes)
+    	
+    	for(String key: boxes.keySet())
     	{
-    		Matrix3 temp = box.addToRows(new Vector3(this));
-			box.pushOutOfBox(this, entity, new Vector3());
-		//	System.out.println(k);
-    		k++;
+    		Matrix3 box = boxes.get(key);
+    		Vector3 offset = new Vector3();
+    		if(offsets.containsKey(key))
+    		{
+    			offset = offsets.get(key);
+    		}
+    		if(box!=null)
+    		{
+				box.pushOutOfBox(this, entity, offset);
+    		}
     	}
-    	turretCollision(entity,e);
     }
     
-    
-    private void turretCollision(Entity entity, Vector3 e)
-    {
-    	double entityDist = e.subtract(origin.add(new Vector3(0,1.6,0))).mag();
-    	Vector3 entityDir = e.subtract(origin.add(new Vector3(0,1.6,0)));
-    	turretBox().pushOutOfBox(this, entity, new Vector3(0,3.6,0));
-    }
-    
-    public Matrix3 turretBox()
-    {
-    	turretBox = new Matrix3(new Vector3(0,0,-size/8), new Vector3(2.5*size,size*0.1,size/8), new Vector3(pitch,yaw));
-    	return turretBox;
-    }
     
     private void doVectorEntityCollision(Entity entity, double distance, double r, Vector3 line, Vector3 vector, double offset, double dotPrecision)
     {
@@ -368,8 +368,9 @@ public class EntityTurret  extends EntityLiving implements IEntityAdditionalSpaw
     private void checkCollision()
     {
     	setSize(size);
-        List list = this.worldObj.getEntitiesWithinAABBExcludingEntity(this, this.boundingBox.expand(size/5, size/5, size/5));
+        List list = this.worldObj.getEntitiesWithinAABBExcludingEntity(this, AxisAlignedBB.getBoundingBox(posX - (size), posY, posZ - (size), posX+(size), posY + 2*size, posZ + (size)));
 
+    	setOffsets();
         if (list != null && !list.isEmpty())
         {
         	if(list.size() == 1 && this.riddenByEntity!=null)
@@ -410,25 +411,8 @@ public class EntityTurret  extends EntityLiving implements IEntityAdditionalSpaw
     
     protected void setSize(double size)
     {
-    	super.setSize((float)size, (float)size);
-    	boxes.clear();
-    	//Base Cuboid 
-    	boxes.add(new Matrix3(new Vector3(-size/2,0,-size/2), new Vector3(size/2,size*0.2,size/2)));
-    	//*
-    	//Turret Cylinder
-    	boxes.add(new Matrix3(new Vector3(-size/2,0,-size/4), new Vector3(size/2,size*0.6,size/4), new Vector3(0,yaw)));
-    	boxes.add(new Matrix3(new Vector3(-size/2,0,-size/4), new Vector3(size/2,size*0.6,size/4), new Vector3(0,45+yaw)));
-    	boxes.add(new Matrix3(new Vector3(-size/2,0,-size/4), new Vector3(size/2,size*0.6,size/4), new Vector3(0,-45+yaw)));
-    	boxes.add(new Matrix3(new Vector3(-size/2,0,-size/4), new Vector3(size/2,size*0.6,size/4), new Vector3(0,-90+yaw)));
-    	
-    	boxes.add(new Matrix3(new Vector3(-size/2.1,0,-size/7), new Vector3(size/2.1,size,size/7), new Vector3(0,-90+yaw)));
-
-    	//*
-    	//Turret top
-    	boxes.add(new Matrix3(new Vector3(-size/4,0,-size/4), new Vector3(size/4,size*1.4,size/4)));
-    	boxes.add(new Matrix3(new Vector3(-size/3,0,-size/3), new Vector3(size/3,size*1.3,size/3)));
-    	//*/
-    	
+    	super.setSize((float)size/2, (float)size/2);
+    	setBoxes();
     }
     
 	@Override
@@ -443,4 +427,65 @@ public class EntityTurret  extends EntityLiving implements IEntityAdditionalSpaw
     {
     	return "railgun";
     }
+
+	@Override
+	public void setBoxes() {
+    	boxes.clear();
+    	//Base Cuboid 
+    	boxes.put("base",new Matrix3(new Vector3(-size/2,0,-size/2), new Vector3(size/2,size*0.2,size/2)));
+    	//*
+    	//Turret Cylinder
+    	boxes.put("mid0",new Matrix3(new Vector3(-size/2,0,-size/4), new Vector3(size/2,size*0.6,size/4), new Vector3(0,yaw)));
+    	boxes.put("mid1",new Matrix3(new Vector3(-size/2,0,-size/4), new Vector3(size/2,size*0.6,size/4), new Vector3(0,45+yaw)));
+    	boxes.put("mid2",new Matrix3(new Vector3(-size/2,0,-size/4), new Vector3(size/2,size*0.6,size/4), new Vector3(0,-45+yaw)));
+    	boxes.put("mid3",new Matrix3(new Vector3(-size/2,0,-size/4), new Vector3(size/2,size*0.6,size/4), new Vector3(0,-90+yaw)));
+    	
+    	boxes.put("mid4",new Matrix3(new Vector3(-size/2.1,0,-size/7), new Vector3(size/2.1,size*0.8,size/7), new Vector3(0,-90+yaw)));
+
+    	//*
+    	//Turret top
+    	boxes.put("top0",new Matrix3(new Vector3(-size/4,0,-size/4), new Vector3(size/4,size*1.2,size/4)));
+    	boxes.put("top1",new Matrix3(new Vector3(-size/3,0,-size/3), new Vector3(size/3,size*1.1,size/3)));
+    	//*/
+    	
+    	boxes.put("turret", new Matrix3(new Vector3(0,0,-size/8), new Vector3(size,size*0.1,size/8), new Vector3(pitch,yaw)));
+    	
+	}
+
+	@Override
+	public void setOffsets() 
+	{
+    	offsets.clear();
+		offsets.put("turret", new Vector3(0,3.6,0));
+	}
+
+	@Override
+	public ConcurrentHashMap<String, Matrix3> getBoxes() 
+	{
+		return boxes;
+	}
+
+	@Override
+	public void addBox(String name, Matrix3 box) 
+	{
+		boxes.put(name, box);
+	}
+
+	@Override
+	public ConcurrentHashMap<String, Vector3> getOffsets()
+	{
+		return offsets;
+	}
+
+	@Override
+	public void addOffset(String name, Vector3 offset) 
+	{
+		offsets.put(name, offset);
+	}
+
+	@Override
+	public Matrix3 bounds(Vector3 target) {
+		return new Matrix3(new Vector3(-size/2,0, -size/2), new Vector3(size/2, size, size/2));
+	}
+
 }

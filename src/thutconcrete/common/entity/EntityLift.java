@@ -5,12 +5,16 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.concurrent.ConcurrentHashMap;
 
+import thutconcrete.common.blocks.BlockBoom;
 import thutconcrete.common.blocks.BlockLift;
 import thutconcrete.common.blocks.BlockLiftRail;
+import thutconcrete.common.corehandlers.ConfigHandler;
 import thutconcrete.common.items.ItemLiftController;
 import thutconcrete.common.network.PacketLift;
 import thutconcrete.common.tileentity.TileEntityLiftAccess;
+import thutconcrete.common.utils.IMultiBox;
 import thutconcrete.common.utils.Vector3;
 import thutconcrete.common.utils.Vector3.Matrix3;
 
@@ -31,15 +35,15 @@ import cpw.mods.fml.common.network.PacketDispatcher;
 import cpw.mods.fml.common.network.Player;
 import cpw.mods.fml.common.registry.IEntityAdditionalSpawnData;
 
-public class EntityLift extends EntityLiving implements IEntityAdditionalSpawnData
+public class EntityLift extends EntityLiving implements IEntityAdditionalSpawnData, IMultiBox
 {
 
 	public double size = 5;
 	public double y0=0;
-	public double speedUp = 0.5;
-	public double speedDown = -0.25;
-	public double NOPASSENGERSPEEDDOWN = -0.5;
-	public double PASSENDERSPEEDDOWN = -0.2;
+	public double speedUp = ConfigHandler.LiftSpeedUp;
+	public double speedDown = -ConfigHandler.LiftSpeedDown;
+	public double NOPASSENGERSPEEDDOWN = -ConfigHandler.LiftSpeedDown;
+	public double PASSENDERSPEEDDOWN = -ConfigHandler.LiftSpeedDownOccupied;
 	public double acceleration = 0.05;
 	public boolean up = true;
 	public boolean move = false;
@@ -56,7 +60,12 @@ public class EntityLift extends EntityLiving implements IEntityAdditionalSpawnDa
 	TileEntityLiftAccess current;
 	public int id;
 	
-	public static Map<Integer, EntityLift> lifts = new HashMap<Integer, EntityLift>();
+	public static ConcurrentHashMap<Integer, EntityLift> lifts = new ConcurrentHashMap<Integer, EntityLift>();
+	
+	public ConcurrentHashMap<String, Matrix3> boxes = new ConcurrentHashMap<String, Matrix3>();
+	public ConcurrentHashMap<String, Vector3> offsets = new ConcurrentHashMap<String, Vector3>();
+	
+	
 	
 	public TileEntityLiftAccess[][] floors = new TileEntityLiftAccess[16][4];
 	
@@ -69,7 +78,7 @@ public class EntityLift extends EntityLiving implements IEntityAdditionalSpawnDa
 	public EntityLift(World par1World) 
 	{
 		super(par1World);
-		this.setSize(5f, 1f);
+		this.setSize(5f, 1.5f);
 		this.ignoreFrustumCheck = true;
 		this.hurtResistantTime =0;
 		this.hurtTime = 0;
@@ -95,7 +104,12 @@ public class EntityLift extends EntityLiving implements IEntityAdditionalSpawnDa
 	public void onUpdate()
 	{
 		this.prevPosY = posY;
-		speedDown = passengertime>0?PASSENDERSPEEDDOWN:NOPASSENGERSPEEDDOWN;
+		
+		if(first)
+		{
+			checkRails(0);
+			first = false;
+		}
 		
 		checkBlocks(0);
 		accelerate();
@@ -115,8 +129,22 @@ public class EntityLift extends EntityLiving implements IEntityAdditionalSpawnDa
 			}
 		}
 		checkCollision();
-		passengertime = hasPassenger?10:passengertime-1;
+		passengertime = hasPassenger?20:passengertime-1;
 		n++;
+	}
+	
+	public void passengerCheck()
+	{
+		List<Entity> list = worldObj.getEntitiesWithinAABBExcludingEntity(this, boundingBox);
+		if(list.size()>0)
+		{
+			hasPassenger = true;
+			System.out.println("passenger");
+		}
+		else
+		{
+			hasPassenger = false;
+		}
 	}
 	
 	
@@ -146,7 +174,7 @@ public class EntityLift extends EntityLiving implements IEntityAdditionalSpawnDa
 						up = destinationY > posY;
 						move = true;
 						called = true;
-						System.out.println(destinationY+" "+posY+" "+up+" "+move);
+						//System.out.println(destinationY+" "+posY+" "+up+" "+move);
 						PacketDispatcher.sendPacketToAllAround(posX, posY, posZ, 100, this.dimension, PacketLift.getPacket(this, 3,destinationY));
 						return;
 					}
@@ -165,6 +193,7 @@ public class EntityLift extends EntityLiving implements IEntityAdditionalSpawnDa
 	
 	public void accelerate()
 	{
+		motionX = motionZ = 0;
 		if(!move)
 			motionY *= 0.5;
 		else
@@ -188,7 +217,7 @@ public class EntityLift extends EntityLiving implements IEntityAdditionalSpawnDa
 			}
 			else
 			{
-				while(motionY>=0&&!checkBlocks((motionY - acceleration*speedUp)*15))
+				while(motionY>=0&&!checkBlocks((motionY - acceleration*speedUp)*40))
 				{
 					motionY = motionY - acceleration*speedUp;
 				}
@@ -226,7 +255,7 @@ public class EntityLift extends EntityLiving implements IEntityAdditionalSpawnDa
 			}
 			else
 			{
-				while(motionY<=0&&!checkBlocks((motionY - acceleration*speedDown)*15))
+				while(motionY<=0&&!checkBlocks((motionY - acceleration*speedDown)*40))
 				{
 					motionY = motionY - acceleration*speedDown;
 				}
@@ -304,9 +333,16 @@ public class EntityLift extends EntityLiving implements IEntityAdditionalSpawnDa
 			ret = ret&&worldObj.getBlockId((int)Math.floor(posX)+sides[axis?3:1][0],(int)Math.floor(posY+dir+i),(int)Math.floor(posZ)+sides[axis?3:1][1])==BlockLiftRail.staticBlock.blockID;
 		}
 		
-		if(!(ret||dir!=0))
+		if((!ret&&dir==0))
 		{
 			axis = !axis;
+			for(int i = 0; i<size; i++)
+			{
+				ret = ret&&worldObj.getBlockId((int)Math.floor(posX)+sides[axis?2:0][0],(int)Math.floor(posY+dir+i),(int)Math.floor(posZ)+sides[axis?2:0][1])==BlockLiftRail.staticBlock.blockID;
+				ret = ret&&worldObj.getBlockId((int)Math.floor(posX)+sides[axis?3:1][0],(int)Math.floor(posY+dir+i),(int)Math.floor(posZ)+sides[axis?3:1][1])==BlockLiftRail.staticBlock.blockID;
+			}
+			if(!ret)
+				axis = !axis;
 		}
 		
 		return ret;
@@ -316,9 +352,13 @@ public class EntityLift extends EntityLiving implements IEntityAdditionalSpawnDa
     {
         List list = this.worldObj.getEntitiesWithinAABBExcludingEntity(this, AxisAlignedBB.getBoundingBox(posX - (size), posY, posZ - (size), posX+(size), posY + size+1, posZ + (size)));
         double factor = 5;//worldObj.isRemote? 1.95:5;
-        base = new Matrix3(new Vector3(-size/2,0,-size/2), new Vector3(size/2,size/factor,size/2));
-        top = new Matrix3(new Vector3(-size/2,0,-size/2), new Vector3(size/2,size/(2*factor),size/2));
-        wall1 = new Matrix3(new Vector3(-size/10,0,-size/10), new Vector3(size/10,size,size/10));
+      //  base = new Matrix3(new Vector3(-size/2,0,-size/2), new Vector3(size/2,size/factor,size/2));
+      //  top = new Matrix3(new Vector3(-size/2,0,-size/2), new Vector3(size/2,size/(2*factor),size/2));
+      //  wall1 = new Matrix3(new Vector3(-size/10,0,-size/10), new Vector3(size/10,size,size/10));
+        
+        setOffsets();
+        setBoxes();
+        
         if (list != null && !list.isEmpty())
         {
         	if(list.size() == 1 && this.riddenByEntity!=null)
@@ -343,6 +383,24 @@ public class EntityLift extends EntityLiving implements IEntityAdditionalSpawnDa
      */
     public void applyEntityCollision(Entity entity)
     {
+    	
+    	for(String key: boxes.keySet())
+    	{
+    		Matrix3 box = boxes.get(key);
+    		Vector3 offset = new Vector3();
+    		if(offsets.containsKey(key))
+    		{
+    			offset = offsets.get(key);
+    		}
+    		if(box!=null)
+    		{
+    		//	System.out.println(key+" "+offset.toString());
+    			boolean push = false;
+				push = box.pushOutOfBox(this, entity, offset);
+    		}
+    	}
+    	
+    	/*/
     	Vector3 e = new Vector3(entity);
     	//this.motionY = 0;
     	hasPassenger = base.pushOutOfBox(this, entity, new Vector3());
@@ -362,6 +420,9 @@ public class EntityLift extends EntityLiving implements IEntityAdditionalSpawnDa
 	    	if(wall1.pushOutOfBox(this, entity, new Vector3(0,0,-wallOffset)));
 	     //   	System.out.println("push wall4");
     	}
+    	
+    	//*/
+    	
     }
 	
     /**
@@ -379,8 +440,10 @@ public class EntityLift extends EntityLiving implements IEntityAdditionalSpawnDa
            	item.stackTagCompound.setInteger("lift", entityId);
            	player.addChatMessage("lift set");
     	}
-    	if(item!=null&&item.getItem() instanceof ItemAxe)
-    	{
+    	if(player.isSneaking()&&item!=null&&(player.getHeldItem().itemID==BlockBoom.instance.blockID
+				 ||player.getHeldItem().getItem().getUnlocalizedName().toLowerCase().contains("wrench")
+				 ||player.getHeldItem().getItem().getUnlocalizedName().toLowerCase().contains("screwdriver")))
+		 {
     		if(!worldObj.isRemote)
     		{
     			player.addChatMessage("killed lift");
@@ -399,7 +462,7 @@ public class EntityLift extends EntityLiving implements IEntityAdditionalSpawnDa
     {
     	if(!worldObj.isRemote&&!this.isDead)
     	{
-	    	this.dropItem(Block.blockIron.blockID, 24);
+	    	this.dropItem(Block.blockIron.blockID, 55);
 	    	this.dropItem(BlockLift.instance.blockID, 1);
     	}
         super.setDead();
@@ -500,4 +563,58 @@ public class EntityLift extends EntityLiving implements IEntityAdditionalSpawnDa
     	return "lift";
     }
 
+	@Override
+	public void setBoxes()
+	{
+        boxes.put("base", new Matrix3(new Vector3(-size/2,0,-size/2), new Vector3(size/2,size/5,size/2)));
+        boxes.put("top", new Matrix3(new Vector3(-size/2,0,-size/2), new Vector3(size/2,size/10,size/2)));
+        boxes.put("wall1", new Matrix3(new Vector3(-size/10,0,-size/10), new Vector3(size/10,size,size/10)));
+        boxes.put("wall2", new Matrix3(new Vector3(-size/10,0,-size/10), new Vector3(size/10,size,size/10)));
+	}
+
+	@Override
+	public void setOffsets() 
+	{
+		offsets.put("top", new Vector3(0,size*0.9,0));
+    	double wallOffset = size/2 + size/10;
+    	if(!axis)
+    	{
+    		offsets.put("wall1",new Vector3(wallOffset,0,0));
+	    	offsets.put("wall2",new Vector3(-wallOffset,0,0));
+    	}
+    	else
+    	{
+    		offsets.put("wall1",new Vector3(0,0,wallOffset));
+	    	offsets.put("wall2",new Vector3(0,0,-wallOffset));
+    	}
+	}
+
+	@Override
+	public ConcurrentHashMap<String, Matrix3> getBoxes() 
+	{
+		return boxes;
+	}
+
+	@Override
+	public void addBox(String name, Matrix3 box) 
+	{
+		boxes.put(name, box);
+	}
+
+	@Override
+	public ConcurrentHashMap<String, Vector3> getOffsets()
+	{
+		return offsets;
+	}
+
+	@Override
+	public void addOffset(String name, Vector3 offset) 
+	{
+		offsets.put(name, offset);
+	}
+
+	@Override
+	public Matrix3 bounds(Vector3 target) {
+		return new Matrix3(new Vector3(-size/2,0, -size/2), new Vector3(size/2, size, size/2));
+	}
 }

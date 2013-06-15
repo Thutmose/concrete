@@ -45,7 +45,6 @@ public class ItemLiftController extends Item
        	if(e!=null&&e instanceof EntityLift)
        	{
        		EntityLift lift = (EntityLift)e;
-       		player.addChatMessage("lift setting changed from "+lift.move+" "+lift.up);
        	//	if(lift.move)
 
        		if(player.isSneaking())
@@ -59,7 +58,10 @@ public class ItemLiftController extends Item
        		
        		
        		PacketDispatcher.sendPacketToPlayer(PacketLift.getPacket(lift, lift.move?1:0, lift.up?1:0), (Player) player);
-       		player.addChatMessage(" to "+lift.move+" "+lift.up);
+       		
+       		String message = "Lift "+(lift.move?"Moving "+(lift.up?"Up":"Down"):"Stopped");
+       		
+       		player.addChatMessage(message);
        	}
         return itemstack;
     }
@@ -83,6 +85,7 @@ public class ItemLiftController extends Item
 			te.setLift((EntityLift)e);
 			te.setFloor(te.getButtonFromClick(side, hitX, hitY, hitZ));
 			player.addChatMessage("Set this Floor to "+te.floor);
+			return true;
 		}
     	return false;
     }

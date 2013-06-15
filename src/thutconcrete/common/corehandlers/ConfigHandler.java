@@ -40,6 +40,10 @@ public class ConfigHandler {
 	public static int ashAmount;
 	public static boolean debugPrints;
 	public static boolean volcanosActive;
+
+	public static double LiftSpeedUp;
+	public static double LiftSpeedDown;
+	public static double LiftSpeedDownOccupied;
 	
 	// Items
 	public static int IDItem;
@@ -88,6 +92,14 @@ public class ConfigHandler {
 			TileEntityVolcano.eruptionStopRate = conf.get("Volcano Stuff", "Eruption stop Rate", 2,"the number of standard deviations needed for the volcano to exit an eruptive period").getDouble(2);
 			debugPrints = conf.get("Volcano Stuff", "debug Prints", false,"Do Printouts of whatever the volcano does happen?").getBoolean(false);
 			//debug = conf.get("Volcano Stuff", "debug bool", false,"debug bool" ).getBoolean(false);
+			////////////////////////////////Lift Stuff////////////////////////////////////////////////////////////////
+
+			LiftSpeedUp = conf.get("Lift Settings", "Upward speed", 0.5,"The speed in blocks/tick for the lift going upwards").getDouble(0.5);
+			LiftSpeedDown = conf.get("Lift Settings", "Downward speed", 0.25,"The speed in blocks/tick for the lift going downwards").getDouble(0.25);
+		//	LiftSpeedDownOccupied = conf.get("Lift Settings", "Downward speed2", 0.25,"The speed in blocks/tick for the lift going downwards with a passenger").getDouble(0.25);
+			
+			///////////////////////////////////////////////////////////////////////////////////////////////////////////
+			
 			
 			// Load Item Ids
 			Property item = conf.getItem("Item", itemRange);

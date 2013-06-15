@@ -47,7 +47,7 @@ public class ItemConcreteDust extends Item {
     		int meta = world.getBlockMetadata(x1, y1, z1);
     		Block block = Block.blocksList[id];
     		
-            if (ItemDye.applyBonemeal(stack, world, x, y, z, player))
+            if (!player.isSneaking()&&ItemDye.applyBonemeal(stack, world, x, y, z, player))
             {
                 if (!world.isRemote)
                 {

@@ -98,7 +98,7 @@ public class RecipeHandler
 
 		GameRegistry.addRecipe(new ItemStack(ItemLiftController.instance),"xyx"," x ","   ", 'x', Item.ingotIron, 'y', Item.redstone);
 		GameRegistry.addRecipe(new ItemStack(ItemLiftBlocks.instance,1,0),"xyx","zxz","zzz", 'x', Item.ingotIron, 'y', Item.redstone, 'z', new ItemStack(Block.stone));
-		GameRegistry.addRecipe(new ItemStack(ItemLiftController.instance),"xyx","yxy","xyx", 'x', Item.ingotIron, 'y', Item.redstone);
+		GameRegistry.addRecipe(new ItemStack(ItemLiftBlocks.instance,1,1),"xyx","yxy","xyx", 'x', Item.ingotIron, 'y', Item.redstone);
 		
 		
 		

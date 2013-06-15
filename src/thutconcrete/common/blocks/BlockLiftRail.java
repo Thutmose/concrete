@@ -50,7 +50,7 @@ public class BlockLiftRail extends BlockRebar implements ITileEntityProvider
     	if(item!=null)
     	{
 	    	int itemID = item.itemID;
-	    	if(itemID<4095)
+	    	if(side==0||side==1&&itemID<4095)
 	    	{
 		    	if(Block.blocksList[itemID] instanceof IRebar)
 		    	{

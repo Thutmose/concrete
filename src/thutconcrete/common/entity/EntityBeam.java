@@ -138,7 +138,7 @@ public class EntityBeam extends Entity implements IEntityAdditionalSpawnData, IC
 
 		this.rotationPitch= (float) Math.toDegrees((direction.toSpherical()).y);
 		this.rotationYaw= (float) (90+Math.toDegrees((direction.toSpherical()).z));
-		this.worldObj.playSoundEffect(this.posX, this.posY, this.posZ, "random.explode", (float)(v/5), 1f);
+		//this.worldObj.playSoundEffect(this.posX, this.posY, this.posZ, "random.explode", (float)(v/5), 1f);
 		if(!this.worldObj.isRemote)
 		{
 		  move();
