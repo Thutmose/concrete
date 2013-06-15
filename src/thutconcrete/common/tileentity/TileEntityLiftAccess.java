@@ -49,6 +49,8 @@ public class TileEntityLiftAccess extends TileEntity
 	int liftID = -1;
 	public int side = 0;
 	
+	int tries = 0;
+	
 	public boolean first = true;
 	public boolean read = false;
 	public boolean redstone = true;
@@ -62,7 +64,7 @@ public class TileEntityLiftAccess extends TileEntity
 			first = false;
 		}
 		//System.out.println(called);
-		if(!worldObj.isRemote && lift == null && liftID!=-1&&blockID==BlockLift.instance.blockID)
+		if(!worldObj.isRemote && tries<10 &&lift == null && liftID!=-1&&blockID==BlockLift.instance.blockID&&getBlockMetadata()==1)
 		{
 			if(EntityLift.lifts.containsKey(liftID))
 			{
@@ -74,6 +76,7 @@ public class TileEntityLiftAccess extends TileEntity
 			//System.out.println("lost lift");
 				liftID = -1;
 			}
+			tries++;
 		}
 		
 		if(side==0)
