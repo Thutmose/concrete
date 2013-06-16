@@ -6,7 +6,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import thutconcrete.common.ConcreteCore;
-import thutconcrete.common.blocks.BlockBoom;
+import thutconcrete.common.blocks.BlockMisc;
 import thutconcrete.common.network.PacketBeam;
 import thutconcrete.common.network.PacketMountedCommand;
 import thutconcrete.common.utils.IMultiBox;
@@ -46,7 +46,7 @@ public class EntityTurret  extends EntityLiving implements IEntityAdditionalSpaw
 	int fireCooldown = rate;
 	int mountTime = 0;
 	
-	public double v = 75;
+	public double v = 100;
 	
 	public Entity target;
 	public Entity owner;
@@ -101,7 +101,7 @@ public class EntityTurret  extends EntityLiving implements IEntityAdditionalSpaw
         this.prevPosZ = this.posZ;
         if(motionY<0.03)
         {
-        this.motionY -= 0.01D;
+        	this.motionY -= 0.01D;
         }
         else
         {
@@ -217,15 +217,16 @@ public class EntityTurret  extends EntityLiving implements IEntityAdditionalSpaw
 	}
 	
 	@Override
-	public void writeSpawnData(ByteArrayDataOutput data) {
-		// TODO Auto-generated method stub
-		
+	public void writeSpawnData(ByteArrayDataOutput data) 
+	{
+		data.writeFloat(pitch);
+		data.writeFloat(yaw);
 	}
 
 	@Override
 	public void readSpawnData(ByteArrayDataInput data) {
-		// TODO Auto-generated method stub
-		
+		pitch = data.readFloat();
+		yaw = data.readFloat();
 	}
 
 	@Override
@@ -350,25 +351,10 @@ public class EntityTurret  extends EntityLiving implements IEntityAdditionalSpaw
     }
     
     
-    private void doVectorEntityCollision(Entity entity, double distance, double r, Vector3 line, Vector3 vector, double offset, double dotPrecision)
-    {
-    	System.out.println(distance + " "+ r +" "+line.dot(vector.normalize())+" "+line.distanceTo(vector)+" "+worldObj);
-    	
-    	if(distance<r&&line.distanceTo(vector)<0.5)//line.dot(vector.normalize())>dotPrecision)
-    	{
-    		System.out.println("collided");
-			entity.motionY = 0;
-			entity.posY = origin.add(new Vector3(0,1.6,0)).add((line).scalarMult(distance)).y+offset;
-			entity.isAirBorne = false;
-			entity.onGround = true;
-			entity.fallDistance = 0;
-    	}
-    }
-    
     private void checkCollision()
     {
     	setSize(size);
-        List list = this.worldObj.getEntitiesWithinAABBExcludingEntity(this, AxisAlignedBB.getBoundingBox(posX - (size), posY, posZ - (size), posX+(size), posY + 2*size, posZ + (size)));
+        List list = this.worldObj.getEntitiesWithinAABBExcludingEntity(this, AxisAlignedBB.getBoundingBox(posX - (size), posY, posZ - (size), posX+(size), posY + 4*size, posZ + (size)));
 
     	setOffsets();
         if (list != null && !list.isEmpty())
@@ -448,7 +434,7 @@ public class EntityTurret  extends EntityLiving implements IEntityAdditionalSpaw
     	boxes.put("top1",new Matrix3(new Vector3(-size/3,0,-size/3), new Vector3(size/3,size*1.1,size/3)));
     	//*/
     	
-    	boxes.put("turret", new Matrix3(new Vector3(0,0,-size/8), new Vector3(size,size*0.1,size/8), new Vector3(pitch,yaw)));
+    	boxes.put("turret", new Matrix3(new Vector3(0,0,-size/8), new Vector3(size*0.8,size*0.1,size/8), new Vector3(pitch,yaw)));
     	
 	}
 

@@ -79,12 +79,17 @@ public class TileEntityBlock16Fluid extends TileEntity implements IStampableTE
 		   if(worldObj!=null)
 		   for(int i = 0; i<6; i++)
 		   {
-			   if(iconIDs[i]==0||iconIDs[i]==thisBlock().blockID)
+			   if((iconIDs[i]==0||iconIDs[i]==thisBlock().blockID)&&thisBlock() instanceof Block16Fluid)
 			   {
 				   Block16Fluid block = (Block16Fluid) thisBlock();
 				   iconIDs[i] = block.blockID;
 				   if(block.iconArray!=null)
 				   icons[i] = block.iconArray[metaArray[i]];
+			   }
+			   else if((iconIDs[i]==0||iconIDs[i]==thisBlock().blockID))
+			   {
+				   iconIDs[i] = thisBlock().blockID;
+				   icons[i] = thisBlock().getIcon(i, metaArray[i]);
 			   }
 			   else if(Block.blocksList[iconIDs[i]]!=null)
 			   {

@@ -55,20 +55,33 @@ public class RenderLift  extends Render
         GL11.glPushMatrix();
 
         GL11.glTranslated(x, y, z);
-
-        GL11.glScalef(scale, scale*1.25F, scale);
-
-
 		GL11.glRotatef(lift.axis?90:0, 0F, 1F, 0F);
-
+		
+        GL11.glPushMatrix();
+      
+        GL11.glScalef(2, 2.5F, 2);
+		
+		GL11.glTranslated((-5+lift.size)*0.25, 0, 0);
 		FMLClientHandler.instance().getClient().renderEngine.bindTexture("/mods/thutconcrete/textures/models/railAttatchment.png");
 		modelTurret.renderPart("railAttatchment2");
+		
+        GL11.glPopMatrix();
+        
+        GL11.glPushMatrix();
 
+        GL11.glScalef(2, 2.5F, 2);
+        
+
+		GL11.glTranslated((5-lift.size)*0.25, 0, 0);
 		FMLClientHandler.instance().getClient().renderEngine.bindTexture("/mods/thutconcrete/textures/models/railAttatchment.png");
     	modelTurret.renderPart("railAttatchment1");
          
         GL11.glPopMatrix();
+        
+        
 
+        GL11.glPopMatrix();
+        
 	}
 	
 	private void renderBase(Entity te, float scale, double x,double y,double z)
@@ -77,13 +90,13 @@ public class RenderLift  extends Render
         
         GL11.glTranslated(x, y, z);
         
-        GL11.glScalef(scale, scale, scale);
+        GL11.glScalef(scale, 2, scale);
     	
         FMLClientHandler.instance().getClient().renderEngine.bindTexture("/mods/thutconcrete/textures/models/liftFloor.png");
     	modelTurret.renderPart("base");    
     	
     	GL11.glScalef(1, 0.5F, 1);
-    	GL11.glTranslated(0, 2.25*scale, 0);
+    	GL11.glTranslated(0, 4.5, 0);
     	FMLClientHandler.instance().getClient().renderEngine.bindTexture("/mods/thutconcrete/textures/models/liftRoof.png");
     	modelTurret.renderPart("base");
     	

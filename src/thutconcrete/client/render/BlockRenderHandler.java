@@ -10,6 +10,7 @@ import net.minecraft.block.Block;
 import net.minecraft.client.renderer.EntityRenderer;
 import net.minecraft.client.renderer.RenderBlocks;
 import net.minecraft.client.renderer.Tessellator;
+import net.minecraft.client.renderer.entity.RenderManager;
 import net.minecraft.util.Icon;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
@@ -90,9 +91,10 @@ public class BlockRenderHandler implements ISimpleBlockRenderingHandler{
 	        	icon1 = block.getIcon(0, 0);
 	        	rebar = true;
 	        }
-	        
-	        rebarRender.renderREConcrete(world,parblock, x, y, z, meta, sides,icon, icon1,rebar,concrete, icons);
-
+			
+			{
+				rebarRender.renderREConcrete(world,parblock, x, y, z, meta, sides,icon, icon1,rebar,concrete, icons);
+			}
 		}
 		
 		return true;

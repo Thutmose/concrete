@@ -101,7 +101,7 @@ public class BlockConcrete extends Block16Fluid implements ITileEntityProvider, 
     public void registerIcons(IconRegister par1IconRegister)
     {
         this.iconArray = new Icon[16];
-        super.registerIcons(par1IconRegister);
+        //super.registerIcons(par1IconRegister);
         this.blockIcon = par1IconRegister.registerIcon("thutconcrete:" + "dryConcrete_"+8);
         for (int i = 0; i < this.iconArray.length; ++i)
         {

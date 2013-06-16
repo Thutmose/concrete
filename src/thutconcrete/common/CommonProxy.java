@@ -39,10 +39,13 @@ public class CommonProxy  implements IGuiHandler
     
     public void registerEntities()
     {
-    	ConcreteCore.registerEntity(EntityBeam.class, "beamofLaser");
+    	ConcreteCore.registerEntity(EntityBeam.class, "railgunProjectile");
     	ConcreteCore.registerEntity(EntityRocket.class, "tehRocket");
-    	ConcreteCore.registerEntity(EntityTurret.class, "tehturret");
+    	ConcreteCore.registerEntity(EntityTurret.class, "railgunTurret");
     	ConcreteCore.registerEntity(EntityLift.class, "tehlift");
+    	
+    	
+    	ConcreteCore.registerEntity(EntitySine.class, "sine");
     }
     
 	@Override

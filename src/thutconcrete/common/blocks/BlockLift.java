@@ -30,6 +30,8 @@ public class BlockLift extends Block implements ITileEntityProvider
 
 	public static BlockLift instance;
 	
+	public int size = 5;
+	
 	public BlockLift(int par1) 
 	{
 		super(par1, Material.iron);
@@ -83,7 +85,7 @@ public class BlockLift extends Block implements ITileEntityProvider
     {
 		 int meta = worldObj.getBlockMetadata(x, y, z);
 		 
-		 if(player.getHeldItem()!=null&&(player.getHeldItem().itemID==BlockBoom.instance.blockID
+		 if(player.getHeldItem()!=null&&(player.getHeldItem().itemID==BlockMisc.instance.blockID
 				 ||player.getHeldItem().getItem().getUnlocalizedName().toLowerCase().contains("wrench")
 				 ||player.getHeldItem().getItem().getUnlocalizedName().toLowerCase().contains("screwdriver")))
 		 {
@@ -111,13 +113,13 @@ public class BlockLift extends Block implements ITileEntityProvider
 			 {
 				 player.addChatMessage("complete rails not found");
 			 }
-	
-			ret = checkBlocks(worldObj, x, y, z);
+			 if(ret)
+				 ret = checkBlocks(worldObj, x, y, z);
 			 
 			if(ret&&!worldObj.isRemote)
 			{
 				removeBlocks(worldObj, x, y, z);
-				EntityLift lift = new EntityLift(worldObj, x+0.5, y, z+0.5);
+				EntityLift lift = new EntityLift(worldObj, x+0.5, y, z+0.5, size);
 				worldObj.spawnEntityInWorld(lift);
 			}
 			if(!ret)
@@ -139,20 +141,40 @@ public class BlockLift extends Block implements ITileEntityProvider
 	 
 	public boolean checkRailsForSpawn(World worldObj, boolean axis, int x, int y, int z)
 	{
-		int[][] sides = {{3,0},{-3,0},{0,3},{0,-3}};
-		int[][] colm =  {{2,0},{-2,0},{0,2},{0,-2}};
+		int[] sizes = {5,3,1};
 		
-		boolean ret = true;
+		boolean ret = false;
 		
-		for(int i = 0; i<5; i++)
+		for(int j = 0; j<3; j++)
 		{
-			ret = ret&&worldObj.getBlockId(x+sides[axis?2:0][0],y+i,z+sides[axis?2:0][1])==BlockLiftRail.staticBlock.blockID;
-			ret = ret&&worldObj.getBlockId(x+sides[axis?3:1][0],y+i,z+sides[axis?3:1][1])==BlockLiftRail.staticBlock.blockID;
+			boolean bool = true;
 			
-
-			ret = ret&&worldObj.getBlockId(x+colm[axis?2:0][0],y+i,z+colm[axis?2:0][1])==Block.blockIron.blockID;
-			ret = ret&&worldObj.getBlockId(x+colm[axis?3:1][0],y+i,z+colm[axis?3:1][1])==Block.blockIron.blockID;
+			int rail =(int)(1+Math.floor(sizes[j]/2));
+			int colmn = (int)(sizes[j]/2);
 			
+			int[][] sides = {{rail,0},{-rail,0},{0,rail},{0,-rail}};
+			int[][] colm =  {{colmn,0},{-colmn,0},{0,colmn},{0,-colmn}};
+			
+			
+			for(int i = 0; i<5; i++)
+			{
+				bool = bool&&worldObj.getBlockId(x+sides[axis?2:0][0],y+i,z+sides[axis?2:0][1])==BlockLiftRail.staticBlock.blockID;
+				bool = bool&&worldObj.getBlockId(x+sides[axis?3:1][0],y+i,z+sides[axis?3:1][1])==BlockLiftRail.staticBlock.blockID;
+				
+				
+				if(i!=0&&colmn!=0)
+				{
+					bool = bool&&(worldObj.getBlockId(x+colm[axis?2:0][0],y+i,z+colm[axis?2:0][1])==Block.blockIron.blockID);
+					bool = bool&&(worldObj.getBlockId(x+colm[axis?3:1][0],y+i,z+colm[axis?3:1][1])==Block.blockIron.blockID);
+				}
+				
+			}
+			if(bool)
+			{
+				size = sizes[j];
+				ret = bool;
+				break;
+			}
 		}
 		
 		return ret;
@@ -161,8 +183,11 @@ public class BlockLift extends Block implements ITileEntityProvider
 	public boolean checkBlocks(World worldObj, int x, int y, int z)
 	{
 		boolean ret = true;
-		for(int i = -2; i<=2;i++)
-			for(int j = -2;j<=2;j++)
+		
+		int rad = (size/2);
+		
+		for(int i = -rad; i<=rad;i++)
+			for(int j = -rad;j<=rad;j++)
 			{
 				if(!(i==0&&j==0))
 				{
@@ -175,8 +200,10 @@ public class BlockLift extends Block implements ITileEntityProvider
 	
 	public void removeBlocks(World worldObj, int x, int y, int z)
 	{
-		for(int i = -2; i<=2;i++)
-			for(int j = -2;j<=2;j++)
+		int rad = (size/2);
+		
+		for(int i = -rad; i<=rad;i++)
+			for(int j = -rad;j<=rad;j++)
 				for(int k = 0; k<5; k++)
 				{
 					worldObj.setBlock(x+i, y+k, z+j,0,0,3);

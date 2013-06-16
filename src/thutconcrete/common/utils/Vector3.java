@@ -770,6 +770,13 @@ public class Vector3
 	   * @return
 	   */
 	  public Vector3 rotateAboutAngles(double pitch, double yaw){
+		  if(pitch==0&&yaw==0)
+		  {
+			  return this;
+		  }
+		  
+		  
+		  
 		  return vectorRotateAboutLine(vectorRotateAboutLine(this, secondAxis, yaw),horizonalPerp(this), pitch);
 	  }
 	  
@@ -1808,7 +1815,7 @@ public class Vector3
 					
 				//	System.out.println(location.toString());
 					
-					double f = 0.1;
+					double f = 0.15;
 					
 					if(ypositive)
 					{
@@ -1834,7 +1841,7 @@ public class Vector3
 					}					
 					else if(ynegative)
 					{
-						pushDir.y = -e.motionY-f;
+						pushDir.y = -e.motionY-f+pusher.motionY;
 						movedy = true;
 
 						if(e instanceof EntityLiving)

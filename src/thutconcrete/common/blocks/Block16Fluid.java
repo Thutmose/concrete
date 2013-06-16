@@ -1060,19 +1060,18 @@ public class Block16Fluid extends Block
 		        	}
 		        }
 		   }
-		    
+		   /*/ 
 			@SideOnly(Side.CLIENT)
 		    public void registerIcons(IconRegister par1IconRegister)
 		    {
 		        this.iconArray = new Icon[16];
-		        super.registerIcons(par1IconRegister);
 		        this.blockIcon = par1IconRegister.registerIcon("thutconcrete:" + "dryConcrete_"+8);
 		        for (int i = 0; i < this.iconArray.length; ++i)
 		        {
 		            this.iconArray[i] = par1IconRegister.registerIcon("thutconcrete:" + "dryConcrete_"+i);
 		        }
 		    }
-		 
+		 //*/
 		    
 		    /**
 		     * Common way to recolour a block with an external tool

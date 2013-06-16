@@ -40,6 +40,10 @@ public class PacketLift implements IPacketProcessor
 			{
 				((EntityLift)e).callClient(dat.readDouble());
 			}
+			if(command == 4)
+			{
+				((EntityLift)e).size = dat.readDouble();
+			}
 			
 		}
 		
@@ -142,4 +146,5 @@ public class PacketLift implements IPacketProcessor
       pkt.isChunkDataPacket = true;
       return pkt;
 	 }
+	
 }

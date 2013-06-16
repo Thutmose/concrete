@@ -3,7 +3,7 @@ package thutconcrete.common.entity;
 import java.util.List;
 
 import thutconcrete.common.ConcreteCore;
-import thutconcrete.common.blocks.BlockBoom;
+import thutconcrete.common.blocks.BlockMisc;
 import thutconcrete.common.utils.LinearAlgebra;
 import thutconcrete.common.utils.Vector3;
 
@@ -107,7 +107,7 @@ public class CopyOfEntityTurret  extends EntityLiving implements IEntityAddition
 	
 	public void init()
 	{
-		if((worldObj.getBlockId((int)Math.floor(posX),(int)Math.floor(posY)-1,(int)Math.floor(posZ))!=BlockBoom.instance.blockID))
+		if((worldObj.getBlockId((int)Math.floor(posX),(int)Math.floor(posY)-1,(int)Math.floor(posZ))!=BlockMisc.instance.blockID))
 		{
 			this.setDead();
 		}

@@ -7,6 +7,8 @@ import java.util.List;
 import javax.print.attribute.standard.SheetCollate;
 
 import cpw.mods.fml.common.network.PacketDispatcher;
+import dan200.computer.api.IComputerAccess;
+import dan200.computer.api.IPeripheral;
 
 import thutconcrete.common.blocks.BlockLift;
 import thutconcrete.common.blocks.BlockLiftRail;
@@ -28,7 +30,7 @@ import net.minecraft.util.Icon;
 import net.minecraft.world.World;
 import net.minecraftforge.common.ForgeDirection;
 
-public class TileEntityLiftAccess extends TileEntity
+public class TileEntityLiftAccess extends TileEntity implements IPeripheral
 {
 	
 	public int power = 0;
@@ -64,7 +66,7 @@ public class TileEntityLiftAccess extends TileEntity
 			first = false;
 		}
 		//System.out.println(called);
-		if(!worldObj.isRemote && tries<10 &&lift == null && liftID!=-1&&blockID==BlockLift.instance.blockID&&getBlockMetadata()==1)
+		if(!worldObj.isRemote && tries<3 &&lift == null && liftID!=-1&&blockID==BlockLift.instance.blockID&&getBlockMetadata()==1)
 		{
 			if(EntityLift.lifts.containsKey(liftID))
 			{
@@ -79,7 +81,7 @@ public class TileEntityLiftAccess extends TileEntity
 			tries++;
 		}
 		
-		if(side==0)
+		if(side==0&&blockID==BlockLift.instance.blockID&&getBlockMetadata()==1)
 		{
 			worldObj.markBlockForUpdate(xCoord, yCoord, zCoord);
 		}
@@ -124,7 +126,7 @@ public class TileEntityLiftAccess extends TileEntity
 		return !(check == null || check.isEmpty());
 	}
 	
-	public void setFloor(int floor)
+	public synchronized void setFloor(int floor)
 	{
 		assert(floor <=16 && floor > 0);
 		if(lift!=null)
@@ -175,15 +177,26 @@ public class TileEntityLiftAccess extends TileEntity
 			   {
 				//   System.out.println("click" +" "+side+" "+this.side+" "+lift);
 				   int button = getButtonFromClick(side, hitX, hitY, hitZ);
-				//   System.out.println(button+" "+hitX+" "+hitY+" "+hitZ+" "+side);
-				   if(button!=0&&lift!=null&&lift.floors[button-1]!=null)
-				   {
-					   if(button==floor)
-						   this.called = true;
-					   lift.call(button);
-				//	   System.out.println("floor called");
-				   }
+				   buttonPress(button);
 			   }
+		   }
+	   }
+	   
+	   public synchronized void callYValue(int yValue)
+	   {
+		   if(lift!=null)
+		   {
+			   lift.callYValue(yValue);
+		   }
+	   }
+	   
+	   public synchronized void buttonPress(int button)
+	   {
+		   if(button!=0&&button<=16&&lift!=null&&lift.floors[button-1]!=null)
+		   {
+			   if(button==floor)
+				   this.called = true;
+			   lift.call(button);
 		   }
 	   }
 	   
@@ -196,7 +209,6 @@ public class TileEntityLiftAccess extends TileEntity
 	   
 	   public void setSide(int side)
 	   {
-		//   System.out.println("side set to "+side);
 		   this.side = side;
 	   }
 	   
@@ -246,7 +258,10 @@ public class TileEntityLiftAccess extends TileEntity
 	    @Override
 	    public Packet getDescriptionPacket()
 	    {
-	    	return PacketInt.getPacket(this);
+	    	if(blockID==BlockLift.instance.blockID&&getBlockMetadata()==1)
+	    		return PacketInt.getPacket(this);
+	    	else
+	    		return null;
 	    }
 
 	    public Block thisBlock()
@@ -294,5 +309,82 @@ public class TileEntityLiftAccess extends TileEntity
 	    {
 	    	worldObj.setBlock(xCoord+side.offsetX, yCoord+side.offsetY, zCoord+side.offsetZ, id, meta, 3);
 	    }
+
+	    //////////////////////////////////////////////////////////ComputerCraft Stuff/////////////////////////////////////////////////////////////////
+		@Override
+		public String getType() {
+			if(blockID==BlockLift.instance.blockID&&getBlockMetadata()==1)
+				return "LiftController";
+			return null;
+		}
+		
+		public String[] names = 
+			{
+				"call",
+				"goto",
+				"setFloor",
+			};
+
+		@Override
+		public String[] getMethodNames() {
+			return names;
+		}
+
+		@Override
+		public Object[] callMethod(IComputerAccess computer, int method,
+				Object[] arguments) throws Exception {
+			
+			
+			if(arguments.length>0)
+			{
+				int num = 0;
+						
+				if(arguments[0] instanceof Double)
+				{
+					num = ((Double)arguments[0]).intValue();
+				}
+				if(arguments[0] instanceof String)
+				{
+					num = Integer.parseInt((String)arguments[0]);
+				}
+				
+				if(num!=0)
+				{
+					if(method==0)
+					{
+						buttonPress(num);
+					}
+					if(method==1)
+					{
+						callYValue(num);
+					}
+					if(method==2)
+					{
+						setFloor(num);
+					}
+				}
+			}
+			
+			
+			return null;
+		}
+
+		@Override
+		public boolean canAttachToSide(int side) {
+			if(blockID==BlockLift.instance.blockID&&getBlockMetadata()==1)
+				return side!=this.side;
+			return false;
+		}
+
+		@Override
+		public void attach(IComputerAccess computer) {
+			// TODO Auto-generated method stub
+		}
+
+		@Override
+		public void detach(IComputerAccess computer) {
+			// TODO Auto-generated method stub
+			
+		}
 }
 

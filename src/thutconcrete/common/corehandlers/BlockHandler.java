@@ -52,17 +52,19 @@ public class BlockHandler {
 		}
 
 		blockList.add(new BlockVolcano(id++));
-		blockList.add(new BlockBoom(id++));
+		blockList.add(new BlockMisc(id++));
 		blockList.add(new BlockLimekiln(id++));
 		blockList.add(new BlockLimekilnDummy(id++));
 		blockList.add(new BlockLiftRail(id++));
+		BlockLift lift = new BlockLift(id++);
+		blockList.add(new BlockLava(id++,3));
+		blockList.add(new BlockSolidLava(id++,3));
 		
 		blocks = blockList.toArray(new Block[0]);
 
 		registerBlocks();
 		
 		BlockWorldGen worldGenBlock = new BlockWorldGen(idWorld);
-		BlockLift lift = new BlockLift(id++);
 		blockList.add(lift);
 		
 		GameRegistry.registerBlock(lift, ItemLiftBlocks.class, "liftBlocks");

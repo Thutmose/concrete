@@ -35,7 +35,8 @@ import net.minecraftforge.common.ForgeDirection;
 public class BlockREConcrete extends Block16Fluid implements IRebar, ITileEntityProvider, IStampableBlock
 {
 	
-	public static Block instance;
+	public static BlockREConcrete instance;
+	
 	public int colourid;
 	public static int resistance = 100;
 	public static float hardness = 100;
@@ -52,7 +53,6 @@ public class BlockREConcrete extends Block16Fluid implements IRebar, ITileEntity
 		this.setStepSound(soundStoneFootstep);
 		this.solid = true;
 		this.stampable = true;
-		this.setLightOpacity(1).setLightValue(0);
 		setData();
 	}
 	
@@ -246,6 +246,10 @@ public class BlockREConcrete extends Block16Fluid implements IRebar, ITileEntity
 				}
 			}
 		}
+		if(meta==0)
+		{
+			worldObj.setBlock(x, y, z, BlockMisc.instance.blockID, 1, 3);
+		}
 		
 	}
 	
@@ -253,18 +257,18 @@ public class BlockREConcrete extends Block16Fluid implements IRebar, ITileEntity
 		this.setResistanceByMeta(worldObj.getBlockMetadata(x, y, z));
 	}
 	
-	protected void setResistanceByMeta(int meta){
+	public void setResistanceByMeta(int meta){
 		int j = 15-meta;
         float f = (float)((1 + j)) / 16.0F;
         this.setResistance(f*resistance);
         this.setHardness(f*hardness);
 	}
-	protected float getBlastResistanceByMeta(int meta){
+	public float getBlastResistanceByMeta(int meta){
 		int j = 15-meta;
         float f = (float)((1 + j)) / 16.0F;
         return (f*resistance);
 	}
-	protected float getHardnessByMeta(int meta){
+	public float getHardnessByMeta(int meta){
 		int j = 15-meta;
         float f = (float)((1 + j)) / 16.0F;
         return (f*hardness);
@@ -386,5 +390,5 @@ public class BlockREConcrete extends Block16Fluid implements IRebar, ITileEntity
 		
 		return te.sideArray[side];
 	}
-	 
+	
 }

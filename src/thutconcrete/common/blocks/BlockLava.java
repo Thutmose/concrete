@@ -111,12 +111,13 @@ public class BlockLava extends Block16Fluid implements ISoldifiable, IBlockLiqui
 		combinationList.add(Block.waterMoving.blockID+4096*BlockLava.getInstance(typeid).blockID);
 		combinationList.add(Block.waterStill.blockID+4096*BlockLava.getInstance(typeid).blockID);
 		
-		for(int i = 0;i<3;i++){
+		for(int i = 0;i<4;i++){
 			combinationList.add(BlockLava.getInstance(i).blockID+4096*BlockLava.getInstance(typeid).blockID);
 			combinationList.add(BlockSolidLava.getInstance(i).blockID+4096*BlockLava.getInstance(typeid).blockID);
 		}
 
 		combinationList.add(BlockConcrete.instance.blockID+4096*BlockLava.getInstance(typeid).blockID);
+		
 		combinationList.add(BlockDust.instance.blockID+4096*BlockLava.getInstance(typeid).blockID);
 		
 		combinationList.add(BlockLiquidConcrete.instance.blockID+4096*BlockLava.getInstance(typeid).blockID);
@@ -139,9 +140,9 @@ public class BlockLava extends Block16Fluid implements ISoldifiable, IBlockLiqui
 		
 		//ORDER HERE MATTERS
 		configList.add(0);
-		int viscosity = 0;
+		int viscosity = 1;
 		int fluidity = 2;
-		int differential;
+		int differential = 2;
 		if(typeid == 0)
 		{
 			differential = 1;
@@ -153,7 +154,7 @@ public class BlockLava extends Block16Fluid implements ISoldifiable, IBlockLiqui
 			differential = 2;
 			viscosity = 2;
 		}
-		else
+		else if(typeid==2)
 		{
 			differential = 2;
 			viscosity = 5;

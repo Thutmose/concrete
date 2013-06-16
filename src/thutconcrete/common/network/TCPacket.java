@@ -25,6 +25,7 @@ public class TCPacket
 {
 	
 	Map<Integer, IPacketProcessor> packetTypes = new HashMap<Integer, IPacketProcessor>();
+	static Map<Integer, Integer> packetCounts = new HashMap<Integer, Integer>();
 	
 	public TCPacket()
 	{
@@ -34,13 +35,14 @@ public class TCPacket
 		packetTypes.put(3, new PacketInt());
 		packetTypes.put(4, new PacketMountedCommand());
 		packetTypes.put(5, new PacketLift());
+		
 	}
 	
 	public void handlePacket(ByteArrayDataInput dat,Player player,World world)
 	{
 		int id = dat.readInt();
+	//	System.out.println(id);
 		packetTypes.get(id).processPacket(dat, player, world);
 	}
 	
-
 }

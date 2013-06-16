@@ -18,6 +18,7 @@ import thutconcrete.common.blocks.BlockConcrete;
 import thutconcrete.common.blocks.BlockREConcrete;
 import thutconcrete.common.items.ItemConcreteDust;
 import thutconcrete.common.corehandlers.ItemHandler;
+import thutconcrete.common.utils.*;
 
 public class ItemGrinder extends Item {
 
@@ -41,17 +42,23 @@ public class ItemGrinder extends Item {
         }
         else
         {
-        	int blockid;
-        	
+        	int blockid = par3World.getBlockId(x, y, z);
+        	Block block = Block.blocksList[blockid];
         	int minmeta = 30;
         	int maxmeta = 0;
+        	
+        	if(block instanceof IStampableBlock && par2EntityPlayer.isSneaking())
+        	{
+        		int meta = par3World.getBlockMetadata(x, y, z);
+        		((IStampableBlock)block).setBlockIcon(blockid, meta, side, par3World, x, y, z, block.getIcon(side, meta), side);
+        	}
         	
         	for(int locx = -1; locx < 2; locx++)
         	{
         		for(int locz = -1; locz < 2; locz++)
         		{
         			blockid = par3World.getBlockId(x + locx, y, z + locz);
-        			if(Block.blocksList[blockid] instanceof Block16Fluid)
+        			if(block instanceof Block16Fluid)
         			{
         				if(15 - par3World.getBlockMetadata(x + locx, y, z + locz) < minmeta)
         				{

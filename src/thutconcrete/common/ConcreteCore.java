@@ -378,6 +378,8 @@ public class ConcreteCore {
 							
 							BlockSolidLava.getInstance(2).turnto.add(b.blockID + 4096*ConcreteCore.oreMap2.get(s) + 4096*1024*meta);
 							
+							BlockSolidLava.getInstance(3).turnto.add(b.blockID + 4096*ConcreteCore.oreMap2.get(s) + 4096*1024*meta);
+							
 							ores.add(s);
 						}
 					}

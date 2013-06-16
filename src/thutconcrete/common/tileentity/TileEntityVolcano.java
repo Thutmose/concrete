@@ -8,7 +8,7 @@ import java.util.Random;
 import thutconcrete.common.ConcreteCore;
 import thutconcrete.common.Volcano;
 import thutconcrete.common.blocks.Block16Fluid;
-import thutconcrete.common.blocks.BlockBoom;
+import thutconcrete.common.blocks.BlockMisc;
 import thutconcrete.common.blocks.BlockDust;
 import thutconcrete.common.blocks.BlockLava;
 import thutconcrete.common.blocks.BlockSolidLava;

@@ -36,6 +36,8 @@ public class ClientProxy extends CommonProxy{
 		RenderingRegistry.registerEntityRenderingHandler(EntityBeam.class, new RenderBeam(RenderBeam.laser));
 		RenderingRegistry.registerEntityRenderingHandler(EntityTurret.class, new RenderTurret());
 		RenderingRegistry.registerEntityRenderingHandler(EntityLift.class, new RenderLift());
+
+		RenderingRegistry.registerEntityRenderingHandler(EntitySine.class, new RenderSine());
 		
 		//ClientRegistry.bindTileEntitySpecialRenderer(TileEntityLaser.class, new RenderTurret());
 	}

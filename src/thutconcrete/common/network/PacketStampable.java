@@ -27,15 +27,17 @@ public class PacketStampable implements IPacketProcessor
        int[] items = new int[6];
        int[] ids = new int[6];
        int[] sides = new int[6];
+       int id = 0;
        if(te instanceof TileEntityBlock16Fluid)
        {
 	       TileEntityBlock16Fluid teb16f = (TileEntityBlock16Fluid) te;
 	       items = teb16f.metaArray;
 	       ids = teb16f.iconIDs;
 	       sides = teb16f.sideArray;
+	       id = te.worldObj.getBlockId(x, y, z);
        }
        
-       if(!(isMetaSame(items,x,y,z)&&isIDSame(ids, x, y, z)))
+       if(!(isMetaSame(items,x,y,z)&&isIDSame(ids, x, y, z, id)))
 	        {
        	
 		 	ByteArrayOutputStream bos = new ByteArrayOutputStream(16+(3*4*6));
@@ -83,16 +85,16 @@ public class PacketStampable implements IPacketProcessor
 		 }
 	 }
 	 
-	 public static boolean isIDSame(int[] array, int x, int y, int z)
+	 public static boolean isIDSame(int[] array, int x, int y, int z, int id)
 	 {
 		 {
 			 return ( 
-					  array[0]==0
-					&&array[1]==0
-					&&array[2]==0
-					&&array[3]==0
-					&&array[4]==0
-					&&array[5]==0
+					  (array[0]==0||array[0]==id)
+					&&(array[1]==0||array[1]==id)
+					&&(array[2]==0||array[2]==id)
+					&&(array[3]==0||array[3]==id)
+					&&(array[4]==0||array[4]==id)
+					&&(array[5]==0||array[5]==id)
 					);
 		 }
 	 }

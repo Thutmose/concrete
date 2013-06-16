@@ -12,5 +12,5 @@ public interface IStampableBlock
 	public int sideIconMetadata(IBlockAccess world, int x, int y, int z, int side);
 	public int sideIconSide(IBlockAccess world, int x, int y, int z, int side);
 	
-	 public boolean setBlockIcon(int id, int meta, int side, World worldObj, int x, int y, int z, Icon icon, int iconSide);
+	public boolean setBlockIcon(int id, int meta, int side, World worldObj, int x, int y, int z, Icon icon, int iconSide);
 }
