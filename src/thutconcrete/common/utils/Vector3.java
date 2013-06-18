@@ -9,7 +9,6 @@ import java.util.List;
 import com.google.common.io.ByteArrayDataInput;
 import com.google.common.io.ByteArrayDataOutput;
 
-
 import net.minecraft.block.Block;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLiving;
@@ -180,6 +179,23 @@ public class Vector3
 			}
 		}
 		return ret;
+	}
+	
+	public static double convertYawRadians(float rotationYaw)
+	{
+		return (Math.PI*((rotationYaw%360)-90)/180);
+	}	
+	public static double convertYaw(float rotationYaw)
+	{
+		return ((rotationYaw%360)-90);
+	}	
+	public float convertPitch(float rotationPitch)
+	{
+		return 0;
+	}
+	public void addVelocities(Entity e)
+	{
+		e.addVelocity(x, y, z);
 	}
 	
 	public void setBlock(World worldObj, int meta, int id)
@@ -770,14 +786,17 @@ public class Vector3
 	   * @return
 	   */
 	  public Vector3 rotateAboutAngles(double pitch, double yaw){
-		  if(pitch==0&&yaw==0)
+		  if(this.isEmpty()||pitch==0&&yaw==0)
+		  {
+			  return this;
+		  }
+		  Vector3 ret = vectorRotateAboutLine(vectorRotateAboutLine(this, secondAxis, yaw),horizonalPerp(this), pitch);
+		  if(ret.isNaN())
 		  {
 			  return this;
 		  }
 		  
-		  
-		  
-		  return vectorRotateAboutLine(vectorRotateAboutLine(this, secondAxis, yaw),horizonalPerp(this), pitch);
+		  return ret;
 	  }
 	  
 	  public static void rotateAboutAngles(Vector3[] points, double pitch, double yaw)
@@ -1792,14 +1811,230 @@ public class Vector3
 				{
 					location.clear();
 				}
+				{
+					boolean entitymovingup = (e.motionY-pusher.motionY)>0;
+					location = location.add(new Vector3(0.5,0,0.5));
+					
+					boolean xpositive = location.x>0&&location.x>=Math.abs(location.z);
+					boolean xnegative = location.x<0&&-location.x>=Math.abs(location.z);
+					
+					boolean zpositive = location.z>0&&location.z>=Math.abs(location.x);
+					boolean znegative = location.z<0&&-location.z>=Math.abs(location.x);
 
-			  //	if(e instanceof EntityPlayer)
-			  //	{
-			  //		System.out.println("player"+min.toString()+" "+max.toString()+" "+location.toString());
-			  	//	((EntityPlayer)e).
-			  //	}
+					boolean ynegative = (entitymovingup||(e.motionY-pusher.motionY)>0.2)&&location.y<0;
+					boolean ypositive = Math.abs(yDiff-e.posY)<=e.stepHeight||((e.motionY-pusher.motionY)<-0.2&&(e.posY-e.motionY > yDiff));//&&!entitymovingup;//||(((pusher.motionY)<0)&&(yDiff-e.posY)<=e.stepHeight)||(flag&&(yDiff-e.posY)<=e.stepHeight);
+					
+				//	System.out.println(location.toString());
+					
+					double fx = 0.15, fy = 0.15, fz = 0.15;
+			//		System.out.println(fx+" "+fy+" "+fz);
+					if(ypositive)
+					{
+					//	System.out.println(yDiff+" "+push.y+" "+max.y+" "+offset.y+" "+(Math.sqrt(r.x*r.x+r.z*r.z)*Math.sin(-rotation.y))+" "+(-rotation.y));
+						pushDir.y  = pusher.motionY>0? pusher.motionY:0;
+					//	System.out.println((yDiff-e.posY)+" "+e.stepHeight+" "+(e.motionY-pusher.motionY));
+						if(e instanceof EntityLiving)
+						{
+							int damage = Math.max((int)((-e.motionY+pusher.motionY+0.15)*(-e.motionY+pusher.motionY+0.15)),0);
+						//	System.out.println(damage+" "+(-e.motionY+pusher.motionY)+" "+pusher.motionY);
+							if(damage>0)
+								((EntityLiving)e).attackEntityFrom(DamageSource.fall, damage);
+						}
+						e.motionY = pusher.motionY>0? pusher.motionY:0;
+						e.motionX += pusher.motionX;
+						e.motionZ += pusher.motionZ;
+						e.setPosition(e.posX, yDiff, e.posZ);
+						e.isAirBorne = false;
+						e.onGround = true;
+						e.fallDistance = 0;
+						movedy = true;
+					//	System.out.println("pushed+y");
+					}					
+					else if(ynegative)
+					{
+						pushDir.y = -e.motionY-fy+pusher.motionY;
+						movedy = true;
 
-			//	else
+						if(e instanceof EntityLiving)
+						{
+							int damage = Math.max((int)((e.motionY+pusher.motionY+0.15)*(e.motionY+pusher.motionY+0.15)),0);
+						//	System.out.println(damage+" "+(-e.motionY+pusher.motionY)+" "+pusher.motionY);
+							((EntityLiving)e).attackEntityFrom(DamageSource.fall, damage);
+						}
+					//	System.out.println("pushed-y");
+					}
+					
+					
+					if(!movedy)
+					{
+						if(xnegative)
+						{
+							pushDir.x = -fx;
+							pushLoc.x = min.x;
+				//			System.out.println("pushed1"+location.toString());
+							movedx = true;
+						}
+						else if(xpositive)
+						{
+							pushDir.x = fx;
+							pushLoc.x = max.x;
+				//			System.out.println("pushed2"+location.toString());
+							movedx = true;
+						}
+						if(znegative)
+						{
+							pushDir.z = -fz;
+							pushLoc.x = min.z;
+				//			System.out.println("pushed3"+location.toString());
+							movedz = true;
+						}
+						else if(zpositive)
+						{
+							pushDir.z = fz;
+							pushLoc.x = max.z;
+				//			System.out.println("pushed4"+location.toString());
+							movedz = true;
+						}
+					}
+
+				}
+				
+				if(rot)
+				{
+					pushDir = pushDir.rotateAboutAngles(-rotation.y, -rotation.z);
+					pushLoc = pushLoc.rotateAboutAngles(-rotation.y, -rotation.z);
+				}
+				//System.out.println(pushLoc.toString()+" "+toString());
+				if(movedy||movedx||movedz)
+				{
+				//	System.out.println("pushDir"+pushDir);
+					if(pushDir.y!=0&&!Double.isNaN(pushDir.y))
+					{
+						e.motionY = pushDir.y;
+						
+					}
+					if(pushDir.x!=0&&!Double.isNaN(pushDir.x))
+					{
+						e.motionX = pushDir.x;
+						if(pushLoc.x!=0&&!pushLoc.isNaN())
+						{
+				//			e.setPosition(pusher.posX + pushLoc.x, e.posY + pushLoc.y, e.posZ + pushLoc.z);
+						}
+					}
+					if(pushDir.z!=0&&!Double.isNaN(pushDir.z))
+					{
+						e.motionZ = pushDir.z;
+						if(pushLoc.x!=0&&!pushLoc.isNaN())
+						{
+					//		e.setPosition(e.posX + pushLoc.x, e.posY + pushLoc.y, pusher.posZ + pushLoc.z);
+						}
+						
+					}
+					ret = movedx||movedz||movedy;
+				}
+				if(e instanceof EntityItem)
+				{
+					if(movedy)
+					{
+						e.motionX = 0;
+						e.motionZ = 0;
+					}
+				}
+		    	return movedx||movedz||movedy;
+		  }
+		  
+		  public Vector3 getEntityCollisionVector(Entity pusher, Entity e, Vector3 offset, Vector3 entity)
+		  {
+			  	offset.y += e.yOffset;
+			  	if(entity.isNaN())
+			  	{
+			  		System.out.println("HOW DIS NAN "+entity.toString());
+			  		entity.clear();
+			  	}
+
+		    	Vector3 pushDir = new Vector3();
+		    	Vector3 pushLoc = new Vector3();
+			  	
+			  	Vector3 push = new Vector3(pusher);
+			  	Vector3 r = ((new Vector3(e)).subtract(offset).subtract(push)).add(entity);
+
+			  	boolean rot = false;
+		    	Vector3 rotation = boxRotation();	
+		    	
+		    	if(!(rotation.y==0&&rotation.z==0))
+		    	{
+		    		rot = true;
+		    		r = r.rotateAboutAngles(rotation.y, rotation.z);
+		    	}
+		    	
+		    	Vector3 min = boxMin();
+		    	min.y =- e.yOffset;
+		    	Vector3 max = boxMax();
+		    	
+		    	boolean flag = !(e instanceof IMultiBox);
+		    	
+		    	double posxOffset =  flag? e.width/2:((IMultiBox)e).bounds(push).boxMax().x;
+		    	double negxOffset =  flag? -e.width/2:((IMultiBox)e).bounds(push).boxMin().x;		    	
+		    	double posyOffset =  flag? 0:((IMultiBox)e).bounds(push).boxMax().y;
+		    	double negyOffset =  flag? 0:((IMultiBox)e).bounds(push).boxMin().y;		    	
+		    	double poszOffset =  flag? e.width/2:((IMultiBox)e).bounds(push).boxMax().z;
+		    	double negzOffset =  flag? -e.width/2:((IMultiBox)e).bounds(push).boxMin().z;
+
+	    		if(flag&&
+	    				!(r.inMatBox(this)
+	    				||r.add(new Vector3(posxOffset,0,0)).inMatBox(this)
+	    				||r.add(new Vector3(negxOffset,0,0)).inMatBox(this)
+	    				
+	    				||r.add(new Vector3(0,0,poszOffset)).inMatBox(this)
+	    				||r.add(new Vector3(0,0,negzOffset)).inMatBox(this)
+	    				)
+	    			)
+	    		{
+	    		//	System.out.println();
+	    			return pushDir;
+	    		}
+	    		else if(
+	    				!(r.inMatBox(this)
+	    				||r.add(new Vector3(posxOffset,0,0)).inMatBox(this)
+	    				||r.add(new Vector3(negxOffset,0,0)).inMatBox(this)
+	    				
+	    				||r.add(new Vector3(0,0,poszOffset)).inMatBox(this)
+	    				||r.add(new Vector3(0,0,negzOffset)).inMatBox(this)
+	    				
+	    				||r.add(new Vector3(0,posyOffset,0)).inMatBox(this)
+	    				||r.add(new Vector3(0,negyOffset,0)).inMatBox(this)
+	    				
+	    				))
+	    		
+	    		{
+	    			return pushDir;
+	    		}
+	    //		if(e instanceof IMultiBox)
+	    		{
+	    			
+	    		}
+		    	
+				double x = (r.x - (boxXLength())/2)/(boxXLength());
+				double y = (r.y - (boxYLength())/2)/(boxYLength());
+				double z = (r.z - (boxZLength())/2)/(boxZLength());
+				double yoffset = 0;
+				
+				double yDiff = push.y+max.y+offset.y;
+				double rho = Math.sqrt(r.x*r.x+r.z*r.z);
+
+				if(rot)
+				{
+					yDiff += rho*Math.sin(-rotation.y);
+				}
+				
+				boolean movedx = false, movedy = false, movedz = false;
+				
+				Vector3 location = new Vector3(x,y,z);
+				
+				if(location.isNaN())
+				{
+					location.clear();
+				}
 				{
 					boolean entitymovingup = (e.motionY-pusher.motionY)>0;
 					location = location.add(new Vector3(0.5,0,0.5));
@@ -1830,9 +2065,7 @@ public class Vector3
 								((EntityLiving)e).attackEntityFrom(DamageSource.fall, damage);
 						}
 						e.motionY = pusher.motionY>0? pusher.motionY:0;
-						e.motionX += pusher.motionX;
-						e.motionZ += pusher.motionZ;
-						e.setPosition(e.posX, yDiff, e.posZ);
+						e.setPosition(e.posX+pusher.motionX, yDiff, e.posZ+pusher.motionZ);
 						e.isAirBorne = false;
 						e.onGround = true;
 						e.fallDistance = 0;
@@ -1887,7 +2120,7 @@ public class Vector3
 					}
 
 				}
-				
+
 				if(rot)
 				{
 					pushDir = pushDir.rotateAboutAngles(-rotation.y, -rotation.z);
@@ -1919,7 +2152,6 @@ public class Vector3
 						}
 						
 					}
-					ret = movedx||movedz||movedy;
 				}
 				if(e instanceof EntityItem)
 				{
@@ -1929,7 +2161,7 @@ public class Vector3
 						e.motionZ = 0;
 					}
 				}
-		    	return movedx||movedz||movedy;
+		    	return !pushDir.isNaN()?pushDir:new Vector3();
 		  }
 		  
 		  public static boolean multiBoxIntersect(Entity pusher, Entity e, Vector3 offset, Vector3 intersect)
@@ -2035,6 +2267,26 @@ public class Vector3
     {
     	return getLiquid(world, vec.intX(),vec.intY(),vec.intZ()) != null;
     }
+    
+	 /**
+     * Whether or not a certain block is considered a liquid.
+     * @param world - world the block is in
+     * @param (int)d - x coordinate
+     * @param e - y coordinate
+     * @param f - z coordinate
+     * @return if the block is a liquid
+     */
+    public boolean isLiquid(World world)
+    {
+    	boolean ret = getLiquid(world, intX(),intY(),intZ()) != null;
+    	int id = getBlockId(world);
+    	int meta = getBlockMetadata(world);
+    	
+    	ret = ret || (Block.blocksList[id] instanceof ILiquid) || id == Block.waterMoving.blockID ||  id == Block.lavaMoving.blockID;
+    	
+    	return ret;
+    }
+    
     
     public void clear() 
     {

@@ -90,7 +90,6 @@ public class Block16Fluid extends Block
     {
     	super(par1, par2);
         this.setBlockBounds(0.0F, 0.0F, 0.0F, 1.0F, 0.0625F, 1.0F);
-		setCreativeTab(ConcreteCore.tabThut);
 		this.setTickRandomly(true);
 		breaks.add(78);
 		breaks.add(38);

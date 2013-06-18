@@ -34,18 +34,18 @@ public class CommonProxy  implements IGuiHandler
 		GameRegistry.registerTileEntity(TileEntityLimekiln.class, "tileEntityLimekiln");
 		GameRegistry.registerTileEntity(TileEntityLimekilnDummy.class, "tileEntityLimekilnDummy");
 
-		GameRegistry.registerTileEntity(TileEntityLiftAccess.class, "tileEntityLiftRail");
+		GameRegistry.registerTileEntity(TileEntityLiftAccess.class, "tileEntityLiftAccess");
     }
     
     public void registerEntities()
     {
     	ConcreteCore.registerEntity(EntityBeam.class, "railgunProjectile");
-    	ConcreteCore.registerEntity(EntityRocket.class, "tehRocket");
+   // 	ConcreteCore.registerEntity(EntityRocket.class, "tehRocket");
     	ConcreteCore.registerEntity(EntityTurret.class, "railgunTurret");
     	ConcreteCore.registerEntity(EntityLift.class, "tehlift");
     	
     	
-    	ConcreteCore.registerEntity(EntitySine.class, "sine");
+    //	ConcreteCore.registerEntity(EntitySine.class, "sine");
     }
     
 	@Override

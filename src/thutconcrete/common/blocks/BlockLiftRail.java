@@ -130,4 +130,9 @@ public class BlockLiftRail extends BlockRebar implements ITileEntityProvider
 		
 		return side;
 	}
+	
+	@Override 
+	public String getItemIconName(){
+		return "thutconcrete:" + "liftRail";
+	}
 }

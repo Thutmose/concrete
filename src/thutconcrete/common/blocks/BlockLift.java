@@ -24,6 +24,7 @@ import net.minecraft.util.Icon;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
 import net.minecraftforge.common.ForgeDirection;
+import net.minecraftforge.common.RotationHelper;
 
 public class BlockLift extends Block implements ITileEntityProvider
 {
@@ -85,22 +86,27 @@ public class BlockLift extends Block implements ITileEntityProvider
     {
 		 int meta = worldObj.getBlockMetadata(x, y, z);
 		 
-		 if(player.getHeldItem()!=null&&(player.getHeldItem().itemID==BlockMisc.instance.blockID
-				 ||player.getHeldItem().getItem().getUnlocalizedName().toLowerCase().contains("wrench")
-				 ||player.getHeldItem().getItem().getUnlocalizedName().toLowerCase().contains("screwdriver")))
+
+		 if(meta==1)
 		 {
-			 if(meta==1)
+			 TileEntityLiftAccess te = (TileEntityLiftAccess)worldObj.getBlockTileEntity(x, y, z);
+			 if(te!=null&&side!=te.side)
 			 {
-				 TileEntityLiftAccess te = (TileEntityLiftAccess)worldObj.getBlockTileEntity(x, y, z);
-				 if(te!=null)
-				 {
-					 te.setSide(side);
-				 }
+				 if(player.getHeldItem()!=null&&(player.getHeldItem().itemID==BlockMisc.instance.blockID
+						 ||player.getHeldItem().getItem().getUnlocalizedName().toLowerCase().contains("wrench")
+						 ||player.getHeldItem().getItem().getUnlocalizedName().toLowerCase().contains("screwdriver")
+						 ||player.getHeldItem().itemID==ItemLiftController.instance.itemID
+						 ))
+					 {
+						 te.setSide(side);
+						 return true;
+					 }
 			 }
 		 }
 		 worldObj.markBlockForRenderUpdate(x, y, z);
 		 boolean ret = false;
 		 int id;
+		 boolean rails = false;
 		 
 		 if(meta == 0)
 		 {
@@ -108,8 +114,10 @@ public class BlockLift extends Block implements ITileEntityProvider
 			 if(!ret)
 			 {
 				 ret = checkRailsForSpawn(worldObj, false, x, y, z);
+				 if(ret)
+					 rails = true;
 			 }
-			 if(!ret)
+			 if(!ret&&worldObj.isRemote)
 			 {
 				 player.addChatMessage("complete rails not found");
 			 }
@@ -122,7 +130,7 @@ public class BlockLift extends Block implements ITileEntityProvider
 				EntityLift lift = new EntityLift(worldObj, x+0.5, y, z+0.5, size);
 				worldObj.spawnEntityInWorld(lift);
 			}
-			if(!ret)
+			if(!ret&&rails&&worldObj.isRemote)
 			{
 				player.addChatMessage("complete base not found");
 			}
@@ -255,11 +263,38 @@ public class BlockLift extends Block implements ITileEntityProvider
 		 return this.icon;
 	    }
 
-	@Override
-	public TileEntity createNewTileEntity(World world) 
-	{
-		return new TileEntityLiftAccess();
-	}
+	  /**
+	     * Called throughout the code as a replacement for block instanceof BlockContainer
+	     * Moving this to the Block base class allows for mods that wish to extend vinella
+	     * blocks, and also want to have a tile entity on that block, may.
+	     *
+	     * Return true from this function to specify this block has a tile entity.
+	     *
+	     * @param metadata Metadata of the current block
+	     * @return True if block has a tile entity, false otherwise
+	     */
+	    public boolean hasTileEntity(int metadata)
+	    {
+	        return metadata==1;
+	    }
+
+	    /**
+	     * Called throughout the code as a replacement for ITileEntityProvider.createNewTileEntity
+	     * Return the same thing you would from that function.
+	     * This will fall back to ITileEntityProvider.createNewTileEntity(World) if this block is a ITileEntityProvider
+	     *
+	     * @param metadata The Metadata of the current block
+	     * @return A instance of a class extending TileEntity
+	     */
+	    public TileEntity createTileEntity(World world, int metadata)
+	    {
+	        if (metadata==1)
+	        {
+	            return new TileEntityLiftAccess();
+	        }
+	        return null;
+	    }
+
 	
 	//////////////////////////////////////////////////////RedStone stuff/////////////////////////////////////////////////
     /**
@@ -327,4 +362,35 @@ public class BlockLift extends Block implements ITileEntityProvider
         return par1;
     }
     
+    /**
+     * Rotate the block. For vanilla blocks this rotates around the axis passed in (generally, it should be the "face" that was hit).
+     * Note: for mod blocks, this is up to the block and modder to decide. It is not mandated that it be a rotation around the
+     * face, but could be a rotation to orient *to* that face, or a visiting of possible rotations.
+     * The method should return true if the rotation was successful though.
+     *
+     * @param worldObj The world
+     * @param x X position
+     * @param y Y position
+     * @param z Z position
+     * @param axis The axis to rotate around
+     * @return True if the rotation was successful, False if the rotation failed, or is not possible
+     */
+    public boolean rotateBlock(World worldObj, int x, int y, int z, ForgeDirection axis)
+    {
+    	if(axis==ForgeDirection.DOWN||axis==ForgeDirection.UP)
+    	{
+    		return false;
+    	}
+    	if(worldObj.getBlockTileEntity(x, y, z)!=null && worldObj.getBlockTileEntity(x, y, z) instanceof TileEntityLiftAccess)
+    	{
+    		TileEntityLiftAccess te = (TileEntityLiftAccess)worldObj.getBlockTileEntity(x, y, z);
+    		te.setSide(axis.ordinal());
+    	}
+        return RotationHelper.rotateVanillaBlock(this, worldObj, x, y, z, axis);
+    }
+
+	@Override
+	public TileEntity createNewTileEntity(World world) {
+		return new TileEntityLiftAccess();
+	}
 }

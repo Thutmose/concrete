@@ -117,8 +117,8 @@ public class BlockMisc extends Block implements ITileEntityProvider, IStampableB
 	    	}
 	    	else if(!worldObj.isRemote&&item!=null&&item.getItem() instanceof ItemCoal)
 	    	{
-	    		EntityRocket rocket = new EntityRocket(worldObj, x,y+5,z);
-	    		worldObj.spawnEntityInWorld(rocket);
+	   // 		EntityRocket rocket = new EntityRocket(worldObj, x,y+5,z);
+	    //		worldObj.spawnEntityInWorld(rocket);
 	    	}
 	    	else if(!worldObj.isRemote&&item!=null&&item.getItem() instanceof ItemSoup)
 	    	{
@@ -132,8 +132,10 @@ public class BlockMisc extends Block implements ITileEntityProvider, IStampableB
 	    	}
 	    	else if(!worldObj.isRemote&&item!=null&&item.getItem() instanceof ItemHoe)
 	    	{
-	    		EntitySine turret = new EntitySine(worldObj, x+0.5, y+2.0, z+0.5);
-	    		worldObj.spawnEntityInWorld(turret);
+	    //		EntitySine mob = new EntitySine(worldObj);
+	    //		mob.setPosition(x, y+1, z);
+	    //		mob.setEntityHealth(10);
+	    //		worldObj.spawnEntityInWorld(mob);
 	    	}
     	}
     	

@@ -47,9 +47,9 @@ public class TileEntityLiftAccess extends TileEntity implements IPeripheral
 	boolean loaded = false;
 	
 	public boolean called = false;
-	public int floor;
+	public int floor = -1;
 	int liftID = -1;
-	public int side = 0;
+	public int side = 2;
 	
 	int tries = 0;
 	
@@ -79,11 +79,6 @@ public class TileEntityLiftAccess extends TileEntity implements IPeripheral
 				liftID = -1;
 			}
 			tries++;
-		}
-		
-		if(side==0&&blockID==BlockLift.instance.blockID&&getBlockMetadata()==1)
-		{
-			worldObj.markBlockForUpdate(xCoord, yCoord, zCoord);
 		}
 		
 		if(blockID == BlockLiftRail.staticBlock.blockID&&time%10==0)
@@ -210,6 +205,7 @@ public class TileEntityLiftAccess extends TileEntity implements IPeripheral
 	   public void setSide(int side)
 	   {
 		   this.side = side;
+		   worldObj.markBlockForUpdate(xCoord, yCoord, zCoord);
 	   }
 	   
 	   public int getButtonFromClick(int side, float hitX, float hitY, float hitZ)

@@ -49,6 +49,9 @@ public class BlockSolidLava extends Block16Fluid
 		setUnlocalizedName("solidLava" + typeid);
 		this.instance = this;
 		this.rate = 1;
+		if(typeid!=3)
+			setCreativeTab(ConcreteCore.tabThut);
+		
 		this.instances[typeid] = this;
 		this.setTickRandomly(true);
 		this.setStepSound(soundStoneFootstep);

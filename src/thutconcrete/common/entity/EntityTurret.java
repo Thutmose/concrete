@@ -21,6 +21,7 @@ import net.minecraft.block.Block;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLiving;
 import net.minecraft.entity.item.EntityMinecartEmpty;
+import net.minecraft.entity.passive.EntityPig;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemAxe;
@@ -175,7 +176,7 @@ public class EntityTurret  extends EntityLiving implements IEntityAdditionalSpaw
 		{
 			origin.set(source());
 		}
-		if(this.health<=0)
+		if(!worldObj.isRemote&&this.health<=0)
 		{
 			this.setDead();
 		}
@@ -332,9 +333,6 @@ public class EntityTurret  extends EntityLiving implements IEntityAdditionalSpaw
      */
     public void applyEntityCollision(Entity entity)
     {
-    //	Vector3 e = new Vector3(entity);
-    	
-    	
     	for(String key: boxes.keySet())
     	{
     		Matrix3 box = boxes.get(key);
@@ -354,7 +352,7 @@ public class EntityTurret  extends EntityLiving implements IEntityAdditionalSpaw
     private void checkCollision()
     {
     	setSize(size);
-        List list = this.worldObj.getEntitiesWithinAABBExcludingEntity(this, AxisAlignedBB.getBoundingBox(posX - (size), posY, posZ - (size), posX+(size), posY + 4*size, posZ + (size)));
+        List list = this.worldObj.getEntitiesWithinAABBExcludingEntity(this, AxisAlignedBB.getBoundingBox(posX - (size), posY, posZ - (size), posX+(size), posY + 10, posZ + (size)));
 
     	setOffsets();
         if (list != null && !list.isEmpty())
@@ -474,4 +472,15 @@ public class EntityTurret  extends EntityLiving implements IEntityAdditionalSpaw
 		return new Matrix3(new Vector3(-size/2,0, -size/2), new Vector3(size/2, size, size/2));
 	}
 
+    /**
+     * Returns true if the entity's rider (EntityPlayer) should face forward when mounted.
+     * currently only used in vanilla code by pigs.
+     *
+     * @param player The player who is riding the entity.
+     * @return If the player should orient the same direction as this entity.
+     */
+    public boolean shouldRiderFaceForward(EntityPlayer player)
+    {
+        return true;
+    }
 }

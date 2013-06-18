@@ -44,6 +44,7 @@ public class BlockConcrete extends Block16Fluid implements ITileEntityProvider, 
 		this.rate = 10;
 		this.instance = this;
 		this.setStepSound(soundStoneFootstep);
+		setCreativeTab(ConcreteCore.tabThut);
 		this.solid = true;
 		this.stampable = true;
 		setData();

@@ -35,7 +35,7 @@ public class ItemLiftController extends Item
      */
     public ItemStack onItemRightClick(ItemStack itemstack, World worldObj, EntityPlayer player)
     {
-    	if(worldObj.isRemote||itemstack.stackTagCompound == null)
+    	if(itemstack.stackTagCompound == null)
     	{
     		return itemstack;
     	}
@@ -55,13 +55,12 @@ public class ItemLiftController extends Item
        		{
 	       		lift.up = !lift.up;
        		}
-       		
-       		
-       		PacketDispatcher.sendPacketToPlayer(PacketLift.getPacket(lift, lift.move?1:0, lift.up?1:0), (Player) player);
+       		if(!worldObj.isRemote)
+       			PacketDispatcher.sendPacketToPlayer(PacketLift.getPacket(lift, lift.move?1:0, lift.up?1:0), (Player) player);
        		
        		String message = "Lift "+(lift.move?"Moving "+(lift.up?"Up":"Down"):"Stopped");
-       		
-       		player.addChatMessage(message);
+       		if(worldObj.isRemote)
+       			player.addChatMessage(message);
        	}
         return itemstack;
     }
@@ -84,9 +83,23 @@ public class ItemLiftController extends Item
 			TileEntityLiftAccess te = (TileEntityLiftAccess)worldObj.getBlockTileEntity(x, y, z);
 			te.setLift((EntityLift)e);
 			te.setFloor(te.getButtonFromClick(side, hitX, hitY, hitZ));
+			if(worldObj.isRemote)
 			player.addChatMessage("Set this Floor to "+te.floor);
 			return true;
+		}       	
+		if(e!=null&&e instanceof EntityLift&&id==BlockLift.instance.blockID&&meta==1)
+		{
+			TileEntityLiftAccess te = (TileEntityLiftAccess)worldObj.getBlockTileEntity(x, y, z);
+			if(side!=te.side)
+			{
+				te.setSide(side);
+				return true;
+			}
 		}
+		
+		
+		
+		
     	return false;
     }
     

@@ -7,6 +7,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 
+import thutconcrete.common.ConcreteCore;
 import thutconcrete.common.items.ItemConcreteDust;
 import thutconcrete.common.utils.ThreadSafeWorldOperations;
 
@@ -50,6 +51,7 @@ public class BlockDust extends Block16Fluid
     {
     	super(par1, Material.ground);
 		setUnlocalizedName("dust");
+		setCreativeTab(ConcreteCore.tabThut);
 		setHardness(0.1f);
 		setResistance(0.0f);
 		instance=this;
@@ -213,7 +215,21 @@ public class BlockDust extends Block16Fluid
     }
 
     
-    
+    /**
+     * Return true from this function if the player with silk touch can harvest this block directly, and not it's normal drops.
+     *
+     * @param world The world
+     * @param player The player doing the harvesting
+     * @param x X Position
+     * @param y Y Position
+     * @param z Z Position
+     * @param metadata The metadata
+     * @return True if the block can be directly harvested using silk touch
+     */
+    public boolean canSilkHarvest(World world, EntityPlayer player, int x, int y, int z, int metadata)
+    {
+        return false;
+    }
     
     
 }

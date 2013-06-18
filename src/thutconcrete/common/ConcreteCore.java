@@ -55,7 +55,7 @@ import cpw.mods.fml.relauncher.Side;
 
 import thutconcrete.common.network.*;
 
-@Mod( modid = "ThutConcrete", name="Thut's Concrete", version="0.1.0")
+@Mod( modid = "ThutConcrete", name="Thut's Concrete", version="1.0.0")
 @NetworkMod(clientSideRequired = true, serverSideRequired = true, 
 channels={"Thut's Concrete"},
 packetHandler = PacketHandler.class

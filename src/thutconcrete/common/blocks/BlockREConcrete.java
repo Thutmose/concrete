@@ -47,6 +47,7 @@ public class BlockREConcrete extends Block16Fluid implements IRebar, ITileEntity
 	public BlockREConcrete(int par1) {
 		super(par1,Material.rock);
 		setUnlocalizedName("REconcrete");
+		setCreativeTab(ConcreteCore.tabThut);
 		this.setTickRandomly(true);
 		this.rate = 1;
 		this.instance = this;
@@ -252,6 +253,18 @@ public class BlockREConcrete extends Block16Fluid implements IRebar, ITileEntity
 		}
 		
 	}
+	
+    /**
+     * Called when this block is set (with meta data).
+     */
+    public void onSetBlockIDWithMetaData(World worldObj, int x, int y, int z, int meta) 
+    {
+		if(meta==0)
+		{
+			worldObj.scheduleBlockUpdate(x, y, z, blockID, 1);
+		}
+    }
+
 	
 	public void onBlockClicked(World worldObj, int x, int y, int z, EntityPlayer player){
 		this.setResistanceByMeta(worldObj.getBlockMetadata(x, y, z));

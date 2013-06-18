@@ -54,6 +54,9 @@ public class BlockLava extends Block16Fluid implements ISoldifiable, IBlockLiqui
 		super(par1, Material.lava);
 		typeid = x;
 		this.setLightValue(1);
+		if(typeid!=3)
+			setCreativeTab(ConcreteCore.tabThut);
+		
 		setUnlocalizedName("Lava" + typeid);
 		this.setResistance((float) 5.0);
 		this.rate = 0.9;

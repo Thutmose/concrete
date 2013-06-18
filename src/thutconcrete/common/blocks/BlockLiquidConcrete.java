@@ -51,6 +51,7 @@ public class BlockLiquidConcrete extends Block16Fluid implements IBlockLiquid, I
 	public BlockLiquidConcrete(int par1) {
 		super(par1, wetConcrete);
 		setUnlocalizedName("concreteLiquid");
+		setCreativeTab(ConcreteCore.tabThut);
 		this.setResistance((float) 10.0);
 		this.setHardness((float) 1.0);
 		this.rate = 0.9;

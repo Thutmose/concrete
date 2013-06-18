@@ -25,6 +25,7 @@ import net.minecraft.block.Block;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLiving;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemAxe;
 import net.minecraft.item.ItemDye;
 import net.minecraft.item.ItemStack;
@@ -109,12 +110,22 @@ public class EntityLift extends EntityLiving implements IEntityAdditionalSpawnDa
 			this.setSize((float)size, 1f);
 		}
 		
+
+		if(this.health <=0)
+		{
+			this.setDead();
+		}
+		if(this.health < this.getMaxHealth()&&Math.random()>0.9)
+		{
+			this.health++;
+		}
+		
 		if(first)
 		{
 			checkRails(0);
 			first = false;
 		}
-		
+		clearLiquids();
 		checkBlocks(0);
 		accelerate();
 		if(move)
@@ -323,21 +334,47 @@ public class EntityLift extends EntityLiving implements IEntityAdditionalSpawnDa
 		for(int i = -rad; i<=rad;i++)
 			for(int j = -rad;j<=rad;j++)
 			{
-				ret = ret && (thisloc.add(new Vector3(i,0,j))).getBlockId(worldObj)==0;
+				Vector3 checkTop = (thisloc.add(new Vector3(i,4,j)));
+				Vector3 checkBottom = (thisloc.add(new Vector3(i,1,j)));
+				ret = ret && (thisloc.add(new Vector3(i,0,j))).clearOfBlocks(worldObj);
+				ret = ret && (thisloc.add(new Vector3(i,5,j))).clearOfBlocks(worldObj);
+				if(checkTop.isLiquid(worldObj))
+				{
+					checkTop.setBlock(worldObj, 0);
+				}
+				if(checkBottom.isLiquid(worldObj))
+				{
+					checkBottom.setBlock(worldObj, 0);
+				}
 			}
-		for(int i = -rad; i<=rad;i++)
-			for(int j = -rad;j<=rad;j++)
-			{
-				ret = ret && (thisloc.add(new Vector3(i,5,j))).getBlockId(worldObj)==0;
-			}
+
 		ret = ret && checkRails(dir);
 		return ret;
 	}
 	
+	public void clearLiquids()
+	{
+		int rad = (int)(Math.floor(size/2));
+
+		Vector3 thisloc = new Vector3(this);
+		for(int i = -rad; i<=rad;i++)
+			for(int j = -rad;j<=rad;j++)
+			{
+				Vector3 check = (thisloc.add(new Vector3(i,5,j)));
+				if(check.isLiquid(worldObj))
+				{
+					check.setBlock(worldObj, 0,0);
+				}
+				check = (thisloc.add(new Vector3(i,0,j)));
+				if(check.isLiquid(worldObj))
+				{
+					check.setBlock(worldObj, 0,0);
+				}
+			}
+	}
 	
 	public boolean checkRails(double dir)
 	{
-		
 		int rad = (int)(1+Math.floor(size/2));
 		
 		int[][] sides = {{rad,0},{-rad,0},{0,rad},{0,-rad}};
@@ -358,8 +395,6 @@ public class EntityLift extends EntityLiving implements IEntityAdditionalSpawnDa
 				ret = ret&&worldObj.getBlockId((int)Math.floor(posX)+sides[axis?2:0][0],(int)Math.floor(posY+dir+i),(int)Math.floor(posZ)+sides[axis?2:0][1])==BlockLiftRail.staticBlock.blockID;
 				ret = ret&&worldObj.getBlockId((int)Math.floor(posX)+sides[axis?3:1][0],(int)Math.floor(posY+dir+i),(int)Math.floor(posZ)+sides[axis?3:1][1])==BlockLiftRail.staticBlock.blockID;
 			}
-			if(!ret)
-				axis = !axis;
 		}
 		
 		return ret;
@@ -382,7 +417,7 @@ public class EntityLift extends EntityLiving implements IEntityAdditionalSpawnDa
             for (int i = 0; i < list.size(); ++i)
             {
                 Entity entity = (Entity)list.get(i);
-                if(entity!=this.riddenByEntity)
+                if(entity!=this.riddenByEntity&&!(entity instanceof EntityLift))
                 {
                 	applyEntityCollision(entity);
                 }
@@ -432,13 +467,17 @@ public class EntityLift extends EntityLiving implements IEntityAdditionalSpawnDa
         		item.setTagCompound(new NBTTagCompound() );
         	}
            	item.stackTagCompound.setInteger("lift", entityId);
+           	if(worldObj.isRemote)
            	player.addChatMessage("lift set");
+           	return true;
     	}
     	if(player.isSneaking()&&item!=null&&(player.getHeldItem().itemID==BlockMisc.instance.blockID
 				 ||player.getHeldItem().getItem().getUnlocalizedName().toLowerCase().contains("wrench")
-				 ||player.getHeldItem().getItem().getUnlocalizedName().toLowerCase().contains("screwdriver")))
+				 ||player.getHeldItem().getItem().getUnlocalizedName().toLowerCase().contains("screwdriver")
+				 ||player.getHeldItem().getItem().getUnlocalizedName().equals(Item.stick.getUnlocalizedName())
+    			))
 		 {
-    		if(!worldObj.isRemote)
+    		if(worldObj.isRemote)
     		{
     			player.addChatMessage("killed lift");
     		}
@@ -451,8 +490,8 @@ public class EntityLift extends EntityLiving implements IEntityAdditionalSpawnDa
 		 {
 
     		axis = !axis;
-   		return true;
-   	}
+    		return true;
+		 }
     	
     	return false;
     }
@@ -486,17 +525,41 @@ public class EntityLift extends EntityLiving implements IEntityAdditionalSpawnDa
 
 	public void setFoor(TileEntityLiftAccess te, int floor)
 	{
-		int j = 0;
-		for(int i = 0; i<4; i++)
+		if(te.floor == -1)
 		{
-			if(floors[floor-1][i]==null)
+			int j = 0;
+			for(int i = 0; i<4; i++)
 			{
-				j = i;
-				break;
+				if(floors[floor-1][i]==null)
+				{
+					j = i;
+					break;
+				}
 			}
+			floors[floor-1][j]=te;
+			floorArray[floor-1][j] = new int[]{te.xCoord,te.yCoord,te.zCoord};
 		}
-		floors[floor-1][j]=te;
-		floorArray[floor-1][j] = new int[]{te.xCoord,te.yCoord,te.zCoord};
+		else if(te.floor!=-1)
+		{
+			for(int i = 0; i<4; i++)
+			{
+				if(floors[te.floor-1][i] == te)
+				{
+					floors[te.floor-1][i] = null;
+				}
+			}
+			int j = 0;
+			for(int i = 0; i<4; i++)
+			{
+				if(floors[floor-1][i]==null)
+				{
+					j = i;
+					break;
+				}
+			}
+			floors[floor-1][j]=te;
+			floorArray[floor-1][j] = new int[]{te.xCoord,te.yCoord,te.zCoord};
+		}
 	}
 
 	@Override
@@ -632,8 +695,14 @@ public class EntityLift extends EntityLiving implements IEntityAdditionalSpawnDa
 	 /**
      * Called when the entity is attacked.
      */
-    public boolean attackEntityFrom(DamageSource par1DamageSource, int par2)
+    public boolean attackEntityFrom(DamageSource source, int damage)
     {
+    	if(damage>15)
+    	{
+    		this.health -= damage;
+    		return true;
+    	}
+    	
     	return false;
     }
 }
