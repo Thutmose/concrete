@@ -2,14 +2,17 @@ package thutconcrete.common.blocks;
 
 import java.util.List;
 
+import powercrystals.minefactoryreloaded.api.rednet.IConnectableRedNet;
+import powercrystals.minefactoryreloaded.api.rednet.RedNetConnectionType;
+
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
+import thutconcrete.api.utils.Vector3;
 import thutconcrete.common.ConcreteCore;
 import thutconcrete.common.entity.EntityLift;
 import thutconcrete.common.items.ItemLiftController;
 import thutconcrete.common.tileentity.TileEntityLiftAccess;
 import thutconcrete.common.tileentity.TileEntityLimekiln;
-import thutconcrete.common.utils.Vector3;
 import net.minecraft.block.Block;
 import net.minecraft.block.ITileEntityProvider;
 import net.minecraft.block.material.Material;
@@ -26,10 +29,12 @@ import net.minecraft.world.World;
 import net.minecraftforge.common.ForgeDirection;
 import net.minecraftforge.common.RotationHelper;
 
-public class BlockLift extends Block implements ITileEntityProvider
+public class BlockLift extends Block implements ITileEntityProvider, IConnectableRedNet
 {
 
 	public static BlockLift instance;
+	
+	public Icon[] faces;
 	
 	public int size = 5;
 	
@@ -85,7 +90,10 @@ public class BlockLift extends Block implements ITileEntityProvider
 	public boolean onBlockActivated(World worldObj, int x, int y, int z, EntityPlayer player, int side, float hitX, float hitY, float hitZ)
     {
 		 int meta = worldObj.getBlockMetadata(x, y, z);
-		 
+		 if(player.isSneaking())
+		 {
+			 player.addChatMessage("sneaky");
+		 }
 
 		 if(meta==1)
 		 {
@@ -228,9 +236,10 @@ public class BlockLift extends Block implements ITileEntityProvider
 	@Override
 	public void registerIcons(IconRegister iconRegister)
 	{
-		blockIcon = iconRegister.registerIcon("thutconcrete:liftSpawner");
+		blockIcon = iconRegister.registerIcon("thutconcrete:blockLift");
 		icon = iconRegister.registerIcon("thutconcrete:liftControl");
-		icon2 = iconRegister.registerIcon("thutconcrete:controlPanel");
+		faces = new Icon[17];
+		icon2 = iconRegister.registerIcon("thutconcrete:controlPanel_1");
 	}
 	
     @SideOnly(Side.CLIENT)
@@ -257,7 +266,7 @@ public class BlockLift extends Block implements ITileEntityProvider
 		 TileEntityLiftAccess te = (TileEntityLiftAccess)par1IBlockAccess.getBlockTileEntity(x, y, z);
 		 if(te!=null)
 		 {
-			 if(par5 == te.side)
+			 if(par5 == te.side)//&&te.floor>=0&&te.floor<=16
 				 return icon2;
 		 }
 		 return this.icon;
@@ -392,5 +401,95 @@ public class BlockLift extends Block implements ITileEntityProvider
 	@Override
 	public TileEntity createNewTileEntity(World world) {
 		return new TileEntityLiftAccess();
+	}
+
+	///////////////////////////////////////////////MFR Rednet Compatibility stuff///////////////////////////////////////////////////
+	@Override
+	public RedNetConnectionType getConnectionType(World world, int x, int y,
+			int z, ForgeDirection side) {
+		
+		TileEntityLiftAccess te = (TileEntityLiftAccess)world.getBlockTileEntity(x, y, z);
+		int meta = world.getBlockMetadata(x, y, z);
+		if(meta==1&&te!=null)
+		{
+			ForgeDirection teSide = ForgeDirection.getOrientation(te.side);
+			if(teSide!=side)
+			{
+				return RedNetConnectionType.PlateAll;
+			}
+		}
+		
+		return RedNetConnectionType.None;
+	}
+
+	@Override
+	public int[] getOutputValues(World world, int x, int y, int z,
+			ForgeDirection side) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public int getOutputValue(World world, int x, int y, int z,
+			ForgeDirection side, int subnet) {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
+	@Override
+	public void onInputsChanged(World world, int x, int y, int z,
+			ForgeDirection side, int[] inputValues) {
+		TileEntityLiftAccess te = (TileEntityLiftAccess)world.getBlockTileEntity(x, y, z);
+		int meta = world.getBlockMetadata(x, y, z);
+		if(meta==1&&te!=null)
+		{
+			ForgeDirection teSide = ForgeDirection.getOrientation(te.side);
+			
+			boolean hex = inputValues[2] == 13;
+			boolean binary = (inputValues[0]==13||inputValues[1]==13)&&!hex;
+			
+			if(hex)
+			{
+				int yPos = inputValues[0]+16*inputValues[1];
+				te.callYValue(yPos);
+				return;
+			}
+			
+			if(binary)
+			{
+				int yPos = 0;
+				for(int i = 0; i<inputValues.length; i++)
+				{
+					yPos += inputValues[i]==0?0:Math.pow(2,i);
+				}
+				te.callYValue(yPos);
+				return;
+			}
+			if(!(binary||hex))
+			{
+				for(int i = 0; i<inputValues.length; i++)
+				{
+					if(inputValues[i]==15)
+					{
+						te.buttonPress(i+1);
+						break;
+					}
+					if(inputValues[i]==14)
+					{
+						te.buttonPress(te.floor);
+						break;
+					}
+				}
+				return;
+			}
+			
+		}
+	}
+
+	@Override
+	public void onInputChanged(World world, int x, int y, int z,
+			ForgeDirection side, int inputValue) {
+		// TODO Auto-generated method stub
+		
 	}
 }

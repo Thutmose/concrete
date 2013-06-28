@@ -4,10 +4,11 @@ import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
+import thutconcrete.api.network.IPacketProcessor;
+import thutconcrete.api.utils.Vector3;
 import thutconcrete.common.entity.EntityBeam;
 import thutconcrete.common.entity.EntityTurret;
-import thutconcrete.common.tileentity.TileEntityLaser;
-import thutconcrete.common.utils.Vector3;
+import thutconcrete.common.tileentity.TileEntitySeismicMonitor;
 
 import net.minecraft.client.entity.EntityClientPlayerMP;
 

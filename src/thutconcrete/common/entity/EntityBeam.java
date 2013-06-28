@@ -2,12 +2,14 @@ package thutconcrete.common.entity;
 
 import java.util.List;
 
+import thutconcrete.api.utils.Vector3;
 import thutconcrete.common.ConcreteCore;
+import thutconcrete.common.blocks.Block16Fluid;
+import thutconcrete.common.blocks.BlockLava;
 import thutconcrete.common.network.PacketBeam;
 import thutconcrete.common.utils.EntityChunkLoader;
 import thutconcrete.common.utils.ExplosionCustom;
 import thutconcrete.common.utils.IChunkEntity;
-import thutconcrete.common.utils.Vector3;
 
 import com.google.common.io.ByteArrayDataInput;
 import com.google.common.io.ByteArrayDataOutput;
@@ -16,6 +18,7 @@ import cpw.mods.fml.common.network.PacketDispatcher;
 import cpw.mods.fml.common.registry.IEntityAdditionalSpawnData;
 import net.minecraft.block.Block;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.EntityLiving;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.DamageSource;
 import net.minecraft.util.MathHelper;
@@ -41,6 +44,7 @@ public class EntityBeam extends Entity implements IEntityAdditionalSpawnData, IC
 	int n = 0;
 	public int x,z;
 	public boolean tick = false;
+	public double size = 0.2;
 	public int count = 0;
 	public float mass = 0;
 	double y;
@@ -127,7 +131,7 @@ public class EntityBeam extends Entity implements IEntityAdditionalSpawnData, IC
 	//	System.out.println(this);
 		tick = false;
 		count = 0;
-		if(!real||this.ticksExisted>(gravity?30000:3000))
+		if(!real||this.ticksExisted>(gravity?3000:300))
 		{
 			this.setDead();
 		}
@@ -164,10 +168,8 @@ public class EntityBeam extends Entity implements IEntityAdditionalSpawnData, IC
 					{
 						e.setFire(5);
 						e.attackEntityFrom(DamageSource.onFire, (int)energy());
-						if(energy()<5)
-						{
-							this.setDead();
-						}
+						if(((EntityLiving)e).getMaxHealth()>(int)energy())
+						this.setDead();
 					}
 				}
 			}
@@ -194,7 +196,7 @@ public class EntityBeam extends Entity implements IEntityAdditionalSpawnData, IC
 
 			n = 0;
 		}
-		else if (mass <= 0.08)
+		else if (!gravity&&!this.isDead)
 		{
 			this.setPosition(next.x,next.y,next.z);
 			if(n>5)
@@ -206,6 +208,18 @@ public class EntityBeam extends Entity implements IEntityAdditionalSpawnData, IC
 				{
 					worldObj.setBlock(next.intX(), next.intY(), next.intZ(), Block.fire.blockID);
 				}
+				else
+				{
+					float resistance = next.getExplosionResistance(worldObj);
+					int meta = 10;
+					if(block instanceof Block16Fluid)
+					{
+						meta = next.getBlockMetadata(worldObj);
+					}
+					System.out.println(resistance+" "+energy());
+					if(resistance<=energy())
+						next.setBlock(worldObj, BlockLava.getInstance(3).blockID, meta);
+				}
 				this.setDead();
 			}
 			n++;
@@ -214,9 +228,12 @@ public class EntityBeam extends Entity implements IEntityAdditionalSpawnData, IC
 		{
 			if(n>5&&!worldObj.isRemote)
 			{
-				ExplosionCustom boom = new ExplosionCustom();
-				boom.kineticImpactor(worldObj, direction, next, g, mass, energy());
-				this.setDead();
+				if(gravity)
+				{
+					ExplosionCustom boom = new ExplosionCustom();
+					boom.kineticImpactor(worldObj, direction, next, g, mass, energy());
+					this.setDead();
+				}
 			}
 			
 		n++;

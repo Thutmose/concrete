@@ -4,8 +4,11 @@ import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
+import thutconcrete.api.network.IPacketProcessor;
+import thutconcrete.common.entity.EntityLift;
 import thutconcrete.common.tileentity.TileEntityLiftAccess;
 import thutconcrete.common.tileentity.TileEntityLimekiln;
+import thutconcrete.common.tileentity.TileEntitySeismicMonitor;
 import net.minecraft.network.packet.Packet250CustomPayload;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.world.World;
@@ -34,16 +37,31 @@ public class PacketInt implements IPacketProcessor
 		else if(te instanceof TileEntityLiftAccess)
 		{
 			TileEntityLiftAccess tel = (TileEntityLiftAccess)te;
-			tel.side = f;
+			tel.side = f&15;
+			tel.floor = (f>>4)&15;
+			tel.calledFloor = f>>8;
+			int id = dat.readInt();
+			if(EntityLift.lifts.containsKey(id))
+			{
+				tel.lift = EntityLift.lifts.get(id);
+			}
+			
+		//	System.out.println("set: "+(f&15)+" "+(f>>4)+" "+f);
+		}
+		else if(te instanceof TileEntitySeismicMonitor)
+		{
+			TileEntitySeismicMonitor tel = (TileEntitySeismicMonitor)te;
+			tel.setScale(f);
 		}
 	}
 	
 	public static Packet250CustomPayload getPacket(TileEntity te)
-	 {
+	{
 			int x = te.xCoord;
 			int y = te.yCoord;
 			int z = te.zCoord;
 			int f = 0;
+			int v = 0;
 			
 			if(te instanceof TileEntityLimekiln)
 			{
@@ -53,9 +71,17 @@ public class PacketInt implements IPacketProcessor
 			else if(te instanceof TileEntityLiftAccess)
 			{
 				TileEntityLiftAccess tel = (TileEntityLiftAccess)te;
-				f = tel.side;
+				f = tel.side+tel.floor*16+tel.calledFloor*256;
+				if(tel.lift!=null)
+					v = tel.lift.id;
+			//	System.out.println("read: "+tel.side+" "+tel.floor+" "+f);
 			}
-		 	ByteArrayOutputStream bos = new ByteArrayOutputStream(20);
+			else if(te instanceof TileEntitySeismicMonitor)
+			{
+				TileEntitySeismicMonitor tel = (TileEntitySeismicMonitor)te;
+				f = tel.exponent;
+			}
+		 	ByteArrayOutputStream bos = new ByteArrayOutputStream(24);
 		 	DataOutputStream dos = new DataOutputStream(bos);
 			
 			try
@@ -65,10 +91,11 @@ public class PacketInt implements IPacketProcessor
 	            dos.writeInt(y);
 	            dos.writeInt(z);
 	            dos.writeInt(f);
+	            dos.writeInt(v);
 	        }
 	        catch (IOException e)
 	        {
-	            // UNPOSSIBLE?
+	            e.printStackTrace();
 	        }
 	        
 	        Packet250CustomPayload pkt = new Packet250CustomPayload();

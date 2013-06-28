@@ -23,6 +23,7 @@ public class BlockRenderHandler implements ISimpleBlockRenderingHandler{
 
 	private RenderIRebar rebarRender = new RenderIRebar();
 	private RenderTurret turret = new RenderTurret();
+//	private
 
 	
 	@Override
@@ -96,6 +97,12 @@ public class BlockRenderHandler implements ISimpleBlockRenderingHandler{
 				rebarRender.renderREConcrete(world,parblock, x, y, z, meta, sides,icon, icon1,rebar,concrete, icons);
 			}
 		}
+		if(parblock instanceof BlockSeismicMonitor)
+		{
+			
+		}
+		
+		
 		
 		return true;
 	}

@@ -1,11 +1,11 @@
 package thutconcrete.common.tileentity;
 
+import thutconcrete.api.network.PacketStampable;
+import thutconcrete.api.utils.Vector3;
 import thutconcrete.common.blocks.BlockLimekiln;
 import thutconcrete.common.blocks.BlockLimekilnDummy;
 import thutconcrete.common.items.Items;
 import thutconcrete.common.network.PacketInt;
-import thutconcrete.common.network.PacketStampable;
-import thutconcrete.common.utils.Vector3;
 import net.minecraft.block.Block;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.ISidedInventory;

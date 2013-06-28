@@ -4,13 +4,16 @@ import java.util.List;
 import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 
+import atomicscience.api.IAntiPoisonBlock;
+import atomicscience.api.poison.Poison;
+
+import thutconcrete.api.utils.IStampableBlock;
 import thutconcrete.client.render.BlockRenderHandler;
 import thutconcrete.common.ConcreteCore;
 import thutconcrete.common.corehandlers.TSaveHandler;
 import thutconcrete.common.tileentity.TileEntityBlock16Fluid;
 import thutconcrete.common.utils.IRebar;
 import thutconcrete.common.utils.ISaveable;
-import thutconcrete.common.utils.IStampableBlock;
 
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
@@ -32,7 +35,7 @@ import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
 import net.minecraftforge.common.ForgeDirection;
 
-public class BlockREConcrete extends Block16Fluid implements IRebar, ITileEntityProvider, IStampableBlock
+public class BlockREConcrete extends Block16Fluid implements IRebar, ITileEntityProvider, IStampableBlock, IAntiPoisonBlock
 {
 	
 	public static BlockREConcrete instance;
@@ -52,6 +55,7 @@ public class BlockREConcrete extends Block16Fluid implements IRebar, ITileEntity
 		this.rate = 1;
 		this.instance = this;
 		this.setStepSound(soundStoneFootstep);
+		this.setResistance(resistance);
 		this.solid = true;
 		this.stampable = true;
 		setData();
@@ -402,6 +406,12 @@ public class BlockREConcrete extends Block16Fluid implements IRebar, ITileEntity
 		TileEntityBlock16Fluid te = (TileEntityBlock16Fluid) world.getBlockTileEntity(x, y, z);
 		
 		return te.sideArray[side];
+	}
+
+	@Override
+	public boolean isPoisonPrevention(World par1World, int x, int y, int z,
+			Poison type) {
+		return true;
 	}
 	
 }

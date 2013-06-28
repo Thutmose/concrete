@@ -8,11 +8,13 @@ import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.CountDownLatch;
 
+import thutconcrete.api.utils.Vector3;
 import thutconcrete.common.ConcreteCore;
 import thutconcrete.common.blocks.BlockDust;
 import thutconcrete.common.blocks.BlockLava;
 
 import net.minecraft.block.Block;
+import net.minecraft.block.material.Material;
 import net.minecraft.entity.Entity;
 import net.minecraft.util.DamageSource;
 import net.minecraft.world.World;
@@ -34,8 +36,9 @@ public class ExplosionCustom
 		    short rMax = (short)Math.min(Math.sqrt(A * r0 / B),MAX_RADIUS);
 		    double[] centre = { x0, z0, y0 };
 		    if(!worldObj.isRemote)
-		    sphericalExplosion(worldObj, x0, z0, y0, r0, vapourize, A, B, rMax);    
-		    
+		    {
+		    	sphericalExplosion(worldObj, x0, z0, y0, r0, vapourize, A, B, rMax);    
+		    }
 	  }
 	  
 	  public static void doExplosion(World worldObj,double x0, double y0, double z0, double r0, boolean vapourize, short rMax)
@@ -48,6 +51,17 @@ public class ExplosionCustom
 		    worldObj.createExplosion(null, x0, y0, z0, (float) r0, false);
 	  }
 
+	  public static void doExplosion2(final Vector3 centre,final World worldObj,final int radius,final double strength,final boolean dust, final boolean melt)
+	  {
+		    Thread nextBoom = new Thread(new Runnable() {
+			      public void run() { 
+			    	  Cruncher.destroyInRangeV3(centre, worldObj, radius, strength, dust, melt);
+			      }
+		    });
+		    nextBoom.start();
+	  }
+	  
+	  
 	  public static synchronized void sphericalExplosion(final World worldObj,final double x0,final double y0,final double z0, final double r0,final boolean vapourize, final double A, final double B, final int rMax)
 	  {
 	    Thread nextBoom = new Thread(new Runnable() {
@@ -146,30 +160,45 @@ public class ExplosionCustom
 		  }
 	  }
 	  
-	  public void kineticImpactor(World worldObj, Vector3 velocity, Vector3 hitLocation, Vector3 acceleration, double mass, float energy)
+	  public void kineticImpactor(final World worldObj,final Vector3 velocity,final Vector3 hitLocation,final
+			  			Vector3 acceleration,final double mass,final float energy)
 	  {
+		  Cruncher.safe = new ThreadSafeWorldOperations();
+		//    Thread nextBoom = new Thread(new Runnable() {
+		//	      public void run() { 
+			    	  doKineticImpactor(worldObj, velocity, hitLocation, acceleration, mass, energy);
+		//	      }
+		 //   });
+		    
+		 //   nextBoom.start();
+	  }
+	  
+	  public void doKineticImpactor(World worldObj, Vector3 velocity, Vector3 hitLocation, Vector3 acceleration, double mass, float energy)
+	  {
+		  ThreadSafeWorldOperations safe = new ThreadSafeWorldOperations();
 		  if(mass<0||energy<=0)
 		  {
 			  return;
 		  }
+		  double eid = Math.random();
 		  System.out.println("energy: "+energy+" Location: "+hitLocation.toString());
 		  int n = 0;
 		  List<Vector3> locations = new ArrayList<Vector3>();
 		  List<Float> blasts = new ArrayList<Float>();
 		  
-		  float resist = hitLocation.getExplosionResistance(worldObj);
+		  float resist = safe.getResistance(worldObj, hitLocation);
 		  float blast = Math.min(resist, energy);
 		  
 		  if(resist>energy)
 		  {
 			  hitLocation = hitLocation.subtract(velocity.normalize());
-			  Cruncher.destroyInRangeV3(hitLocation, worldObj, (int)(int) Math.max( (energy/2), 10), energy);
+			  Cruncher.destroyInRangeV3(hitLocation, worldObj, (int)(int) Math.max( (energy/2), 10), energy, true, true);
 			  return;
 		  }
 		  
 		  Vector3 absorbedLoc = new Vector3();
 		  float remainingEnergy = 0;
-		  int id = hitLocation.getBlockId(worldObj);
+		  int id = safe.getID(worldObj, hitLocation);
 		  energy-=resist;
 		  
 		  while(energy>0)
@@ -177,9 +206,9 @@ public class ExplosionCustom
 			  locations.add(hitLocation.subtract(velocity.normalize()));
 			  blasts.add(blast);
 			  hitLocation = hitLocation.add(velocity.normalize());
-			  id = hitLocation.getBlockId(worldObj);
+			  id = safe.getID(worldObj, hitLocation);
 			  velocity.add(acceleration);
-			  resist = (float) Math.max(hitLocation.getExplosionResistance(worldObj),0);
+			  resist = (float) Math.max(safe.getResistance(worldObj, hitLocation),0);
 			  blast = Math.min(resist, energy);
 			  if(resist>energy)
 			  {
@@ -197,18 +226,16 @@ public class ExplosionCustom
 		  for(int i = 0; i<n;i++)
 		  {
 			  Vector3 source = locations.get(i);
-			  float strength = blasts.get(i)*blasts.get(i)*(((float)n-(float)i)/((float)n));
+			  float strength = Math.min(blasts.get(i)*blasts.get(i)*(((float)n-(float)i)/((float)n)),256);
 			  if(worldObj.doChunksNearChunkExist(source.intX(), source.intY(), source.intZ(), (int) (strength/2)))
 			  {
-				  if(i%2==0)
-					  source.doExplosion(worldObj, strength, false);
-				  System.out.println("blast "+i);
+				  System.out.println("blast "+i+" Strength "+strength+" "+blasts.get(i));
 				  if(strength!=0)
-				  Cruncher.destroyInRangeV3(source, worldObj, (int) Math.max(10, strength/2), strength);
+				  Cruncher.destroyInRangeV3(source, worldObj, (int) Math.max(10, strength/2), strength, true, true);
 			  }
 			  else
 			  {
-				  System.out.println("not exist");
+				  System.out.println("chunks near do not exist "+source.toString()+" "+((int) (strength/2)));
 			  }
 		  }
 		  System.out.println("done blasts "+n);
@@ -217,7 +244,7 @@ public class ExplosionCustom
 		  if(remainingEnergy>10)
 		  {
 			  absorbedLoc = absorbedLoc.subtract(velocity.normalize());
-			  Cruncher.destroyInRangeV3(absorbedLoc, worldObj, 50, remainingEnergy);
+			  Cruncher.destroyInRangeV3(absorbedLoc, worldObj, 50, remainingEnergy, true, true);
 		  }
 		  System.out.println("done remainder");
 		  
@@ -239,6 +266,8 @@ public class ExplosionCustom
 	    public short[][] set11 = new short[][] {{12345}};
 	    public int n;
 	    public Boolean[] done = { Boolean.valueOf(false) };
+	    
+	    public static ThreadSafeWorldOperations safe;
 
 	    double temp = 0.0D;
 	    int temp2 = 0;
@@ -617,16 +646,24 @@ public class ExplosionCustom
 	      return list;
 	    }
 	    
-	    public static void destroyInRangeV3(Vector3 centre,World worldObj,int radius,double strength)
+	    public static synchronized void destroyInRangeV3(Vector3 centre,World worldObj,int radius,double strength, boolean dust, boolean melt)
 	    {
 	      //Map<Integer, Integer> resists = new HashMap<Integer, Integer>();
 	      double scaleFactor = 10;
 	      double x0 = centre.x;
 	      double y0 = centre.y;
 	      double z0 = centre.z;
+	      
+	      radius = Math.min(radius, 128);
+	      
 	      double radSq = radius*radius;
 	      int n = 0;
 	      int l = 0;
+	      
+	      if(safe==null)
+	      {
+	    	  safe = new ThreadSafeWorldOperations();
+	      }
 	      
 	      Map<Vector3, Integer[]> removed = new HashMap<Vector3, Integer[]>();
 	      
@@ -638,9 +675,10 @@ public class ExplosionCustom
 	    			  if(rSq>radSq)
 	    				  continue;
 	    			  Vector3 r = new Vector3(x,y,z);
-	    			  if(r.add(centre).getBlockId(worldObj)==0&&!(x==0&&y==0&&z==0))
+	    			  Vector3 rAbs = r.add(centre);
+	    			  if(safe.getID(worldObj, rAbs)==0&&!(x==0&&y==0&&z==0))
 	    				  continue;
-	    			  float resist = r.add(centre).getExplosionResistance(worldObj);
+	    			  float resist = safe.getResistance(worldObj, rAbs);
 	    			  if(resist>strength*scaleFactor/r.magSq())
 		    			  continue;
 	    			  
@@ -657,7 +695,7 @@ public class ExplosionCustom
 	    				  if(!rTest.sameBlock(rTestPrev))
 	    				  {
 	    					  n++;
-	    					  resist = rTest.getExplosionResistance(worldObj);
+	    					  resist = safe.getResistance(worldObj,rTest);
 
 	    					  damp += resist;
 	    						  
@@ -671,19 +709,26 @@ public class ExplosionCustom
 	    				  }
 	    				  rTestPrev = rTest.Copy();
 	    			  }
-	    			  if(valid&&r.getBlockId(worldObj)!=DUSTID&&r.getBlockId(worldObj)!=BlockLava.getInstance(3).blockID)
+	    			  
+	    			  if(valid&&safe.getID(worldObj, rAbs)!=DUSTID&&safe.getID(worldObj, rAbs)!=BlockLava.getInstance(3).blockID)
 	    			  {
-	    				  if(!(x==0&&y==0&&z==0))
-	    					  removed.put(r.add(centre),new Integer[]{DUSTID,15});
-	    				  else
-	    					  removed.put(r.add(centre),new Integer[]{BlockLava.getInstance(3).blockID,0});
+	    				  int rho = (int) (Math.sqrt(r.x*r.x+r.z*r.z)*5);
+	    				  
+	    				  int putid = dust?rho<15?BlockLava.getInstance(3).blockID:DUSTID:0;
+	    				  int putmeta = dust?rho<15?rho:15:0;
+	    				  Material test = safe.getMaterial(worldObj, rAbs);
+	    				  if(test==Material.leaves||test==Material.grass)
+	    				  {
+	    					  putid = putmeta = 0;
+	    				  }
+	    				  removed.put(rAbs,new Integer[]{putid,putmeta});
 	    				  
 	    			  }
 	    		  }
-	      System.out.println(removed.size()+" "+strength+" "+n+" "+l);
+	     // System.out.println(removed.size()+" "+strength+" "+n+" "+l);
 	      for(Vector3 r: removed.keySet())
 	      {
-	    	  r.setBlock(worldObj, removed.get(r)[1], removed.get(r)[0]);
+	    	  safe.set(worldObj, r, removed.get(r)[0], removed.get(r)[1]);
 	      }
 	      removed.clear();
 	      

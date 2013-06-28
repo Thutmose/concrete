@@ -4,9 +4,10 @@ import java.util.List;
 
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
+import thutconcrete.api.utils.IStampableBlock;
 import thutconcrete.common.ConcreteCore;
 import thutconcrete.common.blocks.Block16Fluid;
-import thutconcrete.common.utils.IStampableBlock;
+import thutconcrete.common.blocks.BlockLift;
 import net.minecraft.block.Block;
 import net.minecraft.client.renderer.texture.IconRegister;
 import net.minecraft.creativetab.CreativeTabs;
@@ -17,6 +18,7 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.Icon;
 import net.minecraft.util.MathHelper;
 import net.minecraft.world.World;
+import net.minecraftforge.oredict.OreDictionary;
 
 public class ItemStamper extends Item
 {
@@ -34,6 +36,15 @@ public class ItemStamper extends Item
 	
     public boolean onItemUse(ItemStack itemstack, EntityPlayer player, World worldObj, int x, int y, int z, int side, float hitX, float hitY, float hitZ)
     {
+    	
+    	Block k = Block.blocksList[worldObj.getBlockId(x,y,z)];
+    	if(k!=null)
+    	{
+    		System.out.println(y+" "+k.getUnlocalizedName()+" "
+    	+OreDictionary.getOreName(OreDictionary.getOreID(new ItemStack(worldObj.getBlockId(x,y,z),1,worldObj.getBlockMetadata(x, y, z))))+" "
+    				+k.getLocalizedName());
+    	}
+    	
     	if(player.isSneaking()&&worldObj!=null)
     	{
            	if(itemstack.stackTagCompound == null)

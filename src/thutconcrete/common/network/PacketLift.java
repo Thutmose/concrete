@@ -4,6 +4,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
+import thutconcrete.api.network.IPacketProcessor;
 import thutconcrete.common.entity.EntityLift;
 import thutconcrete.common.entity.EntityTurret;
 import thutconcrete.common.tileentity.TileEntityLiftAccess;
@@ -39,6 +40,7 @@ public class PacketLift implements IPacketProcessor
 			if(command == 3)
 			{
 				((EntityLift)e).callClient(dat.readDouble());
+				((EntityLift)e).destinationFloor = dat.readInt();
 			}
 			if(command == 4)
 			{
@@ -56,11 +58,13 @@ public class PacketLift implements IPacketProcessor
 			if(te instanceof TileEntityLiftAccess)
 			{
 				((TileEntityLiftAccess) te).lift = EntityLift.lifts.get(id);
-			//	System.out.println(((TileEntityLiftAccess) te)+" "+((TileEntityLiftAccess) te).lift);
+				System.out.println(((TileEntityLiftAccess) te)+" "+((TileEntityLiftAccess) te).lift);
 			}
 		}
 
 	}
+	
+	
 	
 	public static Packet250CustomPayload getPacket(Entity e, int command, int command2)
 	 {
@@ -89,11 +93,11 @@ public class PacketLift implements IPacketProcessor
        return pkt;
 	 }
 	
-	public static Packet250CustomPayload getPacket(Entity e, int command, double value)
+	public static Packet250CustomPayload getPacket(Entity e, int command, double value, int secondValue)
 	 {
 		int id = e.entityId;
 		
-	 	ByteArrayOutputStream bos = new ByteArrayOutputStream(20);
+	 	ByteArrayOutputStream bos = new ByteArrayOutputStream(24);
 	 	DataOutputStream dos = new DataOutputStream(bos);
 		
 		try
@@ -102,6 +106,7 @@ public class PacketLift implements IPacketProcessor
           dos.writeInt(id);
           dos.writeInt(command);
           dos.writeDouble(value);
+          dos.writeInt(secondValue);
       }
       catch (IOException ex)
       {

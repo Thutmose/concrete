@@ -50,6 +50,8 @@ public class BlockHandler {
 			blockList.add(new BlockLava(id++,i));
 			blockList.add(new BlockSolidLava(id++,i));
 		}
+		
+	//	Block.blocksList[9] = null;
 
 		blockList.add(new BlockVolcano(id++));
 		blockList.add(new BlockMisc(id++));
@@ -59,6 +61,7 @@ public class BlockHandler {
 		BlockLift lift = new BlockLift(id++);
 		blockList.add(new BlockLava(id++,3));
 		blockList.add(new BlockSolidLava(id++,3));
+		blockList.add(new BlockSeismicMonitor(id++));
 		
 		blocks = blockList.toArray(new Block[0]);
 

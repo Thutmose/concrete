@@ -1,5 +1,6 @@
 package thutconcrete.common;
 
+import powercrystals.minefactoryreloaded.api.FarmingRegistry;
 import thutconcrete.common.entity.*;
 import thutconcrete.common.tileentity.*;
 import net.minecraft.entity.player.EntityPlayer;
@@ -29,7 +30,7 @@ public class CommonProxy  implements IGuiHandler
     {
 		GameRegistry.registerTileEntity(TileEntityBlock16Fluid.class, "Fluid16BlockTE");
 		GameRegistry.registerTileEntity(TileEntityVolcano.class, "VolcanoTE");
-		GameRegistry.registerTileEntity(TileEntityLaser.class, "laserTE");
+		GameRegistry.registerTileEntity(TileEntitySeismicMonitor.class, "seismicMonitorTE");
 		
 		GameRegistry.registerTileEntity(TileEntityLimekiln.class, "tileEntityLimekiln");
 		GameRegistry.registerTileEntity(TileEntityLimekilnDummy.class, "tileEntityLimekilnDummy");
@@ -43,7 +44,21 @@ public class CommonProxy  implements IGuiHandler
    // 	ConcreteCore.registerEntity(EntityRocket.class, "tehRocket");
     	ConcreteCore.registerEntity(EntityTurret.class, "railgunTurret");
     	ConcreteCore.registerEntity(EntityLift.class, "tehlift");
-    	
+
+		try {
+			Class<?> registry = Class.forName("powercrystals.minefactoryreloaded.MFRRegistry");
+			if(registry != null)
+			{
+			FarmingRegistry.registerSafariNetBlacklist(EntityLift.class);
+			FarmingRegistry.registerSafariNetBlacklist(EntityTurret.class);
+			FarmingRegistry.registerSafariNetBlacklist(EntityBeam.class);
+			}
+		} catch (ClassNotFoundException e) {
+			// TODO Auto-generated catch block
+		//	System.out.println("[ThutConcrete] MFR not found, lift not added to the non-existant safari net blacklist.");
+		//	e.printStackTrace();
+		}
+		
     	
     //	ConcreteCore.registerEntity(EntitySine.class, "sine");
     }

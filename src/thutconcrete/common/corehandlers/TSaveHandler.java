@@ -121,37 +121,4 @@ public class TSaveHandler {
 		}
 	}
 	
-	public interface Stringable<T> {
-		public String toString(T o);
-	}
-	
-	public <K extends Stringable, V extends Stringable> void saveHashMap(NBTTagCompound cmpnd, HashMap<K, V> map)
-	{
-	}
-	
-	public static void saveSIAHashMap(NBTTagCompound cmpnd, Map<String, int[]> locations)
-	{
-		int n = 0;
-		for(String i : locations.keySet())
-		{
-			if(i!=null)
-			{
-				cmpnd.setString("hashmapdata"+n, i);
-				cmpnd.setIntArray("hashmapkey"+n, locations.get(i));
-				n++;
-			}
-		}
-		cmpnd.setInteger("hashmapsize", n);
-	}
-	
-	public static HashMap readSIAHashMap(NBTTagCompound cmpnd)
-	{
-		HashMap map = new HashMap<String, int[]>();
-		int n = cmpnd.getInteger("hashmapsize");
-		for(int i=0;i<n;i++)
-		{
-			map.put(cmpnd.getString("hashmapdata"+i),cmpnd.getIntArray("hashmapkey"+i));
-		}
-		return map;
-	}
 }

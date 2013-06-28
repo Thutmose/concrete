@@ -29,6 +29,7 @@ public class Items
 	public static ItemStack cementStack = new ItemStack(items[5]);
 	public static ItemStack sandStack = new ItemStack(Block.sand);
 	public static ItemStack gravelStack = new ItemStack(Block.gravel);
+	public static ItemStack cobbleStack = new ItemStack(Block.cobblestone);
 	public static ItemStack waterStack = new ItemStack(Item.bucketWater);
 	public static ItemStack concreteBucketStack = new ItemStack(ItemBucketConcrete.instance);
 	public static ItemStack trassOreStack = new ItemStack(BlockWorldGen.instance,1,1);

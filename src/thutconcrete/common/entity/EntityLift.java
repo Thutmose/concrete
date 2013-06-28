@@ -7,6 +7,11 @@ import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 
+import thutconcrete.api.utils.IMultiBox;
+import thutconcrete.api.utils.Vector3;
+import thutconcrete.api.utils.Vector3.Matrix3;
+
+
 import thutconcrete.common.blocks.BlockMisc;
 import thutconcrete.common.blocks.BlockLift;
 import thutconcrete.common.blocks.BlockLiftRail;
@@ -14,9 +19,6 @@ import thutconcrete.common.corehandlers.ConfigHandler;
 import thutconcrete.common.items.ItemLiftController;
 import thutconcrete.common.network.PacketLift;
 import thutconcrete.common.tileentity.TileEntityLiftAccess;
-import thutconcrete.common.utils.IMultiBox;
-import thutconcrete.common.utils.Vector3;
-import thutconcrete.common.utils.Vector3.Matrix3;
 
 import com.google.common.io.ByteArrayDataInput;
 import com.google.common.io.ByteArrayDataOutput;
@@ -30,9 +32,11 @@ import net.minecraft.item.ItemAxe;
 import net.minecraft.item.ItemDye;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.potion.PotionEffect;
 import net.minecraft.util.AxisAlignedBB;
 import net.minecraft.util.DamageSource;
 import net.minecraft.world.World;
+import cpw.mods.fml.common.FMLCommonHandler;
 import cpw.mods.fml.common.network.PacketDispatcher;
 import cpw.mods.fml.common.network.Player;
 import cpw.mods.fml.common.registry.IEntityAdditionalSpawnData;
@@ -57,20 +61,28 @@ public class EntityLift extends EntityLiving implements IEntityAdditionalSpawnDa
 	int passengertime = 10;
 	boolean first = true;
 	Random r = new Random();
+	
+	
 	public double destinationY = 0;
+	public int destinationFloor = 0;
 	
 	public boolean called = false;
 	TileEntityLiftAccess current;
 	public int id;
 	
+	
+	
 	public static ConcurrentHashMap<Integer, EntityLift> lifts = new ConcurrentHashMap<Integer, EntityLift>();
+	public static int MAXID = 0;
+	
+	
 	
 	public ConcurrentHashMap<String, Matrix3> boxes = new ConcurrentHashMap<String, Matrix3>();
 	public ConcurrentHashMap<String, Vector3> offsets = new ConcurrentHashMap<String, Vector3>();
 	
-	public TileEntityLiftAccess[][] floors = new TileEntityLiftAccess[16][4];
+	public TileEntityLiftAccess[][] floors = new TileEntityLiftAccess[64][4];
 	
-	public int[][][]floorArray = new int[16][4][3];
+	public int[][][]floorArray = new int[64][4][3];
 
 	Matrix3 base = new Matrix3();
 	Matrix3 top = new Matrix3();
@@ -90,12 +102,25 @@ public class EntityLift extends EntityLiving implements IEntityAdditionalSpawnDa
 		return false;
 	}
 	
+    /**
+     * Checks if the entity's current position is a valid location to spawn this entity.
+     */
+    public boolean getCanSpawnHere()
+    {
+    	return false;
+    }
+	
+    public boolean isPotionApplicable(PotionEffect par1PotionEffect)
+    {
+    	return false;
+    }
+    
 	public EntityLift(World world, double x, double y, double z, double size)
 	{
 		this(world);
 		this.setPosition(x, y, z);
 		r.setSeed(100);
-		this.id = r.nextInt((int)Math.abs(x)+1)+r.nextInt((int)Math.abs(y)+1)+r.nextInt((int)Math.abs(z)+1);
+		this.id = MAXID++;//r.nextInt((int)Math.abs(x)+1)+r.nextInt((int)Math.abs(y)+1)+r.nextInt((int)Math.abs(z)+1);
 		lifts.put(id, this);
 		this.size = size;
 		this.setSize((float)size, 1f);
@@ -136,6 +161,8 @@ public class EntityLift extends EntityLiving implements IEntityAdditionalSpawnDa
 		{
 			setPosition(posX, called&&Math.abs(posY-destinationY)<0.5?destinationY:Math.floor(posY), posZ);
 			called = false;
+			destinationY = -1;
+			destinationFloor = 0;
 			if(current!=null)
 			{
 				current.setCalled(false);
@@ -186,10 +213,10 @@ public class EntityLift extends EntityLiving implements IEntityAdditionalSpawnDa
 						current.called = true;
 						worldObj.scheduleBlockUpdate(x, y, z, worldObj.getBlockId(x, y, z), 5);
 						up = destinationY > posY;
+						destinationFloor = floor;
 						move = true;
 						called = true;
-						//System.out.println(destinationY+" "+posY+" "+up+" "+move);
-						PacketDispatcher.sendPacketToAllAround(posX, posY, posZ, 100, this.dimension, PacketLift.getPacket(this, 3,destinationY));
+						PacketDispatcher.sendPacketToAllAround(posX, posY, posZ, 50, this.dimension, PacketLift.getPacket(this, 3,destinationY, floor));
 						return;
 					}
 				}
@@ -212,7 +239,7 @@ public class EntityLift extends EntityLiving implements IEntityAdditionalSpawnDa
 			up = destinationY > posY;
 			move = true;
 			called = true;
-			PacketDispatcher.sendPacketToAllAround(posX, posY, posZ, 100, this.dimension, PacketLift.getPacket(this, 3,destinationY));
+			PacketDispatcher.sendPacketToAllAround(posX, posY, posZ, 100, this.dimension, PacketLift.getPacket(this, 3,destinationY,0));
 	}
 	
 	public void accelerate()
@@ -257,6 +284,8 @@ public class EntityLift extends EntityLiving implements IEntityAdditionalSpawnDa
 			//		System.out.println("blocked up");
 					setPosition(posX, called&&Math.abs(posY-destinationY)<0.5?destinationY:Math.floor(posY), posZ);
 					called = false;
+					destinationY = -1;
+					destinationFloor = 0;
 					if(current!=null)
 					{
 						current.setCalled(false);
@@ -295,6 +324,8 @@ public class EntityLift extends EntityLiving implements IEntityAdditionalSpawnDa
 			//		System.out.println("blocked down");
 					setPosition(posX, called&&Math.abs(posY-destinationY)<0.5?destinationY:Math.floor(posY), posZ);
 					called = false;
+					destinationY = -1;
+					destinationFloor = 0;
 					if(current!=null)
 					{
 						current.setCalled(false);
@@ -340,11 +371,11 @@ public class EntityLift extends EntityLiving implements IEntityAdditionalSpawnDa
 				ret = ret && (thisloc.add(new Vector3(i,5,j))).clearOfBlocks(worldObj);
 				if(checkTop.isLiquid(worldObj))
 				{
-					checkTop.setBlock(worldObj, 0);
+					checkTop.setAir(worldObj);
 				}
 				if(checkBottom.isLiquid(worldObj))
 				{
-					checkBottom.setBlock(worldObj, 0);
+					checkBottom.setAir(worldObj);
 				}
 			}
 
@@ -466,7 +497,7 @@ public class EntityLift extends EntityLiving implements IEntityAdditionalSpawnDa
         	{
         		item.setTagCompound(new NBTTagCompound() );
         	}
-           	item.stackTagCompound.setInteger("lift", entityId);
+           	item.stackTagCompound.setInteger("lift", id);
            	if(worldObj.isRemote)
            	player.addChatMessage("lift set");
            	return true;
@@ -515,17 +546,19 @@ public class EntityLift extends EntityLiving implements IEntityAdditionalSpawnDa
 	public void writeSpawnData(ByteArrayDataOutput data) 
 	{
 		data.writeDouble(size);
+		data.writeInt(id);
 	}
 
 	@Override
 	public void readSpawnData(ByteArrayDataInput data) 
 	{
 		size = data.readDouble();
+		id = data.readInt();
 	}
 
 	public void setFoor(TileEntityLiftAccess te, int floor)
 	{
-		if(te.floor == -1)
+		if(te.floor == 0)
 		{
 			int j = 0;
 			for(int i = 0; i<4; i++)
@@ -539,7 +572,7 @@ public class EntityLift extends EntityLiving implements IEntityAdditionalSpawnDa
 			floors[floor-1][j]=te;
 			floorArray[floor-1][j] = new int[]{te.xCoord,te.yCoord,te.zCoord};
 		}
-		else if(te.floor!=-1)
+		else if(te.floor!=0)
 		{
 			for(int i = 0; i<4; i++)
 			{
@@ -573,6 +606,7 @@ public class EntityLift extends EntityLiving implements IEntityAdditionalSpawnDa
 		super.readEntityFromNBT(nbt);
 		axis = nbt.getBoolean("axis");
 		id = nbt.getInteger("cuid");
+		MAXID = nbt.getInteger("MAXID");
 		size = nbt.getDouble("size");
 		lifts.put(id, this);
 		readList(nbt);
@@ -583,13 +617,14 @@ public class EntityLift extends EntityLiving implements IEntityAdditionalSpawnDa
 		super.writeEntityToNBT(nbt);
 		nbt.setBoolean("axis", axis);
 		nbt.setInteger("cuid", id);
+		nbt.setInteger("MAXID", MAXID);
 		nbt.setDouble("size", size);
 		writeList(nbt);
 	}
 
 	public void writeList(NBTTagCompound nbt)
 	{
-		for(int i = 0; i<16; i++)
+		for(int i = 0; i<floorArray.length; i++)
 		{
 			for(int j = 0; j<4; j++)
 			{
@@ -600,7 +635,7 @@ public class EntityLift extends EntityLiving implements IEntityAdditionalSpawnDa
 	
 	public void readList(NBTTagCompound nbt)
 	{
-		for(int i = 0; i<16; i++)
+		for(int i = 0; i<floorArray.length; i++)
 		{
 			for(int j = 0; j<4; j++)
 			{
@@ -705,4 +740,5 @@ public class EntityLift extends EntityLiving implements IEntityAdditionalSpawnDa
     	
     	return false;
     }
+
 }

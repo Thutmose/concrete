@@ -12,6 +12,7 @@ import net.minecraft.block.Block;
 import net.minecraft.client.renderer.texture.IconRegister;
 import net.minecraft.world.World;
 
+import thutconcrete.api.utils.IStampableBlock;
 import thutconcrete.common.ConcreteCore;
 import thutconcrete.common.blocks.Block16Fluid;
 import thutconcrete.common.blocks.BlockConcrete;

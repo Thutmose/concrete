@@ -10,6 +10,7 @@ import java.util.logging.Logger;
 
 import static net.minecraftforge.common.BiomeDictionary.Type;
 
+import thutconcrete.api.utils.Vector3;
 import thutconcrete.common.blocks.*;
 import thutconcrete.common.corehandlers.*;
 
@@ -18,7 +19,6 @@ import thutconcrete.common.finiteWorld.WorldTypeCustom;
 import thutconcrete.common.ticks.TickHandler;
 import thutconcrete.common.tileentity.*;
 import thutconcrete.common.utils.EntityChunkLoader;
-import thutconcrete.common.utils.Vector3;
 
 import thutconcrete.common.worldgen.*;
 
@@ -58,7 +58,7 @@ import thutconcrete.common.network.*;
 @Mod( modid = "ThutConcrete", name="Thut's Concrete", version="1.0.0")
 @NetworkMod(clientSideRequired = true, serverSideRequired = true, 
 channels={"Thut's Concrete"},
-packetHandler = PacketHandler.class
+packetHandler = TCPacket.class
 )
 
 public class ConcreteCore {
@@ -92,6 +92,7 @@ public class ConcreteCore {
 	
 	
 	public TSaveHandler saveList;
+	public TCPacket pkthandler;
 	
 	public ChunkloadFinite loader;
 	
@@ -126,7 +127,7 @@ public class ConcreteCore {
 	
 	@Init
 	public void load(FMLInitializationEvent evt){
-		new PacketHandler();
+		pkthandler = new TCPacket();
 		commproxy.initClient();
 		
 		liquidHndlr = new LiquidHandler();
@@ -176,7 +177,7 @@ public class ConcreteCore {
 	static int entityID=0;
 	public static void registerEntity(Class<? extends Entity> clas, String name, int freq){
 		EntityRegistry.registerGlobalEntityID(clas, name, EntityRegistry.findGlobalUniqueEntityId());
-		EntityRegistry.registerModEntity(clas, name, entityID++, ConcreteCore.instance, 80, 1, true);
+		EntityRegistry.registerModEntity(clas, name, entityID++, ConcreteCore.instance, 50, 1, true);
 	}
 	public static void registerEntity(Class<? extends Entity> clas, String name){
 		registerEntity(clas, name, 1);
@@ -328,7 +329,7 @@ public class ConcreteCore {
 		oreMap1.put("emerald", 30);
 		oreMap1.put("ruby", 30);
 		oreMap1.put("sapphire", 30);
-		oreMap1.put("quartz", 100);
+		oreMap1.put("quartz", 300);
 		oreMap1.put("lead", 1000);
 		oreMap1.put("zinc", 500);
 		oreMap1.put("redstone", 20);
@@ -368,7 +369,7 @@ public class ConcreteCore {
 					name = oreDictName(b.blockID,meta);
 					for(String s:oreMap0.keySet())
 					{
-						if(!s.contains("nether")&&(s.equals("quartz")||!ores.contains(s)))
+						if(!s.contains("nether")&&!b.getUnlocalizedName().toLowerCase().contains("nether")&&(s.equals("quartz")||!ores.contains(s)))
 						if(!BlockSolidLava.getInstance(0).turnto.contains(b.blockID + 4096*ConcreteCore.oreMap0.get(s) + 4096*1024*meta))
 						if(name.toLowerCase().contains(s)&&name.toLowerCase().contains("ore"))
 						{

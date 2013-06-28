@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.Random;
 
 import net.minecraft.block.Block;
+import net.minecraft.block.material.Material;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.particle.EntityFX;
 import net.minecraft.client.renderer.RenderEngine;
@@ -21,6 +22,7 @@ import net.minecraft.world.chunk.Chunk;
 import net.minecraftforge.liquids.ILiquid;
 import net.minecraftforge.liquids.LiquidContainerRegistry;
 import net.minecraftforge.liquids.LiquidStack;
+import thutconcrete.api.utils.Vector3;
 import thutconcrete.common.*;
 import thutconcrete.common.ticks.Ticker;
 
@@ -161,7 +163,51 @@ public class ThreadSafeWorldOperations extends Ticker
 		
 		return TE;
 	}
-	public double[] getWind(World worldObj, double x, double z){
+	
+	//*
+	public synchronized  void set(World worldObj,Vector3 vec, int ID, int Meta){
+		if(!worldObj.isRemote)
+		{
+			vec.setBlock(worldObj, ID , Meta, 2);
+		}
+	}
+	//*/
+	public synchronized int getMeta(World worldObj,Vector3 vec){
+		return vec.getBlockMetadata(worldObj);
+	}
+	public synchronized int getID(World worldObj,Vector3 vec){
+		return vec.getBlockId(worldObj);
+	}
+	public synchronized Block getBlock(World worldObj,Vector3 vec){
+		return vec.getBlock(worldObj);
+	}
+	public synchronized TileEntity getTE(World worldObj,Vector3 vec){
+		return vec.getTileEntity(worldObj);
+	}
+	public synchronized Material getMaterial(World worldObj, Vector3 vec)
+	{
+		return vec.getBlockMaterial(worldObj);
+	}
+	public synchronized float getResistance(World worldObj, Vector3 vec)
+	{
+		return vec.getExplosionResistance(worldObj);
+	}
+	public synchronized void doExplosion(World worldObj, Vector3 vec, float strength, boolean destroyBlocks)
+	{
+		vec.doExplosion(worldObj, strength, destroyBlocks);
+	}
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	public static double[] getWind(World worldObj, double x, double z){
 		double[] tempWind = new double[] {0,0};
 		double windFactor = 1;
 		double frequencyFactor = 0.00015;
@@ -176,7 +222,7 @@ public class ThreadSafeWorldOperations extends Ticker
 				Math.sin(frequencyFactor*((z/16)+worldObj.getTotalWorldTime()))*Math.cos(frequencyFactor*((z/16)+worldObj.getTotalWorldTime()))+
 				Math.sin(frequencyFactor*((z/16)+worldObj.getTotalWorldTime()))*Math.cos(frequencyFactor*((z/16)+worldObj.getTotalWorldTime()))*
 				Math.sin(frequencyFactor*((z/16)+worldObj.getTotalWorldTime()))*Math.cos(frequencyFactor*((z/16)+worldObj.getTotalWorldTime())));
-		return vec.vectorNormalize(tempWind);
+		return LinearAlgebra.vectorNormalize(tempWind);
 	}
 	
 	

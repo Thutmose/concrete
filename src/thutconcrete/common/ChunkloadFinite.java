@@ -6,9 +6,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import cpw.mods.fml.common.registry.GameRegistry;
+import static java.lang.Math.*;
 
-import thutconcrete.common.network.PacketHandler;
+import cpw.mods.fml.common.registry.GameRegistry;
+import cpw.mods.fml.common.network.Player;
+
+import thutconcrete.common.corehandlers.ConfigHandler;
+import thutconcrete.common.network.PacketSeedMap;
 import thutconcrete.common.network.PacketTPMount;
 
 import net.minecraft.block.Block;
@@ -24,11 +28,13 @@ import net.minecraft.server.management.ServerConfigurationManager;
 import net.minecraft.world.World;
 import net.minecraftforge.common.ForgeDirection;
 import net.minecraftforge.event.ForgeSubscribe;
+import net.minecraftforge.event.entity.EntityJoinWorldEvent;
 import net.minecraftforge.event.entity.living.LivingEvent;
 import net.minecraftforge.event.world.ChunkEvent;
 import net.minecraftforge.event.world.ChunkWatchEvent;
 import net.minecraftforge.event.world.ChunkWatchEvent.Watch;
 import net.minecraftforge.event.world.WorldEvent;
+import net.minecraftforge.event.world.WorldEvent.Load;
 
 public class ChunkloadFinite {
 
@@ -44,42 +50,57 @@ public class ChunkloadFinite {
 	}
 	
 	@ForgeSubscribe
+	public void onWorldLoad(Load evt)
+	{
+		if(!evt.world.isRemote)
+		{
+			if(evt.world.playerEntities!=null&&evt.world.playerEntities.size()>0)
+				for(Object o:evt.world.playerEntities)
+				{
+					PacketSeedMap.sendPacket((Player) o);
+				}
+		}
+		
+		Volcano.init(evt.world);
+	}
+	
+	@ForgeSubscribe
+	public void onJoin(EntityJoinWorldEvent evt)
+	{
+		if(evt.entity instanceof Player)
+		{
+			PacketSeedMap.sendPacket((Player)evt.entity);
+		}
+	}
+	
+	@ForgeSubscribe
 	public void onLivingUpdate(LivingEvent evt)
 	{
 		
-	//	if(!(evt.entityLiving instanceof EntityPlayerMP)) return;
+		if(!(evt.entityLiving instanceof EntityPlayerMP)) return;
 		
 		//EntityPlayerMP player = (EntityPlayerMP) evt.entityLiving;
 		EntityLiving player = evt.entityLiving;
 		World world = player.worldObj;
-		if(!world.provider.terrainType.getWorldTypeName().contentEquals("FINITE")) return;
+		if(!ConfigHandler.defaultTypeFinite&&!(world.provider.terrainType.getWorldTypeName().contentEquals("FINITE"))) return;
 
-		int chunkX = player.chunkCoordX;
-		int chunkZ = player.chunkCoordZ;
-		double x = player.lastTickPosX;
+		double x = player.posX;
+		double y = player.posY;
+		double z = player.posZ;
 		
-		if(!world.isRemote&&(x>(blockSize)||chunkX<-(chunkSize)||chunkZ>chunkSize||chunkZ<-chunkSize))
+		if(!world.isRemote&&(abs(floor(x))>blockSize||abs(floor(z))>blockSize))
 		{
-		
-			double y = player.lastTickPosY;
-			double z = player.lastTickPosZ;
+			System.out.println("wrapping "+x+" "+z+" "+blockSize+" "+player);
 			
 			Entity mount = null;
-			
-			double x2 = player.lastTickPosX;
-			double y2 = player.lastTickPosY;
-			double z2 = player.lastTickPosZ;
 			
 			if(player.isRiding())
 			{
 				mount = player.ridingEntity;
-				x2 = mount.lastTickPosX;
-				y2 = mount.lastTickPosY;
-				z2 = mount.lastTickPosZ;
+				x = mount.posX;
+				y = mount.posY;
+				z = mount.posZ;
 			}
-			
-			
-			double y1 = y;
 			
 			if(players.containsKey(player.entityId)&&players.get(player.entityId)<=world.getTotalWorldTime())
 			{
@@ -100,7 +121,7 @@ public class ChunkloadFinite {
 				players.put(player.entityId, world.getTotalWorldTime());
 			}
 			
-			if(x>(blockSize)||chunkX<-(chunkSize))
+			if(abs(floor(x))>blockSize)
 			{
 				x = x<0?Math.max(-blockSize, x):Math.min(blockSize, x);
 				
@@ -108,36 +129,37 @@ public class ChunkloadFinite {
 				{
 					if(mount!=null)
 					{
-						mount.setPosition(-x2,y2,z2);
+						mount.setPosition(-x,y,z);
 						//PacketTPMount.sendToClient(PacketTPMount.getPacketMount(player,mount,-x2,y2,z2),player);
 					}
 				}
 				else
 				{
-					player.setPositionAndUpdate(-x,y1,z);
-					if(!player.getCanSpawnHere())
-						TPhere(player);
+					player.setPositionAndUpdate(-x,y,z);
+				//	if(!player.getCanSpawnHere())
+				//		TPhere(player);
 				}
 				
 			}
-			if(chunkZ>chunkSize||chunkZ<-chunkSize)
+			if(abs(floor(z))>blockSize)
 			{
 				
 				
-				z = z<0?Math.max(-chunkSize*16, z):Math.min(chunkSize*16, z);
+				z = z<0?Math.max(-blockSize, z):Math.min(blockSize, z);
 				
 				if(player.isRiding())
 				{
-					player.ridingEntity.setPosition(x,y1,-z);
+					player.ridingEntity.setPosition(x,y,-z);
 				}
 				else
 				{
-					player.setPositionAndUpdate(x,y1,-z);
-					if(!player.getCanSpawnHere())
-						TPhere(player);
+					player.setPositionAndUpdate(x,y,-z);
+				//	if(!player.getCanSpawnHere())
+				//		TPhere(player);
 				}
 				
 			}
+			System.out.println("wrapped "+x+" "+z+" "+blockSize+" "+player);
 		}
 	}
 	

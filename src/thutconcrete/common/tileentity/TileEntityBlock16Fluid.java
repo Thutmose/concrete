@@ -4,11 +4,10 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 
+import thutconcrete.api.network.PacketStampable;
+import thutconcrete.api.utils.IStampableTE;
 import thutconcrete.common.blocks.*;
 import thutconcrete.common.corehandlers.ConfigHandler;
-import thutconcrete.common.network.PacketHandler;
-import thutconcrete.common.network.PacketStampable;
-import thutconcrete.common.utils.IStampableTE;
 import thutconcrete.common.utils.LinearAlgebra;
 
 import net.minecraft.block.Block;
@@ -58,7 +57,6 @@ public class TileEntityBlock16Fluid extends TileEntity implements IStampableTE
 	      metaArray = par1.getIntArray("metaArray");
 	      iconIDs = par1.getIntArray("iconsArray");
 	      sideArray = par1.getIntArray("sideArray");
-	      setIconArray();
 	   }
 
 	   public void sendUpdate()
@@ -79,17 +77,17 @@ public class TileEntityBlock16Fluid extends TileEntity implements IStampableTE
 		   if(worldObj!=null)
 		   for(int i = 0; i<6; i++)
 		   {
-			   if((iconIDs[i]==0||iconIDs[i]==thisBlock().blockID)&&thisBlock() instanceof Block16Fluid)
+			   if((iconIDs[i]==0||iconIDs[i]==thisBlock().blockID)&&(thisBlock() instanceof Block16Fluid))
 			   {
 				   Block16Fluid block = (Block16Fluid) thisBlock();
 				   iconIDs[i] = block.blockID;
 				   if(block.iconArray!=null)
 				   icons[i] = block.iconArray[metaArray[i]];
 			   }
-			   else if((iconIDs[i]==0||iconIDs[i]==thisBlock().blockID))
+			   else if((iconIDs[i]==0||iconIDs[i]==BlockMisc.instance.blockID||iconIDs[i]==BlockREConcrete.instance.blockID))
 			   {
-				   iconIDs[i] = thisBlock().blockID;
-				   icons[i] = thisBlock().getIcon(i, metaArray[i]);
+				   iconIDs[i] = BlockREConcrete.instance.blockID;
+				   icons[i] = BlockMisc.instance.getIcon(metaArray[i]);
 			   }
 			   else if(Block.blocksList[iconIDs[i]]!=null)
 			   {
@@ -106,7 +104,8 @@ public class TileEntityBlock16Fluid extends TileEntity implements IStampableTE
 	    @Override
 	    public Packet getDescriptionPacket()
 	    {
-	        return PacketStampable.getPacket(this);
+		    setIconArray();
+	        return PacketStampable.getPacket(this, "Thut's Concrete");
 	    }
 
 	    public Block thisBlock()
@@ -124,5 +123,29 @@ public class TileEntityBlock16Fluid extends TileEntity implements IStampableTE
 	    	else
 	    		return 0;
 	    }
+
+		@Override
+		public int[] getMetaArray() 
+		{
+			return metaArray;
+		}
+
+		@Override
+		public int[] getIdArray() 
+		{
+			return iconIDs;
+		}
+
+		@Override
+		public int[] getSideArray() 
+		{
+			return sideArray;
+		}
+
+		@Override
+		public void setArrays(int[] meta, int[] id, int[] side) 
+		{
+			metaArray = meta; iconIDs = id; sideArray = side;
+		}
 
 	}

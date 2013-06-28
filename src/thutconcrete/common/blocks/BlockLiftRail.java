@@ -1,7 +1,10 @@
 package thutconcrete.common.blocks;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
+
+import appeng.api.me.tiles.IGridTileEntity;
 
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
@@ -19,12 +22,12 @@ import net.minecraft.util.Icon;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
 import net.minecraftforge.common.ForgeDirection;
+import thutconcrete.api.utils.IStampableBlock;
 import thutconcrete.common.blocks.*;
 import thutconcrete.common.entity.EntityLift;
 import thutconcrete.common.tileentity.TileEntityBlock16Fluid;
 import thutconcrete.common.tileentity.TileEntityLiftAccess;
 import thutconcrete.common.utils.IRebar;
-import thutconcrete.common.utils.IStampableBlock;
 
 public class BlockLiftRail extends BlockRebar implements ITileEntityProvider
 {
@@ -58,12 +61,66 @@ public class BlockLiftRail extends BlockRebar implements ITileEntityProvider
 			    	{
 			    		placed = true;
 		    				if(!player.capabilities.isCreativeMode)
-		    					item.splitStack(1);
+		    					player.inventory.consumeInventoryItem(item.itemID);
 			    	}
 		    	}
 	    	}
     	}
         return placed;
+    }
+    
+    /**
+     * Called when the block is clicked by a player. Args: x, y, z, entityPlayer
+     */
+    public void onBlockClicked(World world, int x, int y, int z, EntityPlayer player) 
+    {
+    	boolean placed = false;
+    	ItemStack item = player.getHeldItem();
+
+    	
+    	if(item!=null)
+    	{
+	    	int itemID = item.itemID;
+	    	if(itemID<4095)
+	    	{
+		    	if(Block.blocksList[itemID] instanceof IRebar)
+		    	{
+		    		
+		        	
+		        	if(player.isSneaking())
+		        	{
+		        		boolean done = false;
+		        		int num = item.stackSize;
+		        		
+		        		while(!done&&num>0)
+		        		{
+				    		placed = placeBlock(world, x, y, z, itemID, item.getItemDamage(), ForgeDirection.UP);
+				    		done = !placed;
+				    		if(placed)
+				    		{
+				    			num--;
+				    		}
+		    				if(!player.capabilities.isCreativeMode)
+		    				{
+		    					//player.addChatMessage("split");
+		    					player.inventory.consumeInventoryItem(item.itemID);
+		    				}
+		        		}
+		        	}
+		        	else
+			    	if(placeBlock(world, x, y, z, itemID, item.getItemDamage(), ForgeDirection.UP))
+			    	{
+			    		placed = true;
+		    				if(!player.capabilities.isCreativeMode)
+		    				{
+		    					//player.addChatMessage("split");
+		    					player.inventory.consumeInventoryItem(item.itemID);
+		    				}
+			    	}
+		    	}
+	    	}
+	    	
+    	}
     }
 	
 	@Override
@@ -117,6 +174,8 @@ public class BlockLiftRail extends BlockRebar implements ITileEntityProvider
 		this.blockIcon = par1IconRegister.registerIcon("thutconcrete:liftRails");
 	}
 
+	
+	/*/
 	public boolean[] sides(IBlockAccess worldObj, int x, int y, int z) 
 	{
 		boolean[] side = new boolean[]{false, false, false, false, false, false};
@@ -125,9 +184,31 @@ public class BlockLiftRail extends BlockRebar implements ITileEntityProvider
 		{
 			int id = worldObj.getBlockId(x+sides[i][0], y+sides[i][1], z+sides[i][2]);
 			Block block = Block.blocksList[id];
-			side[4+i] = (block instanceof IRebar);
+			side[4+i] = (block instanceof IRebar)||(block instanceof IGridTileEntity)||(block!=null&&block.isOpaqueCube());
 		}
 		
+		return side;
+	}
+	//*/
+	public boolean[] sides(IBlockAccess worldObj, int x, int y, int z) 
+	{
+		boolean[] side = new boolean[]{false, false, false, false, false, false};
+    	int[][]sides = {{1,0,0},{-1,0,0},{0,0,1},{0,0,-1},{0,1,0},{0,-1,0}};
+		for(int i = 0; i<6; i++)
+		{
+			int id = worldObj.getBlockId(x+sides[i][0], y+sides[i][1], z+sides[i][2]);
+			Block block = Block.blocksList[id];
+			TileEntity te = worldObj.getBlockTileEntity(x+sides[i][0], y+sides[i][1], z+sides[i][2]);
+			if(i>3)
+			{
+				side[i] = (block instanceof IRebar)||(te instanceof IGridTileEntity);
+			}
+			else
+			{
+				side[i] = (te instanceof IGridTileEntity);
+			}
+		}
+	//	System.out.println(Arrays.toString(side));
 		return side;
 	}
 	

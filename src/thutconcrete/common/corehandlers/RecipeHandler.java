@@ -18,6 +18,7 @@ import thutconcrete.common.blocks.BlockLiquidREConcrete;
 import thutconcrete.common.blocks.BlockRebar;
 import thutconcrete.common.blocks.BlockSolidLava;
 import thutconcrete.common.blocks.BlockWorldGen;
+import thutconcrete.common.items.ItemConcreteDust;
 import thutconcrete.common.items.ItemLiftBlocks;
 import thutconcrete.common.items.ItemLiftController;
 import thutconcrete.common.items.Items;
@@ -71,16 +72,16 @@ public class RecipeHandler
 	public void registerShapedRecipes()
 	{
 
-		GameRegistry.addRecipe(Items.rebarStack,"x  "," x ","  x", 'x', Item.ingotIron);
+		GameRegistry.addRecipe(new ItemStack(BlockRebar.instance,4),"x  "," x ","  x", 'x', Item.ingotIron);
 		
 		for (ItemStack steel : OreDictionary.getOres("ingotSteel")) 
 		{
-			GameRegistry.addRecipe(new ItemStack(BlockRebar.instance,8),"x  "," x ","  x", 'x', steel);
+			GameRegistry.addRecipe(new ItemStack(BlockRebar.instance,16),"x  "," x ","  x", 'x', steel);
 		}
 		
 		for (ItemStack steel : OreDictionary.getOres("ingotRefinedIron")) 
 		{
-			GameRegistry.addRecipe(new ItemStack(BlockRebar.instance,4),"x  "," x ","  x", 'x', steel);
+			GameRegistry.addRecipe(new ItemStack(BlockRebar.instance,5),"x  "," x ","  x", 'x', steel);
 		}
 		
 		for(int i = 0; i<16; i++)
@@ -95,12 +96,9 @@ public class RecipeHandler
 			
 		}
 		
-
 		GameRegistry.addRecipe(new ItemStack(ItemLiftController.instance),"xyx"," x ","   ", 'x', Item.ingotIron, 'y', Item.redstone);
 		GameRegistry.addRecipe(new ItemStack(ItemLiftBlocks.instance,1,0),"xyx","zxz","zzz", 'x', Item.ingotIron, 'y', Item.redstone, 'z', new ItemStack(Block.stone));
 		GameRegistry.addRecipe(new ItemStack(ItemLiftBlocks.instance,1,1),"xyx","yxy","xyx", 'x', Item.ingotIron, 'y', Item.redstone);
-		
-		
 		
 	}
 	
@@ -126,6 +124,9 @@ public class RecipeHandler
 	{
 		GameRegistry.addShapelessRecipe(Items.liquidConcreteStack,Items.cementStack, Items.gravelStack, Items.gravelStack, Items.gravelStack, Items.gravelStack, Items.sandStack, Items.sandStack, Items.sandStack, Items.waterStack);
 
+		if(ConfigHandler.vanillaDust)
+			GameRegistry.addShapelessRecipe(new ItemStack(ItemConcreteDust.instance,18,0),Items.cobbleStack, Items.cobbleStack, Items.gravelStack, Items.gravelStack, Items.gravelStack, Items.sandStack, Items.sandStack, Items.sandStack, Items.gravelStack);
+
 		GameRegistry.addShapelessRecipe(Items.cementStack, Items.limeStack, Items.trassStack);
 		GameRegistry.addShapelessRecipe(Items.cementStack, Items.limeStack, Items.dustStack, Items.dustStack, Items.dustStack, Items.dustStack, Items.dustStack, Items.dustStack, Items.dustStack, Items.dustStack);
 		
@@ -149,7 +150,7 @@ public class RecipeHandler
 		}
 		for (ItemStack item : OreDictionary.getOres("rebar")) 
 		{
-			GameRegistry.addShapelessRecipe(new ItemStack(BlockLiftRail.instance,1,0), item, new ItemStack(Item.redstone));
+			GameRegistry.addShapelessRecipe(new ItemStack(BlockLiftRail.staticBlock,1,0), item, new ItemStack(Item.redstone));
 		}
 		
 		for(Item i : Item.itemsList)

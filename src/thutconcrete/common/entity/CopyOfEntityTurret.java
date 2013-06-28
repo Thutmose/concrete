@@ -2,10 +2,10 @@ package thutconcrete.common.entity;
 
 import java.util.List;
 
+import thutconcrete.api.utils.Vector3;
 import thutconcrete.common.ConcreteCore;
 import thutconcrete.common.blocks.BlockMisc;
 import thutconcrete.common.utils.LinearAlgebra;
-import thutconcrete.common.utils.Vector3;
 
 import com.google.common.io.ByteArrayDataInput;
 import com.google.common.io.ByteArrayDataOutput;

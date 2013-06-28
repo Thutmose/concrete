@@ -18,6 +18,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.IconRegister;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.EntityLiving;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemDye;
@@ -63,6 +64,11 @@ public class BlockRebar extends Block implements IRebar
     {
     	boolean placed = false;
     	ItemStack item = player.getHeldItem();
+    	if(player.isSneaking())
+    	{
+    		player.addChatMessage("sneaky");
+    	}
+    	
     	if(item!=null)
     	{
 	    	int itemID = item.itemID;
@@ -91,6 +97,94 @@ public class BlockRebar extends Block implements IRebar
     	}
         return placed;
     }
+    
+    /**
+     * Called when the block is clicked by a player. Args: x, y, z, entityPlayer
+     */
+    public void onBlockClicked(World world, int x, int y, int z, EntityPlayer player) 
+    {
+    	boolean placed = false;
+    	ItemStack item = player.getHeldItem();
+
+    	
+    	if(item!=null)
+    	{
+	    	int itemID = item.itemID;
+	    	if(itemID<4095)
+	    	{
+		    	if(Block.blocksList[itemID] instanceof IRebar)
+		    	{
+		    		
+		        	
+		        	if(player.isSneaking())
+		        	{
+		        		boolean done = false;
+		        		int num = item.stackSize;
+		        		
+		        		while(!done&&num>0)
+		        		{
+				    		placed = placeBlock(world, x, y, z, itemID, item.getItemDamage(), ForgeDirection.UP);
+				    		done = !placed;
+				    		if(placed)
+				    		{
+				    			num--;
+				    		}
+		    				if(!player.capabilities.isCreativeMode)
+		    				{
+		    					//player.addChatMessage("split");
+		    					player.inventory.consumeInventoryItem(item.itemID);
+		    				}
+		        		}
+		        	}
+		        	else
+			    	if(placeBlock(world, x, y, z, itemID, item.getItemDamage(), ForgeDirection.UP))
+			    	{
+			    		placed = true;
+		    				if(!player.capabilities.isCreativeMode)
+		    				{
+		    					//player.addChatMessage("split");
+		    					player.inventory.consumeInventoryItem(item.itemID);
+		    				}
+			    	}
+		    	}
+		    	if(Block.blocksList[itemID] instanceof BlockLiquidConcrete)
+		    	{
+		    		placed = true;
+			    	world.setBlock(x, y, z, BlockLiquidREConcrete.instance.blockID,0,3);
+			    	world.scheduleBlockUpdate(x, y, z, BlockLiquidREConcrete.instance.blockID, 5);
+					if(!player.capabilities.isCreativeMode)
+    					player.inventory.consumeInventoryItem(item.itemID);
+			    	
+		    	}
+	    	}
+	    	
+    	}
+    }
+
+	public ForgeDirection getFacingfromEntity(EntityLiving e)
+	{
+		ForgeDirection side = null;
+		double angle = e.rotationYaw%360;
+			
+		if(angle>315||angle<=45)
+		{
+			return ForgeDirection.SOUTH;
+		}
+		if(angle>45&&angle<=135)
+		{
+			return ForgeDirection.WEST;
+		}
+		if(angle>135&&angle<=225)
+		{
+			return ForgeDirection.NORTH;
+		}
+		if(angle>225&&angle<=315)
+		{
+			return ForgeDirection.EAST;
+		}
+		
+		return side;
+	}
 	
 
     public boolean placeBlock(World worldObj, int x, int y, int z, int rebarID, int rebarMeta, ForgeDirection side)

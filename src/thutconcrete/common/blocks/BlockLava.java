@@ -13,6 +13,9 @@ import java.util.List;
 import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 
+import atomicscience.api.IHeatSource;
+
+import thutconcrete.api.utils.Vector3;
 import thutconcrete.common.ConcreteCore;
 import thutconcrete.common.Volcano;
 import thutconcrete.common.utils.ISoldifiable;
@@ -38,7 +41,7 @@ import net.minecraftforge.common.ForgeDirection;
 import net.minecraftforge.liquids.IBlockLiquid;
 import net.minecraftforge.liquids.ILiquid;
 
-public class BlockLava extends Block16Fluid implements ISoldifiable, IBlockLiquid
+public class BlockLava extends Block16Fluid implements ISoldifiable, IBlockLiquid, IHeatSource
 	{
 	public static BlockLava[] instances = new BlockLava[16];
 	public int typeid;
@@ -53,7 +56,7 @@ public class BlockLava extends Block16Fluid implements ISoldifiable, IBlockLiqui
 	public BlockLava(int par1, int x) {
 		super(par1, Material.lava);
 		typeid = x;
-		this.setLightValue(1);
+		//this.setLightValue(1);
 		if(typeid!=3)
 			setCreativeTab(ConcreteCore.tabThut);
 		
@@ -62,9 +65,15 @@ public class BlockLava extends Block16Fluid implements ISoldifiable, IBlockLiqui
 		this.rate = 0.9;
 		this.solidifiable = true;
 		this.instances[typeid] = this;
+		this.setTickRandomly(true);
 	}
 	
-	
+	 
+    @Override
+    public void onBlockAdded(World worldObj, int x, int y, int z)
+    {
+		tickSides(worldObj, x, y, z, 10);
+    }
 	
     @SideOnly(Side.CLIENT)
 
@@ -73,7 +82,8 @@ public class BlockLava extends Block16Fluid implements ISoldifiable, IBlockLiqui
      */
     public void randomDisplayTick(World par1World, int par2, int par3, int par4, Random par5Random)
     {
-    	Block.lavaStill.randomDisplayTick(par1World, par2, par3, par4, par5Random);
+    	if(!isFloating(par1World, par2, par3, par4))
+    		Block.lavaStill.randomDisplayTick(par1World, par2, par3, par4, par5Random);
     }
 	
     /**
@@ -127,7 +137,7 @@ public class BlockLava extends Block16Fluid implements ISoldifiable, IBlockLiqui
 		
 		int rate = 10*HardenRate*(1+typeid);
 		
-		desiccantList.add(0+4096);
+		desiccantList.add(0+(typeid==3?rate:1)*4096);
 		desiccantList.add(Block.dirt.blockID+rate*4096);
 		desiccantList.add(Block.grass.blockID+rate*4096);
 		desiccantList.add(Block.sand.blockID+rate*4096);
@@ -143,24 +153,23 @@ public class BlockLava extends Block16Fluid implements ISoldifiable, IBlockLiqui
 		
 		//ORDER HERE MATTERS
 		configList.add(0);
-		int viscosity = 1;
+		int viscosity = 0;
 		int fluidity = 2;
-		int differential = 2;
+		int differential = 1;
 		if(typeid == 0)
 		{
 			differential = 1;
 			viscosity = 0;
-			fluidity = 2;
 		}
 		else if(typeid==1)
 		{
 			differential = 2;
-			viscosity = 2;
+			viscosity = 1;
 		}
 		else if(typeid==2)
 		{
 			differential = 2;
-			viscosity = 5;
+			viscosity = 4;
 		}
 		configList.add(viscosity);
 		configList.add(BlockSolidLava.getInstance(typeid).blockID); //Add harden to
@@ -177,7 +186,44 @@ public class BlockLava extends Block16Fluid implements ISoldifiable, IBlockLiqui
 			};
 			fluid16Blocks.put(BlockLava.getInstance(typeid).blockID,data);
 	}
+	/////////////////////////////////////////////////////////Lighting stuff//////////////////////////////////////////////////////////////
+    /**
+     * Get a light value for the block at the specified coordinates, normal ranges are between 0 and 15
+     *
+     * @param world The current world
+     * @param x X Position
+     * @param y Y position
+     * @param z Z position
+     * @return The light value
+     */
+    public int getLightValue(IBlockAccess world, int x, int y, int z)
+    {
+    	return world.getBlockId(x, y-1, z)==blockID&&!isFloating(world, x, y, z)?15:0;//isFloating(world,x,y,z)?0:15-world.getBlockMetadata(x, y, z);
+    }
 	
+    @SideOnly(Side.CLIENT)
+
+    /**
+     * Retrieves the block texture to use based on the display side. Args: iBlockAccess, x, y, z, side
+     */
+    public Icon getBlockTexture(IBlockAccess par1IBlockAccess, int par2, int par3, int par4, int par5)
+    {
+            Material material = par1IBlockAccess.getBlockMaterial(par2, par3 - 1, par4);
+            int id = par1IBlockAccess.getBlockId(par2, par3 - 1, par4);
+            int meta = par1IBlockAccess.getBlockMetadata(par2, par3 - 1, par4);
+            Block block = Block.blocksList[id];
+
+            return isFloating(par1IBlockAccess, par2, par3, par4)? this.iconFloating : this.blockIcon;
+            
+    }
+    
+    public boolean isFloating(IBlockAccess world, int x, int y, int z)
+    {
+    	Vector3 vec = new Vector3(x,y-1,z);
+    	
+    	return (vec.getBlock(world) instanceof Block16Fluid && vec.getBlockMetadata(world)!=0)||vec.isAir(world);
+    }
+    
    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	
 	@Override
@@ -188,24 +234,50 @@ public class BlockLava extends Block16Fluid implements ISoldifiable, IBlockLiqui
 		}
 		
 		doFluidTick(worldObj, x, y, z);
+
 		doHardenTick(worldObj, x, y, z);
 		
-		if(time%6==0)
-		doFireTick(worldObj, x, y, z, par5Random);
+	//	if((worldObj.getBlockId( x, y-1, z)==blockID&&worldObj.getBlockMetadata(x, y-1, z)!=0))
+		int id = 0;
+		int h = y;
+		while(h>0)
+		{
+			id = worldObj.getBlockId(x, h-1, z);
+			if((new Vector3(x, h-1, z)).isAir(worldObj)||breaks.contains(id)||id==Block.waterMoving.blockID||id==Block.waterStill.blockID)
+			{
+				h--;
+			}
+			else
+			{
+				break;
+			}
+		}
 
-		tickSides(worldObj, x, y, z, 5);
+		if(!merge(worldObj, x, y, z, x, h, z)&&h<y-1)
+		{
+			merge(worldObj, x, y, z, x, h+1, z);
+		}
+		//*/
 		
+		if(time%6==0)
+		{
+			doFireTick(worldObj, x, y, z, par5Random);
+		}
+		//if(!Volcano.isOverAnyVolcano(x, z))
+		//{
+		//	tickSides(worldObj, x, y, z, 10);
+		//}
 		time++;
 	}
 	
     public void tickSides(World worldObj, int x, int y, int z, int rate){
-    	int[][]sides = {{1,0,0},{-1,0,0},{0,0,1},{0,0,-1}};
+    	int[][]sides = {{1,0,0},{-1,0,0},{0,0,1},{0,0,-1},{0,1,0},{0,0,0}};
         for(int i=0;i<sides.length;i++){
-        	Block blocki = Block.blocksList[worldObj.getBlockId(x+sides[i][0], y+sides[i][1], z+sides[i][2])];
-  
-        	if(blocki instanceof Block16Fluid && ((Block16Fluid)blocki).solidifiable)
+        	Vector3 vec = new Vector3(x+sides[i][0], y+sides[i][1], z+sides[i][2]);
+        	Block blocki = vec.getBlock(worldObj);
+        	int id = vec.getBlockId(worldObj);
+        	if(blocki instanceof Block16Fluid && ((Block16Fluid)blocki).solidifiable||id==Block.waterStill.blockID)
         	{
-        		int id = worldObj.getBlockId( x+sides[i][0], y+sides[i][1], z+sides[i][2]);
         		worldObj.scheduleBlockUpdate(x+sides[i][0], y+sides[i][1], z+sides[i][2],id,rate);
         	}
         }
@@ -215,21 +287,32 @@ public class BlockLava extends Block16Fluid implements ISoldifiable, IBlockLiqui
 	public void doHardenTick(World worldObj, int x, int y, int z)
 	{
 		
-		int below = worldObj.getBlockId(x, y-1, z);
+		Vector3 down = new Vector3(x, y-1, z);
 		
-		if(below == this.blockID) 
+		int below = down.getBlockId(worldObj);
+		int meta = down.getBlockMetadata(worldObj);
+		
+		if(below==Block.grass.blockID)
 		{
+			down.setBlock(worldObj, Block.dirt.blockID);
+		}
+		
+		if(down.getBlock(worldObj) instanceof Block16Fluid && meta !=0||below == BlockVolcano.instance.blockID)
+		{
+		//	merge(worldObj, x, y, z, x, y-1, z);
 			return;
 		}
 		
-		if(worldObj.getBlockId(x, y-1, z)==Block.grass.blockID)
+		if(below == Block.waterStill.blockID||below == Block.waterMoving.blockID||down.isAir(worldObj)||below == blockID)
 		{
-			worldObj.setBlock(x, y-1, z, Block.dirt.blockID);
+	//		merge(worldObj, x, y, z, x, y-1, z);
+			return;
 		}
 		
-		if(!Volcano.isOverAnyVolcano(x, z))
+	//	if(!Volcano.isOverAnyVolcano(x, z))
 		{
-			super.doHardenTick(worldObj, x, y, z);
+			if(!merge(worldObj, x, y, z, x, y-1, z))
+				super.doHardenTick(worldObj, x, y, z);
 			return;
 		}
 		
@@ -370,22 +453,6 @@ public class BlockLava extends Block16Fluid implements ISoldifiable, IBlockLiqui
         return (newChance > oldChance ? newChance : oldChance);
     }
     
-    @SideOnly(Side.CLIENT)
-
-    /**
-     * Retrieves the block texture to use based on the display side. Args: iBlockAccess, x, y, z, side
-     */
-    public Icon getBlockTexture(IBlockAccess par1IBlockAccess, int par2, int par3, int par4, int par5)
-    {
-            Material material = par1IBlockAccess.getBlockMaterial(par2, par3 - 1, par4);
-            int id = par1IBlockAccess.getBlockId(par2, par3 - 1, par4);
-            int meta = par1IBlockAccess.getBlockMetadata(par2, par3 - 1, par4);
-            Block block = Block.blocksList[id];
-
-            return ((material == Material.air)||(block instanceof Block16Fluid&&meta!=0))? this.iconFloating : this.blockIcon;
-            
-    }
-	
     public void onEntityCollidedWithBlock(World worldObj,int x,int y, int z, Entity entity)
     {
     	if(entity instanceof EntityItem)
@@ -496,6 +563,19 @@ public class BlockLava extends Block16Fluid implements ISoldifiable, IBlockLiqui
 	@Override
 	public NBTTagCompound getLiquidProperties() {
 		return null;
+	}
+
+
+	@Override
+	public float getTemperature() {
+		return 1400;
+	}
+
+
+	@Override
+	public void setTemperature(float celsius) {
+		// TODO Auto-generated method stub
+		
 	}
     
 	}

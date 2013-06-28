@@ -3,13 +3,16 @@ package thutconcrete.common.blocks;
 import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 
+import atomicscience.api.IAntiPoisonBlock;
+import atomicscience.api.poison.Poison;
+
+import thutconcrete.api.utils.IStampableBlock;
 import thutconcrete.client.render.BlockRenderHandler;
 import thutconcrete.common.ConcreteCore;
 import thutconcrete.common.corehandlers.TSaveHandler;
 import thutconcrete.common.items.ItemConcreteDust;
 import thutconcrete.common.tileentity.TileEntityBlock16Fluid;
 import thutconcrete.common.utils.ISaveable;
-import thutconcrete.common.utils.IStampableBlock;
 
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
@@ -29,7 +32,7 @@ import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
 import net.minecraftforge.common.ForgeDirection;
 
-public class BlockConcrete extends Block16Fluid implements ITileEntityProvider, IStampableBlock
+public class BlockConcrete extends Block16Fluid implements ITileEntityProvider, IStampableBlock, IAntiPoisonBlock
 {
 	
 
@@ -192,5 +195,11 @@ public class BlockConcrete extends Block16Fluid implements ITileEntityProvider, 
 			TileEntityBlock16Fluid te = (TileEntityBlock16Fluid) world.getBlockTileEntity(x, y, z);
 			
 			return te.sideArray[side];
+		}
+
+		@Override
+		public boolean isPoisonPrevention(World par1World, int x, int y, int z,
+				Poison type) {
+			return true;
 		}
 }

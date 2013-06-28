@@ -7,6 +7,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 
+import thutconcrete.api.utils.Vector3;
 import thutconcrete.common.ConcreteCore;
 import thutconcrete.common.items.ItemConcreteDust;
 import thutconcrete.common.utils.ThreadSafeWorldOperations;
@@ -57,12 +58,20 @@ public class BlockDust extends Block16Fluid
 		instance=this;
 		this.thisID = par1;
 		this.dust = true;
-		if(data==null){
-			setData();
-		}
     }
   
 	public void setData(){
+		
+		List<Integer> combinationList = new ArrayList<Integer>();
+		
+		combinationList.add(BlockDust.instance.blockID+4096*BlockDust.instance.blockID);
+		combinationList.add(4096*BlockDust.instance.blockID);
+		
+		for(int i = 0;i<4;i++){
+			combinationList.add(BlockLava.getInstance(i).blockID+4096*BlockLava.getInstance(i).blockID);
+		}
+
+		
 		data = new Integer[][]{
 				{
 					0,//ID that this returns when meta hits -1, 
@@ -74,12 +83,7 @@ public class BlockDust extends Block16Fluid
 					0,//0 = not colourable, 1 = colourable.
 				},
 				{},
-				{
-
-					BlockDust.instance.blockID+4096*BlockDust.instance.blockID,
-					4096*BlockDust.instance.blockID,
-					
-				},
+				combinationList.toArray(new Integer[0]),
 				{Block.leaves.blockID}
 			};
 			fluid16Blocks.put(this.thisID,data);
@@ -146,7 +150,7 @@ public class BlockDust extends Block16Fluid
         int id = par1World.getBlockId(par2, par3 - 1, par4);
         Block block = Block.blocksList[id];
         float f = 0.0625F;
-        if(!(safe.isLiquid(par1World, par2,par3-1,par4)||
+        if(!(Vector3.isLiquid(par1World, new Vector3(par2,par3-1,par4))||
         		par1World.isAirBlock(par2, par3-1, par4)||(block instanceof Block16Fluid&&meta!=0))){
         return AxisAlignedBB.getAABBPool().getAABB((double)par2 + this.minX, (double)par3 + this.minY, (double)par4 + this.minZ, (double)par2 + this.maxX, (double)((float)par3 + (float)l * f), (double)par4 + this.maxZ);
         }
@@ -158,9 +162,13 @@ public class BlockDust extends Block16Fluid
 	@Override
 	public void updateTick(World worldObj, int x, int y, int z, Random par5Random)
 	{ 
+
+		if(data==null){
+			setData();
+		}
 		doFluidTick(worldObj, x, y, z);
 		
-		if(Math.random()>0.9999&&worldObj.getBlockMetadata(x, y, z)==0)
+		if(Math.random()>0.999&&worldObj.getBlockMetadata(x, y, z)==0)
 		{
 			int idUp = worldObj.getBlockId(x, y+1, z);
 			int metaUp = worldObj.getBlockMetadata(x, y+1, z);

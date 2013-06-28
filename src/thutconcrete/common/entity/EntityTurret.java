@@ -5,14 +5,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import thutconcrete.api.utils.IMultiBox;
+import thutconcrete.api.utils.Vector3;
+import thutconcrete.api.utils.Vector3.Matrix3;
 import thutconcrete.common.ConcreteCore;
-import thutconcrete.common.blocks.BlockMisc;
+import thutconcrete.common.blocks.*;
 import thutconcrete.common.network.PacketBeam;
 import thutconcrete.common.network.PacketMountedCommand;
-import thutconcrete.common.utils.IMultiBox;
 import thutconcrete.common.utils.LinearAlgebra;
-import thutconcrete.common.utils.Vector3;
-import thutconcrete.common.utils.Vector3.Matrix3;
+import universalelectricity.core.block.IElectricityStorage;
 
 import com.google.common.io.ByteArrayDataInput;
 import com.google.common.io.ByteArrayDataOutput;
@@ -25,31 +26,33 @@ import net.minecraft.entity.passive.EntityPig;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemAxe;
+import net.minecraft.item.ItemBook;
 import net.minecraft.item.ItemDye;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.ItemSword;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.potion.PotionEffect;
+import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.AxisAlignedBB;
 import net.minecraft.world.World;
 import net.minecraftforge.common.ForgeDirection;
 import cpw.mods.fml.common.network.PacketDispatcher;
 import cpw.mods.fml.common.registry.IEntityAdditionalSpawnData;
-
+import net.minecraft.inventory.IInventory;
 
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
 
 public class EntityTurret  extends EntityLiving implements IEntityAdditionalSpawnData, IMultiBox
 {
-	int notfired = 0;
-
-	int rate = 10;
-	int fireCooldown = rate;
+	int rate = 100;
+	int fireCooldown = 100;
 	int mountTime = 0;
+	
+	public int type = 1;
 	
 	public double v = 100;
 	
-	public Entity target;
 	public Entity owner;
 	
 	private AITurret ai;
@@ -61,10 +64,12 @@ public class EntityTurret  extends EntityLiving implements IEntityAdditionalSpaw
 	public Vector3 thisLaser = new Vector3();
 
 	public Vector3 turretDir = new Vector3(1,0,0);
+	
+	public static boolean energyEnabled = false;
 
 	public boolean powered = false;
-	public float mass = 1;
-	public double size = 5;
+	public float mass = 3;
+	public int size = 1;
 	public boolean toDismount;
 	public boolean fire;
 	
@@ -78,7 +83,6 @@ public class EntityTurret  extends EntityLiving implements IEntityAdditionalSpaw
 	
 	public EntityTurret(World par1World) {
 		super(par1World);
-		setSize(size);
 		this.ignoreFrustumCheck = true;
 	}
 	
@@ -86,6 +90,15 @@ public class EntityTurret  extends EntityLiving implements IEntityAdditionalSpaw
 	{
 		this(world);
 		this.setPosition(x, y, z);
+		setSize(size);
+	}
+	
+	public EntityTurret(World world, double x, double y, double z, int size)
+	{
+		this(world);
+		this.setPosition(x, y, z);
+		this.size = size;
+		setSize(size);
 	}
 	
 	public Vector3 source()
@@ -94,12 +107,26 @@ public class EntityTurret  extends EntityLiving implements IEntityAdditionalSpaw
 		return thisLaser.add(new Vector3(0.0,(size*0.8),0.0));
 	}
 	
+    /**
+     * Checks if the entity's current position is a valid location to spawn this entity.
+     */
+    public boolean getCanSpawnHere()
+    {
+    	return false;
+    }
+	
+    public boolean isPotionApplicable(PotionEffect par1PotionEffect)
+    {
+    	return false;
+    }
+	
 	@Override
 	public void onUpdate()
 	{
         this.prevPosX = this.posX;
         this.prevPosY = this.posY;
         this.prevPosZ = this.posZ;
+        clamp();
         if(motionY<0.03)
         {
         	this.motionY -= 0.01D;
@@ -126,7 +153,7 @@ public class EntityTurret  extends EntityLiving implements IEntityAdditionalSpaw
 		{
 			ai.autoFire();
 		}
-		else
+		else if(this.riddenByEntity!=null)
 		{
 			turretDir = new Vector3(this.riddenByEntity.getLookVec());
 			if(turretDir.y<-0.3)
@@ -144,10 +171,12 @@ public class EntityTurret  extends EntityLiving implements IEntityAdditionalSpaw
 					{
 						PacketDispatcher.sendPacketToServer(PacketMountedCommand.getPacket(this, 0));
 					}
-					if(Keyboard.isKeyDown(Keyboard.KEY_SPACE)&&fireCooldown>=rate)
+					if(!fire&&Keyboard.isKeyDown(Keyboard.KEY_SPACE)&&fireCooldown>=rate)
 					{
 						PacketDispatcher.sendPacketToServer(PacketMountedCommand.getPacket(this, 1));
+						System.out.println(fireCooldown+" "+rate);
 						fire = true;
+						fireCooldown = 0;
 					}
 				}
 				if(toDismount&&!worldObj.isRemote)
@@ -155,7 +184,7 @@ public class EntityTurret  extends EntityLiving implements IEntityAdditionalSpaw
 					interact(player);
 					toDismount = false;
 				}
-				if(fire)
+				if(fire&&fireCooldown>=rate)
 				{
 					fire();
 					fireCooldown = 0;
@@ -176,11 +205,13 @@ public class EntityTurret  extends EntityLiving implements IEntityAdditionalSpaw
 		{
 			origin.set(source());
 		}
-		if(!worldObj.isRemote&&this.health<=0)
+		if(this.health<=0)
 		{
+			System.out.println(this.health);
 			this.setDead();
 		}
 		
+		rate = checkAmmo(type)? 50:0;
 		
 		if(ai==null)
 		{
@@ -189,16 +220,174 @@ public class EntityTurret  extends EntityLiving implements IEntityAdditionalSpaw
 		this.prevPosY = this.posY;
 	}
 	
-	public void fire()
-	{			
-		if(!worldObj.isRemote)
-		{
-			EntityBeam beam = new EntityBeam(worldObj, origin.add(turretDir.scalarMult(size)), turretDir, true,mass,v);
-			worldObj.spawnEntityInWorld(beam);
-		}
-		origin.add(turretDir.scalarMult(size)).playSoundEffect(worldObj, 300, 1, "railgun");
+	public void clamp()
+	{
+		this.setPosition(Math.floor(posX) + 0.5, posY, Math.floor(posZ) + 0.5);
 	}
 	
+	public void fire()
+	{	
+		boolean ammo = checkAmmo(type);
+		
+		type = ammo?0:1;
+		
+		double requiredEnergy = type==0?100000:1000;
+		
+		
+		boolean energy = checkEnergy(requiredEnergy);
+		if(energyEnabled&&!energy)
+		{
+			if(riddenByEntity!=null&&riddenByEntity instanceof EntityPlayer)
+			{
+				((EntityPlayer)riddenByEntity).addChatMessage("Insufficient Energy");
+			}
+			return;
+		}
+		if(ammo)
+		{
+			consumeAmmo();
+		}
+		
+		consumeEnergy(requiredEnergy);
+		
+		if(type==0)
+		{
+			if(!worldObj.isRemote)
+			{
+				EntityBeam beam = new EntityBeam(worldObj, origin.add(turretDir.scalarMult(size)), turretDir, true,mass,v);
+				worldObj.spawnEntityInWorld(beam);
+			}
+			origin.add(turretDir.scalarMult(size)).playSoundEffect(worldObj, 300, 1, "railgun");
+		}
+		if(type==1)
+		{
+			if(!worldObj.isRemote)
+			{
+				EntityBeam beam = new EntityBeam(worldObj, origin.add(turretDir.scalarMult(size)), turretDir, false,size,10);
+				worldObj.spawnEntityInWorld(beam);
+				
+				Vector3 next = Vector3.getNextSurfacePoint(worldObj, origin.add(turretDir.scalarMult(size)), turretDir, 256);
+				
+				if(false&&next!=null&&!worldObj.isRemote)
+				{
+					Block block = next.getBlock(worldObj);
+					float resistance = next.getExplosionResistance(worldObj);
+					if(resistance<100&&block!=null&&!(block instanceof BlockLava)&&!
+							block.isFlammable(worldObj, next.intX(), next.intY(), next.intZ(), 
+									worldObj.getBlockMetadata(next.intX(), next.intY(), next.intZ()), ForgeDirection.UP))
+					{
+						int meta = 10;
+						if(block instanceof Block16Fluid)
+						{
+							meta = next.getBlockMetadata(worldObj);
+						}
+						next.setBlock(worldObj, BlockLava.getInstance(3).blockID, meta);
+					}
+				}
+				
+			}
+			//origin.add(turretDir.scalarMult(size)).playSoundEffect(worldObj, 300, 1, "railgun");
+		}
+	}
+	
+	public boolean checkAmmo(int type)
+	{
+		int r = 1+(int)size/2;
+		
+		int[][] sides = {{0,r},{0,-r},{-r,0},{r,0}};
+		
+		for(int i = 0; i<sides.length; i++)
+		{
+			Vector3 vec = (new Vector3(this)).add(new Vector3(sides[i][0],-1,sides[i][1]));
+			TileEntity te = vec.getTileEntity(worldObj);
+			if(te!=null&&te instanceof IInventory)
+			{
+				IInventory inv = (IInventory)te;
+				for(int j = 0; j<inv.getSizeInventory();j++)
+				{
+					ItemStack stack = inv.getStackInSlot(j);
+					if(stack!=null&&stack.itemID==Item.ingotIron.itemID)
+					{
+						return true;
+					}
+				}
+			}
+		}
+		
+		return false;
+	}
+	
+	public void consumeAmmo()
+	{
+		int r = 1+(int)size/2;
+		
+		int[][] sides = {{0,r},{0,-r},{-r,0},{r,0}};
+		
+		for(int i = 0; i<sides.length; i++)
+		{
+			Vector3 vec = (new Vector3(this)).add(new Vector3(sides[i][0],-1,sides[i][1]));
+			TileEntity te = vec.getTileEntity(worldObj);
+			if(te!=null&&te instanceof IInventory)
+			{
+				IInventory inv = (IInventory)te;
+				for(int j = 0; j<inv.getSizeInventory();j++)
+				{
+					ItemStack stack = inv.getStackInSlot(j);
+					if(stack!=null&&stack.itemID==Item.ingotIron.itemID)
+					{
+						inv.decrStackSize(j, 1);
+					}
+				}
+			}
+		}
+	}
+	
+	
+	public boolean checkEnergy(double energy)
+	{
+		boolean ret = false;
+		int r = 1+(int)size/2;
+		
+		int[][] sides = {{0,r},{0,-r},{-r,0},{r,0}};
+		
+		for(int i = 0; i<sides.length; i++)
+		{
+			Vector3 vec = (new Vector3(this)).add(new Vector3(sides[i][0],-1,sides[i][1]));
+			TileEntity te = vec.getTileEntity(worldObj);
+			if(te!=null&&te instanceof IElectricityStorage)
+			{
+				IElectricityStorage inv = (IElectricityStorage)te;
+				if(inv.getJoules()>=energy)
+				{
+					return true;
+				}
+			}
+		}
+		return ret;
+	}
+	
+	public void consumeEnergy(double energy)
+	{
+		boolean ret = false;
+		int r = 1+(int)size/2;
+		
+		int[][] sides = {{0,r},{0,-r},{-r,0},{r,0}};
+		
+		for(int i = 0; i<sides.length; i++)
+		{
+			Vector3 vec = (new Vector3(this)).add(new Vector3(sides[i][0],-1,sides[i][1]));
+			TileEntity te = vec.getTileEntity(worldObj);
+			if(te!=null&&te instanceof IElectricityStorage)
+			{
+				IElectricityStorage inv = (IElectricityStorage)te;
+				if(inv.getJoules()>=energy)
+				{
+					inv.setJoules(inv.getJoules() - energy);
+				}
+			}
+		}
+	}
+		
 	public void rotationAngles()
 	{
 		this.rotationPitch = pitch = (float) Math.toDegrees((turretDir.toSpherical()).y);
@@ -222,12 +411,14 @@ public class EntityTurret  extends EntityLiving implements IEntityAdditionalSpaw
 	{
 		data.writeFloat(pitch);
 		data.writeFloat(yaw);
+		data.writeInt(size);
 	}
 
 	@Override
 	public void readSpawnData(ByteArrayDataInput data) {
 		pitch = data.readFloat();
 		yaw = data.readFloat();
+		size = data.readInt();
 	}
 
 	@Override
@@ -249,7 +440,7 @@ public class EntityTurret  extends EntityLiving implements IEntityAdditionalSpaw
 	public void readEntityFromNBT(NBTTagCompound nbt) {
 		super.readEntityFromNBT(nbt);
 		mass = nbt.getFloat("mass");
-		size = nbt.getDouble("size")==0?5:nbt.getDouble("size");
+		size = nbt.getInteger("size")==0?5:nbt.getInteger("size");
 		turretDir = turretDir.readFromNBT(nbt, "turretDir");
 	//	System.out.println("read: "+turretDir.toString());
 		rotationAngles();
@@ -258,7 +449,7 @@ public class EntityTurret  extends EntityLiving implements IEntityAdditionalSpaw
 	@Override
 	public void writeEntityToNBT(NBTTagCompound nbt) {
 		super.writeEntityToNBT(nbt);
-		nbt.setDouble("size", size);
+		nbt.setInteger("size", size);
 		nbt.setFloat("mass", mass);
 		turretDir.writeToNBT(nbt, "turretDir");
 	//	System.out.println("wrote: "+turretDir.toString());
@@ -288,39 +479,53 @@ public class EntityTurret  extends EntityLiving implements IEntityAdditionalSpaw
         return (double)this.height+1.5;
     }
     
+    public void printThis(EntityPlayer player)
+    {
+    	player.addChatMessage(Double.toString(posX)+" "+Double.toString(posY)+" "+Double.toString(posZ));
+    }
+    
     /**
      * Called when a player interacts with a mob. e.g. gets milk from a cow, gets into the saddle on a pig.
      */
     public boolean interact(EntityPlayer player)
     {
-    	ItemStack item = player.getHeldItem();
-    	if(item!=null&&item.getItem() instanceof ItemDye)
+    	if(worldObj.isRemote)
     	{
-    		this.mass = ((float)item.getItemDamage())/5;
-
-        	player.addChatMessage("Turret Projectile mass set to "+mass);
-    		return true;
+    		player.addChatMessage(Integer.toString(size));
+    		printThis(player);
     	}
+    	ItemStack item = player.getHeldItem();
     	if(item!=null&&item.getItem() instanceof ItemAxe)
     	{
     		setDead();
     		return true;
     	}
+    	if(item!=null&&item.getItem() instanceof ItemBook)
+    	{
+    		size = size==5?3:size==3?1:5;
+    		setSize(size);
+    		return true;
+    	}
     	
-        if (this.riddenByEntity != null && this.riddenByEntity instanceof EntityPlayer && this.riddenByEntity != player)
-        {
-            return true;
-        }
-        else
-        {
-            if (!this.worldObj.isRemote&&mountTime>10)
-            {
-                player.mountEntity(this);
-                mountTime = 0;
-            }
-
-            return true;
-        }
+    	if(!this.worldObj.isRemote&&size==5)
+    	{
+	        if (this.riddenByEntity != null && this.riddenByEntity instanceof EntityPlayer && this.riddenByEntity != player)
+	        {
+	            return true;
+	        }
+	        else
+	        {
+	            if (!this.worldObj.isRemote&&mountTime>10)
+	            {
+	                player.mountEntity(this);
+	                mountTime = 0;
+	            }
+	
+	            return true;
+	        }
+    	}
+        
+        return false;
     }
 
     public boolean shouldRenderInPass(int pass)
@@ -343,7 +548,9 @@ public class EntityTurret  extends EntityLiving implements IEntityAdditionalSpaw
     		}
     		if(box!=null)
     		{
-				box.pushOutOfBox(this, entity, offset);
+				boolean t = box.pushOutOfBox(this, entity, offset);
+				if(t)
+				System.out.println(this+" "+box.toString());
     		}
     	}
     }
@@ -352,7 +559,7 @@ public class EntityTurret  extends EntityLiving implements IEntityAdditionalSpaw
     private void checkCollision()
     {
     	setSize(size);
-        List list = this.worldObj.getEntitiesWithinAABBExcludingEntity(this, AxisAlignedBB.getBoundingBox(posX - (size), posY, posZ - (size), posX+(size), posY + 10, posZ + (size)));
+        List list = this.worldObj.getEntitiesWithinAABBExcludingEntity(this, AxisAlignedBB.getBoundingBox(posX - (size+5), posY, posZ - (size+5), posX+(size+5), posY + 2*size, posZ + (size+5)));
 
     	setOffsets();
         if (list != null && !list.isEmpty())

@@ -40,25 +40,38 @@ public class ItemLiftController extends Item
     		return itemstack;
     	}
        	boolean flag = player.isSneaking();
-       	int liftId = itemstack.stackTagCompound.getInteger("lift");
-       	Entity e = worldObj.getEntityByID(liftId);
-       	if(e!=null&&e instanceof EntityLift)
+       	int liftID = itemstack.stackTagCompound.getInteger("lift");
+       	EntityLift lift = EntityLift.lifts.get(liftID);
+       	if(lift!=null)
        	{
-       		EntityLift lift = (EntityLift)e;
-       	//	if(lift.move)
 
-       		if(player.isSneaking())
+       		boolean move = lift.move;
+       		boolean up = lift.up;
+       		
+       		if(!worldObj.isRemote)
        		{
-       			lift.move = !lift.move;
+	       		if(player.isSneaking())
+	       		{
+	       			lift.move = !lift.move;
+	       		}
+	       		else
+	       		{
+		       		lift.up = !lift.up;
+	       		}
+       			PacketDispatcher.sendPacketToPlayer(PacketLift.getPacket(lift, lift.move?1:0, lift.up?1:0), (Player) player);
        		}
        		else
        		{
-	       		lift.up = !lift.up;
+	       		if(player.isSneaking())
+	       		{
+	       			move = !lift.move;
+	       		}
+	       		else
+	       		{
+		       		up = !lift.up;
+	       		}
        		}
-       		if(!worldObj.isRemote)
-       			PacketDispatcher.sendPacketToPlayer(PacketLift.getPacket(lift, lift.move?1:0, lift.up?1:0), (Player) player);
-       		
-       		String message = "Lift "+(lift.move?"Moving "+(lift.up?"Up":"Down"):"Stopped");
+       		String message = "Lift "+(move?"Moving "+(up?"Up":"Down"):"Stopped");
        		if(worldObj.isRemote)
        			player.addChatMessage(message);
        	}
@@ -75,19 +88,19 @@ public class ItemLiftController extends Item
        	int id = worldObj.getBlockId(x, y, z);
        	int meta = worldObj.getBlockMetadata(x, y, z);
        	
-       	int liftId = itemstack.stackTagCompound.getInteger("lift");
-       	Entity e = worldObj.getEntityByID(liftId);
+       	int liftID = itemstack.stackTagCompound.getInteger("lift");
+       	EntityLift lift = EntityLift.lifts.get(liftID);
        	
-		if(player.isSneaking()&&e!=null&&e instanceof EntityLift&&id==BlockLift.instance.blockID&&meta==1)
+		if(player.isSneaking()&&lift!=null&&id==BlockLift.instance.blockID&&meta==1)
 		{
 			TileEntityLiftAccess te = (TileEntityLiftAccess)worldObj.getBlockTileEntity(x, y, z);
-			te.setLift((EntityLift)e);
+			te.setLift(lift);
 			te.setFloor(te.getButtonFromClick(side, hitX, hitY, hitZ));
 			if(worldObj.isRemote)
 			player.addChatMessage("Set this Floor to "+te.floor);
 			return true;
 		}       	
-		if(e!=null&&e instanceof EntityLift&&id==BlockLift.instance.blockID&&meta==1)
+		if(lift!=null&&id==BlockLift.instance.blockID&&meta==1)
 		{
 			TileEntityLiftAccess te = (TileEntityLiftAccess)worldObj.getBlockTileEntity(x, y, z);
 			if(side!=te.side)
@@ -96,10 +109,6 @@ public class ItemLiftController extends Item
 				return true;
 			}
 		}
-		
-		
-		
-		
     	return false;
     }
     
@@ -109,7 +118,7 @@ public class ItemLiftController extends Item
     	{
     		stack.setTagCompound(new NBTTagCompound() );
     	}
-       	stack.stackTagCompound.setInteger("lift", lift.entityId);
+       	stack.stackTagCompound.setInteger("lift", lift.id);
     }
     
     /**

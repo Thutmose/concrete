@@ -6,17 +6,25 @@ import java.util.List;
 
 import javax.print.attribute.standard.SheetCollate;
 
+import appeng.api.WorldCoord;
+import appeng.api.events.GridTileLoadEvent;
+import appeng.api.events.GridTileUnloadEvent;
+import appeng.api.me.tiles.IDirectionalMETile;
+import appeng.api.me.tiles.IGridMachine;
+import appeng.api.me.tiles.IGridTileEntity;
+import appeng.api.me.util.IGridInterface;
+
 import cpw.mods.fml.common.network.PacketDispatcher;
 import dan200.computer.api.IComputerAccess;
 import dan200.computer.api.IPeripheral;
 
+import thutconcrete.api.network.PacketStampable;
+import thutconcrete.api.utils.IStampableTE;
 import thutconcrete.common.blocks.BlockLift;
 import thutconcrete.common.blocks.BlockLiftRail;
 import thutconcrete.common.entity.EntityLift;
 import thutconcrete.common.network.PacketInt;
 import thutconcrete.common.network.PacketLift;
-import thutconcrete.common.network.PacketStampable;
-import thutconcrete.common.utils.IStampableTE;
 import net.minecraft.block.Block;
 import net.minecraft.entity.Entity;
 import net.minecraft.item.Item;
@@ -29,8 +37,9 @@ import net.minecraft.util.Direction;
 import net.minecraft.util.Icon;
 import net.minecraft.world.World;
 import net.minecraftforge.common.ForgeDirection;
+import net.minecraftforge.common.MinecraftForge;
 
-public class TileEntityLiftAccess extends TileEntity implements IPeripheral
+public class TileEntityLiftAccess extends TileEntity implements IPeripheral, IGridMachine, IDirectionalMETile
 {
 	
 	public int power = 0;
@@ -47,7 +56,9 @@ public class TileEntityLiftAccess extends TileEntity implements IPeripheral
 	boolean loaded = false;
 	
 	public boolean called = false;
-	public int floor = -1;
+	public int floor = 0;
+	public int calledYValue = -1;
+	public int calledFloor = 0;
 	int liftID = -1;
 	public int side = 2;
 	
@@ -63,22 +74,16 @@ public class TileEntityLiftAccess extends TileEntity implements IPeripheral
 		if(first)
 		{
 			blockID = worldObj.getBlockId(xCoord, yCoord, zCoord);
+			
+			GridTileLoadEvent evt = new GridTileLoadEvent(this, worldObj, getLocation());
+			MinecraftForge.EVENT_BUS.post(evt);
 			first = false;
 		}
-		//System.out.println(called);
-		if(!worldObj.isRemote && tries<3 &&lift == null && liftID!=-1&&blockID==BlockLift.instance.blockID&&getBlockMetadata()==1)
+		
+		if(lift!=null&&blockID==BlockLift.instance.blockID&&getBlockMetadata()==1)
 		{
-			if(EntityLift.lifts.containsKey(liftID))
-			{
-				lift = EntityLift.lifts.get(liftID);
-				PacketDispatcher.sendPacketToAllAround(xCoord, yCoord, zCoord, 50, worldObj.provider.dimensionId, PacketLift.getPacket(this, 2, liftID));
-			}
-			else
-			{
-			//System.out.println("lost lift");
-				liftID = -1;
-			}
-			tries++;
+			calledFloor = lift.destinationFloor;
+			worldObj.markBlockForUpdate(xCoord, yCoord, zCoord);
 		}
 		
 		if(blockID == BlockLiftRail.staticBlock.blockID&&time%10==0)
@@ -110,6 +115,24 @@ public class TileEntityLiftAccess extends TileEntity implements IPeripheral
 		time++;
 	}
 	
+    /**
+     * invalidates a tile entity
+     */
+    public void invalidate()
+    {
+		GridTileUnloadEvent evt = new GridTileUnloadEvent(this, worldObj, getLocation());
+		MinecraftForge.EVENT_BUS.post(evt);
+        this.tileEntityInvalid = true;
+    }
+
+    /**
+     * validates a tile entity
+     */
+    public void validate()
+    {
+        this.tileEntityInvalid = false;
+    }
+	
 	public boolean checkSides()
 	{
 		List<Entity> check = worldObj.getEntitiesWithinAABB(EntityLift.class, AxisAlignedBB.getBoundingBox(xCoord+0.5-1, yCoord, zCoord+0.5-1, xCoord+0.5+1, yCoord+1, zCoord+0.5+1));
@@ -123,11 +146,11 @@ public class TileEntityLiftAccess extends TileEntity implements IPeripheral
 	
 	public synchronized void setFloor(int floor)
 	{
-		assert(floor <=16 && floor > 0);
-		if(lift!=null)
+		if(lift!=null&&floor <=64 && floor > 0)
 		{
 			lift.setFoor(this, floor);
 			this.floor = floor;
+			worldObj.markBlockForUpdate(xCoord, yCoord, zCoord);
 		}
 	}
 	
@@ -173,6 +196,8 @@ public class TileEntityLiftAccess extends TileEntity implements IPeripheral
 				//   System.out.println("click" +" "+side+" "+this.side+" "+lift);
 				   int button = getButtonFromClick(side, hitX, hitY, hitZ);
 				   buttonPress(button);
+				   calledFloor = lift.destinationFloor;
+				   worldObj.markBlockForUpdate(xCoord, yCoord, zCoord);
 			   }
 		   }
 	   }
@@ -187,7 +212,7 @@ public class TileEntityLiftAccess extends TileEntity implements IPeripheral
 	   
 	   public synchronized void buttonPress(int button)
 	   {
-		   if(button!=0&&button<=16&&lift!=null&&lift.floors[button-1]!=null)
+		   if(button!=0&&button<=64&&lift!=null&&lift.floors[button-1]!=null)
 		   {
 			   if(button==floor)
 				   this.called = true;
@@ -204,8 +229,11 @@ public class TileEntityLiftAccess extends TileEntity implements IPeripheral
 	   
 	   public void setSide(int side)
 	   {
-		   this.side = side;
-		   worldObj.markBlockForUpdate(xCoord, yCoord, zCoord);
+		   if(side!=0&&side!=1)
+		   {
+			   this.side = side;
+			   worldObj.markBlockForUpdate(xCoord, yCoord, zCoord);
+		   }
 	   }
 	   
 	   public int getButtonFromClick(int side, float hitX, float hitY, float hitZ)
@@ -274,6 +302,18 @@ public class TileEntityLiftAccess extends TileEntity implements IPeripheral
 	    	return worldObj.getBlockId(xCoord, yCoord, zCoord);
 	    	else
 	    		return 0;
+	    }
+	    public int getBlockMetadata()
+	    {
+	    	if(worldObj!=null)
+	    	return worldObj.getBlockMetadata(xCoord, yCoord, zCoord);
+	    	else
+	    		return 0;
+	    }
+	    
+	    public ForgeDirection getFacing()
+	    {
+	    	return ForgeDirection.getOrientation(side);
 	    }
 
 	    public int getBlockId(ForgeDirection side)
@@ -381,6 +421,64 @@ public class TileEntityLiftAccess extends TileEntity implements IPeripheral
 		public void detach(IComputerAccess computer) {
 			// TODO Auto-generated method stub
 			
+		}
+
+	    IGridInterface igi;
+	    boolean hasPower;
+
+		@Override
+		public WorldCoord getLocation() {
+		//	System.out.println("1");
+			return new WorldCoord( xCoord, yCoord, zCoord );
+		}
+
+		@Override
+		public boolean isValid() {
+		//	System.out.println("2");
+			return true;
+		}
+
+		@Override
+		public void setPowerStatus(boolean hasPower) {
+		//	System.out.println("1");
+			this.hasPower = hasPower;
+		}
+
+		@Override
+		public boolean isPowered() {
+		//	System.out.println("3");
+			return hasPower;
+		}
+
+		@Override
+		public IGridInterface getGrid() {
+		//	System.out.println("4");
+			return igi;
+		}
+
+		@Override
+		public void setGrid(IGridInterface gi) {
+		//	System.out.println("5");
+			igi = gi;
+		}
+
+		@Override
+		public World getWorld() {
+		//	System.out.println("6");
+			return worldObj;
+		}
+
+		@Override
+		public boolean canConnect(ForgeDirection dir) {
+			if(blockID == BlockLiftRail.staticBlock.blockID)
+				return true;
+			else
+				return dir != ForgeDirection.getOrientation(side);
+		}
+
+		@Override
+		public float getPowerDrainPerTick() {
+			return 0.0625F;
 		}
 }
 

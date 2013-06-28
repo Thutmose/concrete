@@ -89,8 +89,9 @@ public class BlockLiquidREConcrete extends Block16Fluid implements IRebar, ISold
 		int rate = Math.max(BlockLiquidConcrete.hardenRate/4,1);
 		
 		desiccantList.add(0+rate*4096);
-		
+
 		desiccantList.add(BlockREConcrete.instance.blockID+rate*4096*3);
+		desiccantList.add(BlockMisc.instance.blockID+rate*4096*3);
 	
 		desiccantList.add(BlockConcrete.instance.blockID+rate*4096);
 		
@@ -100,7 +101,7 @@ public class BlockLiquidREConcrete extends Block16Fluid implements IRebar, ISold
 					BlockRebar.instance.blockID,//ID that this returns when meta hits -1, 
 					0,//the viscosity factor,
 					BlockREConcrete.instance.blockID,//a secondary ID that this can turn into used for hardening,
-					1,//The hardening differential that prevents things staying liquid forever.,
+					0,//The hardening differential that prevents things staying liquid forever.,
 					0,//a randomness coefficient, this is multiplied by a random 0-10 then added to the hardening differential and viscosity.,
 					1,//The will fall of edges factor, this is 0 or 1,
 					0,//0 = not colourable, 1 = colourable.

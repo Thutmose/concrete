@@ -9,6 +9,7 @@ import thutconcrete.common.blocks.BlockLava;
 import thutconcrete.common.blocks.BlockLiquidConcrete;
 import thutconcrete.common.blocks.BlockSolidLava;
 import thutconcrete.common.entity.EntityLift;
+import thutconcrete.common.entity.EntityTurret;
 import thutconcrete.common.tileentity.TileEntityVolcano;
 
 import net.minecraft.nbt.NBTBase;
@@ -36,11 +37,16 @@ public class ConfigHandler {
 	public static int ChunkSize;
 	public static double CoolRate;
 	public static boolean volcanos;
+	public static boolean trass;
+	public static boolean limestone;
 	public static int VolcRate;
 	public static int worldID;
 	public static int ashAmount;
 	public static boolean debugPrints;
 	public static boolean volcanosActive;
+	
+	public static boolean defaultTypeFinite;
+	public static boolean vanillaDust;
 
 	public static double LiftSpeedUp;
 	public static double LiftSpeedDown;
@@ -85,11 +91,11 @@ public class ConfigHandler {
 			TileEntityVolcano.tickRate = conf.get("Volcano Stuff", "Volcano tick Rate", 10,"volcanos tick once every this many ticks").getInt();
 			ashAmount= conf.get("Volcano Stuff", "Ash Volume", ashamount, "The base amount of ash from large explosions, scales with lava type, set below 1000 to completely disable ash").getInt();
 			volcanosActive = conf.get("Volcano Stuff", "volcano grow", true,"do volcanos grow?" ).getBoolean(true);
-			CoolRate = conf.get("Volcano Stuff", "Major Explosion Rate", coolrate,"the number of standard deviations needed for a large explosion, this causes ash").getDouble(coolrate);
-			TileEntityVolcano.minorExplosionRate = conf.get("Volcano Stuff", "Minor Explosion Rate", 2,"the number of standard deviations needed for a small explosion, no ash").getDouble(2);
+			TileEntityVolcano.majorExplosionRate = conf.get("Volcano Stuff", "Major Explosion Rate", 2000,"the Average number of Volcano Ticks for a large explosion, this causes ash").getInt();
+			TileEntityVolcano.minorExplosionRate = conf.get("Volcano Stuff", "Minor Explosion Rate", 200,"the Average number of Volcano Ticks for a small explosion, no ash, small amounts of Lava").getInt();
 			TileEntityVolcano.dormancyRate = conf.get("Volcano Stuff", "Dormancy Rate", 5,"the number of standard deviations needed for the volcano to go dormant").getDouble(5);
 			TileEntityVolcano.activityRate = conf.get("Volcano Stuff", "Activity Rate", 4.5,"the number of standard deviations needed for the volcano to go active").getDouble(4.5);
-			TileEntityVolcano.eruptionStartRate = conf.get("Volcano Stuff", "Eruption start Rate", 3,"the number of standard deviations needed for the volcano to enter an eruptive period").getDouble(3);
+			TileEntityVolcano.eruptionStartRate = conf.get("Volcano Stuff", "Eruption start Rate", 2,"the number of standard deviations needed for the volcano to enter an eruptive period").getDouble(3);
 			TileEntityVolcano.eruptionStopRate = conf.get("Volcano Stuff", "Eruption stop Rate", 2,"the number of standard deviations needed for the volcano to exit an eruptive period").getDouble(2);
 			debugPrints = conf.get("Volcano Stuff", "debug Prints", false,"Do Printouts of whatever the volcano does happen?").getBoolean(false);
 			//debug = conf.get("Volcano Stuff", "debug bool", false,"debug bool" ).getBoolean(false);
@@ -102,6 +108,15 @@ public class ConfigHandler {
 			
 			///////////////////////////////////////////////////////////////////////////////////////////////////////////
 			
+			EntityTurret.energyEnabled = conf.get("Tunnel Bore", "energyRequired", false,"Does the tunnel bore need a UE energy storage nearby to fire?").getBoolean(false);
+			
+			vanillaDust = conf.get("Recipes", "dustRecipe", false,"is there a recipe for concrete dust that does not require worldgen?").getBoolean(false);
+			
+			
+			trass = conf.get("World Gen", "trass", true).getBoolean(true);
+			limestone = conf.get("World Gen", "limestone", true).getBoolean(true);
+			defaultTypeFinite = conf.get("World Gen", "defaultFinite", false).getBoolean(false);
+				
 			
 			// Load Item Ids
 			Property item = conf.getItem("Item", itemRange);

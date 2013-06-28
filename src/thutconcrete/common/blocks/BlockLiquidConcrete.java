@@ -128,6 +128,7 @@ public class BlockLiquidConcrete extends Block16Fluid implements IBlockLiquid, I
 		desiccantList.add(0+hardenRate*4096);
 
 		desiccantList.add(BlockREConcrete.instance.blockID+hardenRate*4096*4);
+		desiccantList.add(BlockMisc.instance.blockID+hardenRate*4096*4);
 		
 		desiccantList.add(BlockConcrete.instance.blockID+hardenRate*4096*4);
 

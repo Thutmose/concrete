@@ -3,10 +3,10 @@ package thutconcrete.client.render;
 import org.lwjgl.opengl.GL11;
 
 import cpw.mods.fml.client.FMLClientHandler;
+import thutconcrete.api.utils.Vector3;
 import thutconcrete.common.entity.EntityLift;
 import thutconcrete.common.entity.EntityTurret;
-import thutconcrete.common.tileentity.TileEntityLaser;
-import thutconcrete.common.utils.Vector3;
+import thutconcrete.common.tileentity.TileEntitySeismicMonitor;
 import net.minecraft.client.renderer.entity.Render;
 import net.minecraft.client.renderer.tileentity.TileEntitySpecialRenderer;
 import net.minecraft.entity.Entity;
@@ -14,7 +14,7 @@ import net.minecraft.tileentity.TileEntity;
 import net.minecraftforge.client.model.AdvancedModelLoader;
 import net.minecraftforge.client.model.IModelCustom;
 
-public class RenderLift  extends Render 
+public class RenderLift extends Render
 {
 
 	float pitch = 0.0f;

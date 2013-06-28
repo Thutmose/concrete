@@ -6,15 +6,17 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLiving;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.util.AxisAlignedBB;
+import thutconcrete.api.utils.Vector3;
 import thutconcrete.common.ConcreteCore;
 import thutconcrete.common.utils.LinearAlgebra;
-import thutconcrete.common.utils.Vector3;
 
 public class AITurret 
 {
 	public double targetRange = 0;
 	
 	public EntityTurret turret;
+	
+	public Entity target;
 	
 	Vector3 g = ConcreteCore.g;
 	Vector3 sweepDir = new Vector3();
@@ -32,6 +34,8 @@ public class AITurret
 	public double range = 128;
 	public boolean locked = false;
 	public static double pi = Math.PI;
+	
+	public int notFired = 0;
 
 	long time = 0;
 	
@@ -43,24 +47,26 @@ public class AITurret
 	
 	public void autoFire()
 	{
-		if(turret.powered&&time%(turret.target==null?10:1)==0)
+		if(turret.powered&&time%(target==null?20:1)==0)
 		{
-			
-			double dist = turret.target!=null?turret.origin.distToEntity(turret.target):-1;
+
+			System.out.println("powered "+target);
+			double dist = target!=null?turret.origin.distToEntity(target):-1;
 			if(dist==-1||dist>range)
 			{
 				getTarget();
 			}
 
 			
-			if(turret.target!=null)
+			if(target!=null)
 			{
+				System.out.println("target not null");
 				changePointing();
-				if(turret.target==null)
+				if(target==null)
 					return;
 				if(locked&&turret.fireCooldown>=turret.rate)
 				{
-					turret.notfired = 0;
+					notFired = 0;
 					turret.fireCooldown = 0;
 					locked = false;
 					turret.fire();
@@ -68,10 +74,10 @@ public class AITurret
 				else
 				{
 					turret.fireCooldown++;
-					turret.notfired++;
+					notFired++;
 					changePointing();
 				}
-				if(turret.notfired>100)
+				if(notFired>100)
 				{
 					getTarget();
 				}
@@ -85,14 +91,14 @@ public class AITurret
 	public void changePointing()
 	{
 		setVectors();
-		if(turret.target==null)
+		if(target==null)
 			return;
-		if(!Vector3.isEntityVisibleInDirection(turret.target, targetDir, turret.origin.add(targetDir.scalarMult(turret.size)), turret.worldObj))
+		if(!Vector3.isEntityVisibleInDirection(target, targetDir, turret.origin.add(targetDir.scalarMult(turret.size)), turret.worldObj))
 		{
 			nullTarget();
 			return;
 		}
-		
+		getClientTarget();
 		if(sweepDir.y==0&&sweepDir.z==0) 
 		{
 			locked = true;
@@ -152,7 +158,7 @@ public class AITurret
 				
 				if(Vector3.isEntityVisibleInDirection(e, targetDir, turret.origin.add(targetDir.scalarMult(turret.size)), turret.worldObj)&&turret.origin.distToEntity(e)<range)
 				{
-					turret.target = e;
+					target = e;
 					turret.getDataWatcher().updateObject(31, Integer.valueOf((int)e.entityId));
 					setVectors();
 					return;
@@ -166,6 +172,7 @@ public class AITurret
 		{
 			if(getClientTarget())
 			{
+			//	getClientTarget();
 				setVectors();
 			}
 		}
@@ -176,15 +183,16 @@ public class AITurret
 		if(turret.worldObj.isRemote)
 		{
 			int check = turret.getDataWatcher().getWatchableObjectInt(31);
-			
+			turret.rotationAngles();
 			if(check!=-1)
 			{
-				turret.target = turret.worldObj.getEntityByID(check);
+				target = turret.worldObj.getEntityByID(check);
+				System.out.println(target);
 				return true;
 			}
 			else
 			{
-				turret.target = null;
+				target = null;
 				return false;
 			}
 		}
@@ -193,7 +201,7 @@ public class AITurret
     
 	public void setVectors()
 	{
-		if(turret.target!=null)
+		if(target!=null)
 		{
 
 			if(!turret.origin.equals(turret.source()))
@@ -201,7 +209,7 @@ public class AITurret
 				turret.origin.set(turret.source());
 			}
 			
-			targetLoc = new Vector3(turret.target, true);
+			targetLoc = new Vector3(target, true);
 			targetRange = targetLoc.HorizonalDist(turret.origin);
 			targetDir = (targetLoc.subtract(turret.origin)).normalize();
 			
@@ -221,8 +229,6 @@ public class AITurret
 			
 			double theta = (Math.atan((num)/(g.y*x)));
 			
-			
-
 			aimDir = targetDirSp;
 			aimDir.y = theta;
 			aimDir = aimDir.toCartesian();
@@ -237,7 +243,7 @@ public class AITurret
 	
 	public void nullTarget()
 	{
-		turret.target = null;
+		target = null;
 
 		if(!turret.worldObj.isRemote)
 		{

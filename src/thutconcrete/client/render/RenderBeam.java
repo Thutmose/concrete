@@ -49,7 +49,7 @@ public class RenderBeam extends Render {
 				beam.count++;
 				GL11.glTranslated(beam.direction.x*(beam.count/fraction), beam.direction.y*(beam.count/fraction), beam.direction.z*(beam.count/fraction));
 			}
-			
+			GL11.glScaled(beam.size, beam.size, beam.size);
 		    shape.render(0.0625f);
 		 }
 	}

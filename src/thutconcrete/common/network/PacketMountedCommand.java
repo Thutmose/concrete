@@ -4,6 +4,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
+import thutconcrete.api.network.IPacketProcessor;
 import thutconcrete.common.entity.EntityTurret;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.*;
