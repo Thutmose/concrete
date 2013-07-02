@@ -6,7 +6,7 @@ import cpw.mods.fml.client.FMLClientHandler;
 import thutconcrete.api.utils.Vector3;
 import thutconcrete.common.entity.EntityLift;
 import thutconcrete.common.entity.EntityTurret;
-import thutconcrete.common.tileentity.TileEntitySeismicMonitor;
+import thutconcrete.common.tileentity.TileEntitySensors;
 import net.minecraft.client.renderer.entity.Render;
 import net.minecraft.client.renderer.tileentity.TileEntitySpecialRenderer;
 import net.minecraft.entity.Entity;

@@ -34,7 +34,7 @@ public class PacketLift implements IPacketProcessor
 		if(e instanceof EntityLift)
 		{
 			if(command == 1 || command == 0)
-				((EntityLift)e).move = command!=0;
+				((EntityLift)e).toMoveY = command!=0;
 			if((command == 1 || command == 0)&&(command2 == 1 || command2 == 0))
 				((EntityLift)e).up = command2!=0;
 			if(command == 3)

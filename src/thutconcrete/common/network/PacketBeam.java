@@ -8,7 +8,7 @@ import thutconcrete.api.network.IPacketProcessor;
 import thutconcrete.api.utils.Vector3;
 import thutconcrete.common.entity.EntityBeam;
 import thutconcrete.common.entity.EntityTurret;
-import thutconcrete.common.tileentity.TileEntitySeismicMonitor;
+import thutconcrete.common.tileentity.TileEntitySensors;
 
 import net.minecraft.client.entity.EntityClientPlayerMP;
 

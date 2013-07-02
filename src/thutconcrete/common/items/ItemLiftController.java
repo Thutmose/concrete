@@ -45,26 +45,27 @@ public class ItemLiftController extends Item
        	if(lift!=null)
        	{
 
-       		boolean move = lift.move;
+
+       		boolean move = lift.toMoveY;
        		boolean up = lift.up;
        		
        		if(!worldObj.isRemote)
        		{
 	       		if(player.isSneaking())
 	       		{
-	       			lift.move = !lift.move;
+	       			lift.toMoveY = !lift.toMoveY;
 	       		}
 	       		else
 	       		{
 		       		lift.up = !lift.up;
 	       		}
-       			PacketDispatcher.sendPacketToPlayer(PacketLift.getPacket(lift, lift.move?1:0, lift.up?1:0), (Player) player);
+       			PacketDispatcher.sendPacketToPlayer(PacketLift.getPacket(lift, lift.toMoveY?1:0, lift.up?1:0), (Player) player);
        		}
        		else
        		{
 	       		if(player.isSneaking())
 	       		{
-	       			move = !lift.move;
+	       			move = !lift.toMoveY;
 	       		}
 	       		else
 	       		{

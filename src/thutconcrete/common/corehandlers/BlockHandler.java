@@ -18,6 +18,8 @@ import net.minecraft.world.World;
 import net.minecraftforge.oredict.OreDictionary;
 import thutconcrete.common.blocks.*;
 import thutconcrete.common.items.ItemLiftBlocks;
+import thutconcrete.common.items.ItemDataLinker;
+import thutconcrete.common.items.ItemSensorBlocks;
 import thutconcrete.common.items.ItemWorldGenBlock;
 
 public class BlockHandler {
@@ -61,7 +63,7 @@ public class BlockHandler {
 		BlockLift lift = new BlockLift(id++);
 		blockList.add(new BlockLava(id++,3));
 		blockList.add(new BlockSolidLava(id++,3));
-		blockList.add(new BlockSeismicMonitor(id++));
+		BlockMachine monitor = new BlockMachine(id++);
 		
 		blocks = blockList.toArray(new Block[0]);
 
@@ -69,9 +71,12 @@ public class BlockHandler {
 		
 		BlockWorldGen worldGenBlock = new BlockWorldGen(idWorld);
 		blockList.add(lift);
+		blockList.add(monitor);
+		
 		
 		GameRegistry.registerBlock(lift, ItemLiftBlocks.class, "liftBlocks");
 		GameRegistry.registerBlock(worldGenBlock, ItemWorldGenBlock.class, "worldGenBlock");
+		GameRegistry.registerBlock(monitor, ItemSensorBlocks.class, "sensorBlock");
 		
 		blockList.add(worldGenBlock);
 		blocks = blockList.toArray(new Block[0]);

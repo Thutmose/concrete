@@ -30,15 +30,6 @@ public class TileEntityBlock16Fluid extends TileEntity implements IStampableTE
 	public Icon[] icons = new Icon[6];
 	public int[] iconIDs = {0,0,0,0,0,0}; 
 	
-	public void updateEntity()
-	{
-		if(worldObj.getBlockPowerInput(xCoord, yCoord, zCoord)>0)
-		{
-			System.out.println(worldObj.getBlockPowerInput(xCoord, yCoord, zCoord));
-			worldObj.scheduleBlockUpdate(xCoord, yCoord, zCoord, getBlockId(), 5);
-		}
-	}
-
 	public boolean canUpdate()
 	{
 		return false;

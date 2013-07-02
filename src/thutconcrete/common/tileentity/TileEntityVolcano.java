@@ -37,6 +37,7 @@ import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.Vec3;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.event.ForgeSubscribe;
 
 public class TileEntityVolcano extends TileEntity
 {
@@ -46,6 +47,8 @@ public class TileEntityVolcano extends TileEntity
 	//public int z;
 	public int ventCount = 0;
     int n=0;
+    
+    public boolean grown = false;
    
     public Volcano v;
     
@@ -78,7 +81,7 @@ public class TileEntityVolcano extends TileEntity
     	};
     
     public int[][] sides = {{0,1},{0,-1},{1,0},{-1,0},{1,1},{1,-1},{-1,1},{-1,-1},{0,0}};
-    public int[][] extendedSides =  {{0,2},{0,-2},{2,0},{-2,0},{2,2},{2,-2},{-2,2},{-2,-2}};
+    public int[][] extendedSides =  {{0,2},{0,-2},{2,0},{-2,0},{2,1},{2,-1},{-2,1},{-2,-1}};
     
     public List<Vect> sideVents = new ArrayList<Vect>();
     public Vect mainVent = new Vect(0,1,0);
@@ -91,13 +94,12 @@ public class TileEntityVolcano extends TileEntity
 	public boolean doop = false;
 	
 	private double x0,y0,z0;
-	private boolean read = false;
+
 	public double r0 = 0;
-	public int seed = new Random().nextInt(1000);
-	private double[] wind = {0,0};
+	
 	private int num = 7;
 	private int dustId = BlockDust.instance.blockID;
-	double rMax;
+
 	public boolean first = true;
 	public boolean dormant = false;
 	public int time = 0;
@@ -107,6 +109,18 @@ public class TileEntityVolcano extends TileEntity
 	public static int tickRate;
 	public int activeCount = 0;
 	
+	@ForgeSubscribe
+	public void explosionEvent(ExplosionEvent evt)
+	{
+		if(evt.explosive!=null&&evt.explosive.getExplosiveName().equals("growth"))
+		{
+			if((int)evt.x==xCoord&&(int)evt.z==zCoord)
+			{
+				this.resetGrowthFactor();
+			}
+		}
+	}
+	
 	@Override
 	public void updateEntity()
 	{
@@ -115,7 +129,7 @@ public class TileEntityVolcano extends TileEntity
 			tickRate = 1;
 		}
 		//System.out.println(age%tickRate);
-		if(age%(tickRate*(typeid+1))==0&&ConfigHandler.volcanosActive)
+		if(age%(tickRate*(typeid+1))==0&&ConfigHandler.volcanosActive&&worldObj.doChunksNearChunkExist(xCoord, yCoord, z, 48))
 		{
 		//	System.out.println(age);
 			if(firstTime)
@@ -126,33 +140,30 @@ public class TileEntityVolcano extends TileEntity
 			{
 				volcanoTick();
 				plumeTick();
+				checkSize();
 				
-				if(growthTimes<=100)
+				if(!grown)
 				{
 					double factor = 1-((double)10 - (double)activeCount)/(double)10;
 					v.growthFactor = 1+(factor);
-					if(ConfigHandler.debugPrints)
-					System.out.println("growth Factor: "+v.growthFactor+" "+worldObj+" "+activeCount+" "+growthTimes+" ");
 				}
-				if(doop||(activeCount>10&&growthTimes<=100))
+				else
+				{
+					v.growthFactor = 1;
+				}
+				if((!grown&&activeCount>10)&&!worldObj.isRemote)
 				{
 					if(ConfigHandler.debugPrints)
 					System.out.println(types[typeid]+" Volcano at location "+xCoord+" "+z+" growth Event "+growthTimes+" "+worldObj);
 					growthTimes++;
-					activeCount++;
-					
-					ExplosionEvent evt = new ExplosionEvent(worldObj, xCoord, yCoord+mainVent.y+mainVent.var1, z, getExplosive(0, typeid));
-					MinecraftForge.EVENT_BUS.post(evt);
 					activeCount = 0;
 					v.growthFactor = 1;
-					if(!worldObj.isRemote)
-						rapidGrowthTick();
+					ExplosionEvent evt = new ExplosionEvent(worldObj, xCoord, yCoord+mainVent.y+mainVent.var1, z, getExplosive(0, typeid, "growth"));
+					MinecraftForge.EVENT_BUS.post(evt);
+					rapidGrowthTick();
+					
 				}
-				if(growthTimes>=100&&growthTimes<=102)
-				{
-					v.growthFactor = 1;
-					growthTimes++;
-				}
+				
 				
 				maintainMagma();
 				if(rand.nextGaussian()>dormancyRate)
@@ -174,7 +185,48 @@ public class TileEntityVolcano extends TileEntity
 		age++;
 	}
 	
-	public static IExplosive getExplosive(final int type, final int type1)
+	public void checkSize()
+	{
+		if(!grown)
+		{
+			int maxLength = (int) mainVent.i + yCoord + 5;
+			boolean test = false;
+			for(int[] a: extendedSides)
+			{
+				Vector3 vec = new Vector3(xCoord+a[0], (int) (maxLength), this.z+a[1]);
+				int id = vec.getBlockId(worldObj);
+				if(solidlava.contains(id))
+				{
+					test = true;
+					break;
+				}
+			}
+			grown = test;
+			if(grown)
+			{
+				if(ConfigHandler.debugPrints)
+					System.out.println("max size "+(maxLength));
+			}
+		}
+	}
+	
+	public void resetGrowthFactor()
+	{
+		growthTimes++;
+		activeCount = 0;
+		v.growthFactor = 1;
+	}
+
+	public void resetMajorFactor()
+	{
+		v.majorFactor = 1;
+	}
+	public void resetMinorFactor()
+	{
+		v.minorFactor = 1;
+	}
+	
+	public static IExplosive getExplosive(final int type, final int type1, final String source)
 	{
 		return new IExplosive() {
 			
@@ -217,7 +269,7 @@ public class TileEntityVolcano extends TileEntity
 			
 			@Override
 			public String getExplosiveName() {
-				return "Volcanic Growth Event";
+				return source;
 			}
 			
 			@Override
@@ -248,6 +300,7 @@ public class TileEntityVolcano extends TileEntity
 	{
 		ashAmount = ConfigHandler.ashAmount;
 		firstTime = false;
+		MinecraftForge.EVENT_BUS.register(this);
 		v = Volcano.getVolcano(xCoord, z, worldObj);
 		if(ConfigHandler.debugPrints)
 			System.out.println("frequency: "+v.frequency+" "+worldObj+" "+Volcano.seedFromBlock(xCoord, z, worldObj));
@@ -355,6 +408,7 @@ public class TileEntityVolcano extends TileEntity
 	   mainVent.writeToNBT(par1, "main");
 	   par1.setBoolean("active", active);
 	   par1.setBoolean("erupted", erupted);
+	   par1.setBoolean("grown", grown);
 	   par1.setBoolean("dormant", dormant);
 	   par1.setLong("age", age);
 	   par1.setInteger("activeAge", activeCount);
@@ -377,6 +431,7 @@ public class TileEntityVolcano extends TileEntity
 	   active = par1.getBoolean("active");
 	   erupted = par1.getBoolean("erupted");
 	   dormant = par1.getBoolean("dormant");
+	   grown = par1.getBoolean("grown");
 	   age = par1.getLong("age");
 	   activeCount = par1.getInteger("activeAge");
 	   if(ConfigHandler.debugPrints)
@@ -431,7 +486,7 @@ public class TileEntityVolcano extends TileEntity
 	   	x0 = xCoord+mainVent.x; y0 =  yCoord+mainVent.y+mainVent.var1; z0 = getZCoord()+mainVent.z;
 	   	r0 = rad;
 	   	num = 0;
-	   	n = (int)(0.05*ashAmount);
+	   	n = (int)(0.1*ashAmount);
 		worldObj.createExplosion(null, x0, y0, z0, (float) rad, false);
 	   	addPlumeParticles(0.5, BlockLava.getInstance(typeid).blockID);
 	   	erupted = true;
@@ -450,7 +505,7 @@ public class TileEntityVolcano extends TileEntity
 	   }
 
 	private void plumeCalculations()
-		{
+	{
 		
 		if(particles.size()==0)
 		{
@@ -470,14 +525,11 @@ public class TileEntityVolcano extends TileEntity
 			int id = worldObj.getBlockId((int)p.x, y, (int)p.z);
 			int idP = (int)p.vy;
 			
-	        boolean canBreak = Block16Fluid.instance.willBreak(id);
+	        boolean canBreak = Block16Fluid.willBreak(idP,id);
 
-	        boolean breakException = Block16Fluid.instance.breakException(idP, id);
-	        
-			if(id==0||(canBreak&&!breakException)&&worldObj.doChunksNearChunkExist((int)p.x, y, (int)p.z, 5))
+			if(id==0||(canBreak)&&worldObj.doChunksNearChunkExist((int)p.x, y, (int)p.z, 5))
 			{
 				worldObj.setBlock((int)p.x, y, (int)p.z, idP, (int)p.vx, 3);
-		//		worldObj.scheduleBlockUpdate((int)p.x, y, (int)p.z, idP, 10);
 			}
 		}
 		
@@ -511,19 +563,8 @@ public class TileEntityVolcano extends TileEntity
 			
 	    	boolean fell = false;
 
-		    /*	
-	    	while(h>1)
-	    	{
-	    		id1 = worldObj.getBlockId((int)x+(int)(dx*(1+y-h)), (int)h-1, (int)z+(int)(dz*(1+y-h)));
-	    		if(!(id1==0||Block16Fluid.instance.breaks.contains(id1)||(id==BlockLava.getInstance(typeid).blockID&&(id1==Block.waterMoving.blockID||id1==Block.waterStill.blockID))))
-	    		{
-	    			break;
-	    		}
-	    		h--;
-	    	}
-	   //*/ 	
 	    	id1 = worldObj.getBlockId((int)x+(int)(dx*(y-h)), (int)h, (int)z+(int)(dz*(y-h)));
-	    	if(!(id1==0||Block16Fluid.instance.breaks.contains(id1)||(id==BlockLava.getInstance(typeid).blockID&&(id1==Block.waterMoving.blockID||id1==Block.waterStill.blockID))))
+	    	if(!(id1==0||Block16Fluid.willBreak(id, id1)||(id==BlockLava.getInstance(typeid).blockID&&(id1==Block.waterMoving.blockID||id1==Block.waterStill.blockID))))
 	    	{
 	    		n--;
 	    	}
@@ -542,7 +583,6 @@ public class TileEntityVolcano extends TileEntity
 	    	}
 		}
 		
-	//	System.out.println(particles.size());
 	}
 	
 	void growVent(Vect vent)
@@ -552,6 +592,7 @@ public class TileEntityVolcano extends TileEntity
 		double x = vent.x,y = vent.y,z = vent.z, h = vent.j, e = vent.k, r = vent.r;
 		int countMinor = vent.var2, countMajor = vent.var3;
 		int majorRate = (int) (vent==mainVent?majorExplosionRate:0.85*majorExplosionRate);
+		
 		if(vent!=mainVent && h>mainVent.var1)
 		{
 			return;
@@ -580,6 +621,8 @@ public class TileEntityVolcano extends TileEntity
 			}
 		}
 		
+
+		
 		if(mainVent.var1 > 0.75*maxLength&&countMajor>majorExplosionRate)
 		{
 			active = false;
@@ -588,7 +631,7 @@ public class TileEntityVolcano extends TileEntity
 		}
 		
 
-	  if(age>2500&&countMinor>minorExplosionRate)
+	  if(doop||age>2500&&countMinor>minorExplosionRate)
 	  {
 		  Vector3 centre = new Vector3(xCoord+i*x, yCoord+i*y+h, getZCoord()+i*z);
 		  //*/
@@ -598,7 +641,7 @@ public class TileEntityVolcano extends TileEntity
 			  if(ConfigHandler.debugPrints)
 				  System.out.println(types[typeid]+" Volcano at location "+xCoord+" "+this.z+" minor Explosion "+centre.toString()+" "+worldObj);
 			
-			  double rad = Math.random()*100;
+			  	double rad = Math.random()*200;
 				ExplosionCustom boom = new ExplosionCustom();
 				
 		    	boom.doExplosion2(centre, worldObj, (int) (rad), rad, false, false);
@@ -611,12 +654,13 @@ public class TileEntityVolcano extends TileEntity
 		    	addPlumeParticles(0.5, BlockLava.getInstance(typeid).blockID);
 		    	//*/
 		    	
-				ExplosionEvent evt = new ExplosionEvent(worldObj, x0, y0, z0, getExplosive(1, typeid));
+				ExplosionEvent evt = new ExplosionEvent(worldObj, x0, y0, z0, getExplosive(1, typeid, "Minor Eruption"));
 				MinecraftForge.EVENT_BUS.post(evt);
 		  }
 			
 	    	vent.var2 = 0;
 	    	erupted = true;
+	    	doop = false;
 	  }
 		
 		if(age>2500&&toErupt)
@@ -640,7 +684,7 @@ public class TileEntityVolcano extends TileEntity
 		    	addPlumeParticles(vent==mainVent?1:0.5, BlockDust.instance.blockID);
 		    	//*/
 		    	doop = false;
-				ExplosionEvent evt = new ExplosionEvent(worldObj, x0, y0, z0, getExplosive(2, typeid));
+				ExplosionEvent evt = new ExplosionEvent(worldObj, x0, y0, z0, getExplosive(2, typeid, "Major Eruption"));
 				MinecraftForge.EVENT_BUS.post(evt);
 			}
 		    erupted = true;
@@ -652,12 +696,9 @@ public class TileEntityVolcano extends TileEntity
 		double majorDiff = 1-((double)majorExplosionRate - (double)vent.var3)/(double)majorExplosionRate;
 		double minorDiff = 1-((double)minorExplosionRate - (double)vent.var2)/(double)minorExplosionRate;
 		
-		//System.out.println(majorDiff+" "+minorDiff+" "+(majorDiff*majorDiff)+" "+(minorDiff*minorDiff));
-		
 		v.majorFactor = 1+(majorDiff*majorDiff);
 		v.minorFactor = 1+(minorDiff*minorDiff);
 		
-
 		if(ConfigHandler.debugPrints)
 		System.out.println("major Factor: "+v.majorFactor+", Minor Factor: "+v.minorFactor+" "+worldObj );
 	}
@@ -682,8 +723,27 @@ public class TileEntityVolcano extends TileEntity
     {
         return PacketVolcano.getPacket(this);
     }
-	
-	public static class PlumeParticle
+
+    public byte booleansToByte()
+    {
+    	byte ret = 0;
+    	
+    	ret |= (active?1:0)<<0;
+    	ret |= (dormant?1:0)<<1;
+    	ret |= (grown?1:0)<<2;
+    	
+    	return ret;
+    }
+    
+    public void byteToBools(byte b)
+    {
+    	active = ((b>>0)&1) == 1;
+    	dormant = ((b>>1)&1) == 1;
+    	grown = ((b>>2)&1) == 1;
+    }
+    
+    
+   	public static class PlumeParticle
 	{
 		public double x,y,z,vx,vy,vz,dvy;
 		

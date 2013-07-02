@@ -18,7 +18,8 @@ import thutconcrete.common.corehandlers.ConfigHandler;
 import thutconcrete.common.entity.*;
 import thutconcrete.common.tileentity.TileEntityBlock16Fluid;
 import thutconcrete.common.tileentity.TileEntityLiftAccess;
-import thutconcrete.common.tileentity.TileEntitySeismicMonitor;
+import thutconcrete.common.tileentity.TileEntityRTG;
+import thutconcrete.common.tileentity.TileEntitySensors;
 import thutconcrete.common.utils.ExplosionCustom;
 import thutconcrete.common.utils.ExplosionCustom.Cruncher;
 import thutconcrete.common.utils.IRebar;
@@ -74,6 +75,23 @@ public class BlockMisc extends Block implements ITileEntityProvider, IStampableB
 	{ 
 		
 	}
+	
+    /**
+     * Updates the blocks bounds based on its current state. Args: world, x, y, z
+     */
+    public void setBlockBoundsBasedOnState(IBlockAccess par1IBlockAccess, int par2, int par3, int par4)
+    {
+    	int meta = par1IBlockAccess.getBlockMetadata(par2, par3, par4);
+    	if(meta==2)
+    	{
+    		this.setBlockBounds(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f);
+    	}
+    	else
+    	{
+    		this.setBlockBounds(0f, 0f, 0f, 1f, 1f, 1f);
+    	}
+    }
+	
 	
     @SideOnly(Side.CLIENT)
 
@@ -134,8 +152,7 @@ public class BlockMisc extends Block implements ITileEntityProvider, IStampableB
 	    	}
 	    	else if(!worldObj.isRemote&&item!=null&&item.getItem() instanceof ItemCoal)
 	    	{
-	   // 		EntityRocket rocket = new EntityRocket(worldObj, x,y+5,z);
-	    //		worldObj.spawnEntityInWorld(rocket);
+	    		worldObj.setBlock(x, y+1, z, blockID, 3, 3);
 	    	}
 	    	else if(!worldObj.isRemote&&item!=null&&item.getItem() instanceof ItemSoup)
 	    	{
@@ -205,7 +222,7 @@ public class BlockMisc extends Block implements ITileEntityProvider, IStampableB
         }
         if (metadata==2)
         {
-            return new TileEntitySeismicMonitor();
+            return new TileEntityRTG();
         }
         return null;
     }
@@ -327,10 +344,10 @@ public class BlockMisc extends Block implements ITileEntityProvider, IStampableB
 	}
 
 
-	@Override
-	public boolean[] sides(World worldObj, int x, int y, int z) {
-		return BlockREConcrete.instance.sides(worldObj, x, y, z);
-	}
+//	@Override
+//	public boolean[] sides(World worldObj, int x, int y, int z) {
+//		return BlockREConcrete.instance.sides(worldObj, x, y, z);
+//	}
 
 
 	@Override

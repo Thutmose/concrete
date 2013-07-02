@@ -10,6 +10,7 @@ import thutconcrete.common.blocks.BlockLiquidConcrete;
 import thutconcrete.common.blocks.BlockSolidLava;
 import thutconcrete.common.entity.EntityLift;
 import thutconcrete.common.entity.EntityTurret;
+import thutconcrete.common.tileentity.TileEntityRTG;
 import thutconcrete.common.tileentity.TileEntityVolcano;
 
 import net.minecraft.nbt.NBTBase;
@@ -20,15 +21,15 @@ import net.minecraftforge.common.Property;
 public class ConfigHandler {
 
     private int blockRange = 800;
-    private int blockWorldRange = 252;
-    private int biomeID = 252;
+    private int blockWorldRange = 159;
+    private int biomeID = 159;
     private int itemRange = 7000;
 
     private int chunkSize = 500;
     private double coolrate = 3.5;
     private int ashamount = 25000;
 
-    private int volcanoRate = 5000;
+    private int volcanoRate = 10000;
 
 	// Blocks
 	public static int IDBlock;
@@ -98,14 +99,14 @@ public class ConfigHandler {
 			TileEntityVolcano.eruptionStartRate = conf.get("Volcano Stuff", "Eruption start Rate", 2,"the number of standard deviations needed for the volcano to enter an eruptive period").getDouble(3);
 			TileEntityVolcano.eruptionStopRate = conf.get("Volcano Stuff", "Eruption stop Rate", 2,"the number of standard deviations needed for the volcano to exit an eruptive period").getDouble(2);
 			debugPrints = conf.get("Volcano Stuff", "debug Prints", false,"Do Printouts of whatever the volcano does happen?").getBoolean(false);
-			//debug = conf.get("Volcano Stuff", "debug bool", false,"debug bool" ).getBoolean(false);
 			////////////////////////////////Lift Stuff////////////////////////////////////////////////////////////////
 
-			LiftSpeedUp = conf.get("Lift Settings", "Upward speed", 0.5,"The speed in blocks/tick for the lift going upwards").getDouble(0.5);
-			LiftSpeedDown = conf.get("Lift Settings", "Downward speed", 0.5,"The speed in blocks/tick for the lift going downwards").getDouble(0.5);
+			LiftSpeedUp = conf.get("Lift Settings", "Upward speed", 0.3,"The speed in blocks/tick for the lift going upwards").getDouble(0.3);
+			LiftSpeedDown = conf.get("Lift Settings", "Downward speed", 0.35,"The speed in blocks/tick for the lift going downwards").getDouble(0.35);
+			EntityLift.ENERGYCOST = conf.get("Lift Settings", "energyCost", 5,"the amount of energy (UE Joules) per IronBlock-distance traveled.").getDouble(5);
 			EntityLift.ACCELERATIONTICKS = conf.get("Lift Settings", "stopping ticks", 20,"This corresponds to how slowly the lift stops, setting this to 0 will result in very jerky lift.").getInt();
 			EntityLift.AUGMENTG = conf.get("Lift Settings", "smoothdown", true,"Does the lift smooth your downward motion? if set to true will inhibit jumping while lift is moving down.").getBoolean(true);
-			
+			TileEntityRTG.POWEROUTPUT = conf.get("Lift Settings", "power", 500,"the output of the RTG").getDouble(500);
 			///////////////////////////////////////////////////////////////////////////////////////////////////////////
 			
 			EntityTurret.energyEnabled = conf.get("Tunnel Bore", "energyRequired", false,"Does the tunnel bore need a UE energy storage nearby to fire?").getBoolean(false);

@@ -1,135 +1,132 @@
 package thutconcrete.client.render;
 
+import java.util.Arrays;
+
+import cpw.mods.fml.client.FMLClientHandler;
+
 import net.minecraft.block.Block;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.RenderBlocks;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.util.Icon;
 import net.minecraft.world.IBlockAccess;
+import thutconcrete.common.ConcreteCore;
 import thutconcrete.common.utils.IRebar;
 
 public class RenderIRebar {
 
-	public void renderREConcrete(IBlockAccess world, Block parblock, double x, double y, double z, int meta, boolean[] sides, Icon icon, Icon icon1, boolean rebar, boolean concrete, Icon[] icons)
+	public RenderBlocks b;
+	
+	public void renderREConcrete(Block parblock, double x, double y, double z, boolean[] sides, Icon icon,  boolean rebar)
     {
+
         Tessellator tessellator = Tessellator.instance;
         boolean animated = false;
        
-        tessellator.setBrightness(parblock.getMixedBrightnessForBlock(world, (int)x, (int)y, (int)z));
+        tessellator.setBrightness(parblock.getMixedBrightnessForBlock(ConcreteCore.commproxy.getClientWorld(), (int)x, (int)y, (int)z));
         tessellator.setColorRGBA(255, 255, 255, 255);
-        
-        int j = 15-meta;
-        double yCCmax =y+ ((1 + j)) / 16.0F;
-        
-        double xCCmin = 0+x, zCCmin = 0+z, yCCmin = 0+y, xCCmax = 1+x, zCCmax = 1+z;
-        
         if(rebar)
         {
-        	tessAddRebar(parblock,tessellator, icon1, x,y,z, sides, !concrete);
-        }
-        if(concrete)
-        {
-        	new RenderCuboid(tessellator, icons, xCCmin, zCCmin, yCCmin, xCCmax, zCCmax, yCCmax);
+        	tessAddRebar(tessellator, icon, x,y,z, sides, true);
         }
     }
 	
-	private void tessAddRebar(Block parblock, Tessellator tessellator, Icon icon, double x, double y, double z, boolean[] sides, boolean justRebar){
-		if(parblock instanceof IRebar)
+	public void tessAddRebar(Tessellator tessellator, Icon icon, double x, double y, double z, boolean[] sides, boolean justRebar){
+		boolean connected = false;
+		boolean[] renderSides = new boolean[7];
+		renderSides[6] = justRebar;
+		double dl = justRebar?0.005:0;
+		
+		if(sides[0]&&sides[1]&&sides[2]&&sides[3]&&sides[4]&&sides[5])
 		{
-			boolean connected = false;
-			boolean[] renderSides = new boolean[7];
-			renderSides[6] = justRebar;
-			double dl = justRebar?0.005:0;
+			crossColumnRebar(tessellator, icon, x, y, z,justRebar);
+			return;
+		}
 			
-			if(sides[0]&&sides[1]&&sides[2]&&sides[3]&&sides[4]&&sides[5])
+		if(sides[0]&&sides[1]&&sides[2]&&sides[3]&&!sides[4]&&!sides[5])
+		{
+			connected = true;
+			crossRebar(tessellator, icon, x, y, z,justRebar);
+		}
+		else
+		{
+			if(sides[0]&&!sides[1])
 			{
-				crossColumnRebar(tessellator, icon, x, y, z,justRebar);
-				return;
-			}
-				
-			if(sides[0]&&sides[1]&&sides[2]&&sides[3]&&!sides[4]&&!sides[5])
-			{
-				connected = true;
-				crossRebar(tessellator, icon, x, y, z,justRebar);
-			}
-			else
-			{
-				if(sides[0]&&!sides[1])
-				{
-					renderSides[0] = true;
-					xHorizontalRebar(tessellator, icon, x, y, z, 1+dl, 0.4,renderSides);
-					renderSides[0] = false;
-					connected = true;
-				}
-				if(sides[1]&&!sides[0])
-				{
-					renderSides[1] = true;
-					xHorizontalRebar(tessellator, icon, x, y, z, 0-dl, 0.6,renderSides);
-					renderSides[1] = false;
-					connected = true;
-				}
-				if(sides[1]&&sides[0])
-				{
-					renderSides[0] = true;
-					renderSides[1] = true;
-					xHorizontalRebar(tessellator, icon, x, y, z, 1+dl, 0-dl,renderSides);
-					renderSides[0] = false;
-					renderSides[1] = false;
-					connected = true;
-				}
-				
-				if(sides[2]&&!sides[3])
-				{
-					renderSides[2] = true;
-					zHorizontalRebar(tessellator, icon, x, y, z, 1+dl, 0.4,renderSides);
-					renderSides[2] = false;
-					connected = true;
-				}
-				if(sides[3]&&!sides[2])
-				{
-					renderSides[3] = true;
-					zHorizontalRebar(tessellator, icon, x, y, z, 0-dl, 0.6,renderSides);
-					renderSides[3] = false;
-					connected = true;
-				}
-				if(sides[3]&&sides[2])
-				{
-					renderSides[3] = true;
-					renderSides[2] = true;
-					zHorizontalRebar(tessellator, icon, x, y, z, 1+dl, 0-dl,renderSides);
-					renderSides[3] = false;
-					renderSides[2] = false;
-					connected = true;
-				}
-			}
-			
-			if(sides[4]&&!sides[5])
-			{
-				renderSides[4] = true;
-				columnRebar(tessellator, icon, x, y, z, 1+dl, 0.4,renderSides);
+				renderSides[0] = true;
+				xHorizontalRebar(tessellator, icon, x, y, z, 1+dl, 0.4,renderSides);
+				renderSides[0] = false;
 				connected = true;
 			}
-			if(sides[5]&&!sides[4])
+			if(sides[1]&&!sides[0])
 			{
-				renderSides[5] = true;
-				columnRebar(tessellator, icon, x, y, z, 0-dl, 0.6,renderSides);
+				renderSides[1] = true;
+				xHorizontalRebar(tessellator, icon, x, y, z, 0-dl, 0.6,renderSides);
+				renderSides[1] = false;
 				connected = true;
 			}
-			if(sides[5]&&sides[4])
+			if(sides[1]&&sides[0])
 			{
-				renderSides[4] = true;
-				renderSides[5] = true;
-				columnRebar(tessellator, icon, x, y, z, 1+dl, 0.0-dl,renderSides);
+				renderSides[0] = true;
+				renderSides[1] = true;
+				xHorizontalRebar(tessellator, icon, x, y, z, 1+dl, 0-dl,renderSides);
+				renderSides[0] = false;
+				renderSides[1] = false;
 				connected = true;
 			}
 			
-			
-			if(!connected)
+			if(sides[2]&&!sides[3])
 			{
-				crossRebar(tessellator, icon, x, y, z, justRebar);
+				renderSides[2] = true;
+				zHorizontalRebar(tessellator, icon, x, y, z, 1+dl, 0.4,renderSides);
+				renderSides[2] = false;
+				connected = true;
 			}
+			if(sides[3]&&!sides[2])
+			{
+				renderSides[3] = true;
+				zHorizontalRebar(tessellator, icon, x, y, z, 0-dl, 0.6,renderSides);
+				renderSides[3] = false;
+				connected = true;
+			}
+			if(sides[3]&&sides[2])
+			{
+				renderSides[3] = true;
+				renderSides[2] = true;
+				zHorizontalRebar(tessellator, icon, x, y, z, 1+dl, 0-dl,renderSides);
+				renderSides[3] = false;
+				renderSides[2] = false;
+				connected = true;
+			}
+		}
+		
+		if(sides[4]&&!sides[5])
+		{
+			renderSides[4] = true;
+			columnRebar(tessellator, icon, x, y, z, 1+dl, 0.4,renderSides);
+			connected = true;
+		}
+		if(sides[5]&&!sides[4])
+		{
+			renderSides[5] = true;
+			columnRebar(tessellator, icon, x, y, z, 0-dl, 0.6,renderSides);
+			connected = true;
+		}
+		if(sides[5]&&sides[4])
+		{
+			renderSides[4] = true;
+			renderSides[5] = true;
+			columnRebar(tessellator, icon, x, y, z, 1+dl, 0.0-dl,renderSides);
+			connected = true;
+		}
+		
+		
+		if(!connected)
+		{
+			crossRebar(tessellator, icon, x, y, z, justRebar);
 		}
 	}
 
-	private void crossRebar(Tessellator tessellator, Icon icon, double x, double y, double z, boolean full){
+	public void crossRebar(Tessellator tessellator, Icon icon, double x, double y, double z, boolean full){
 		boolean[] sides = {true,true,false,false,false,false};
 		double dl = full? 0.005:0;
 		xHorizontalRebar(tessellator, icon, x, y, z, 1+dl,0-dl, sides);
@@ -137,7 +134,7 @@ public class RenderIRebar {
 		zHorizontalRebar(tessellator, icon, x, y, z, 1+dl,0-dl,sides);
 	//	columnRebar(tessellator, icon, x, y, z,0.6,0.4,sides);
 	}
-	private void xHorizontalRebar(Tessellator tessellator, Icon icon, double x, double y, double z, double length, double min, boolean[] sides){
+	public void xHorizontalRebar(Tessellator tessellator, Icon icon, double x, double y, double z, double length, double min, boolean[] sides){
 
 		double dT = 0.05;
 		double dS = 0.1;
@@ -145,10 +142,10 @@ public class RenderIRebar {
 		
 		double 	yMin = y+(0.5-dS-dT),
 				xMin = x+dl+min,
-				zMin = z+(0.5-dS-dT),
+				zMin = z+(0.5-dS-dT-0.001),
 				yMax = y+(0.5+dS+dT),
 				xMax = x+length-dl,
-				zMax = z+(0.5+dS+dT);
+				zMax = z+(0.5+dS+dT-0.001);
 		tessAddCuboid(tessellator, icon, xMin, zMin, yMin, xMax, zMax, yMax, sides);
 		/*/
 		double 	yMin = y+(0.5-dS-dT),
@@ -186,7 +183,7 @@ public class RenderIRebar {
 		
 	}
 	
-	private void zHorizontalRebar(Tessellator tessellator, Icon icon, double x, double y, double z, double length, double min, boolean[] sides){
+	public void zHorizontalRebar(Tessellator tessellator, Icon icon, double x, double y, double z, double length, double min, boolean[] sides){
 
 		double dT = 0.05;
 		double dS = 0.1;
@@ -194,10 +191,10 @@ public class RenderIRebar {
 		
 		double 	yMin = y+(0.5-dS-dT),
 				zMin = z+dl+min,
-				xMin = x+(0.5-dS-dT),
+				xMin = x+(0.5-dS-dT-0.001),
 				yMax = y+(0.5+dS+dT),
 				zMax = z+length-dl,
-				xMax = x+(0.5+dS+dT);
+				xMax = x+(0.5+dS+dT-0.001);
 		tessAddCuboid(tessellator, icon, xMin, zMin, yMin, xMax, zMax, yMax, sides);
 		
 		/*/
@@ -236,7 +233,7 @@ public class RenderIRebar {
 	}
 	
 	
-	private void columnRebar(Tessellator tessellator, Icon icon, double x, double y, double z, double length, double min, boolean[] sides){
+	public void columnRebar(Tessellator tessellator, Icon icon, double x, double y, double z, double length, double min, boolean[] sides){
 
 		double dT = 0.05;
 		double dS = 0.1;
@@ -287,7 +284,7 @@ public class RenderIRebar {
 	}
 	
 	
-	private void crossColumnRebar(Tessellator tessellator, Icon icon, double x, double y, double z, boolean full){
+	public void crossColumnRebar(Tessellator tessellator, Icon icon, double x, double y, double z, boolean full){
 
 		crossRebar(tessellator, icon, x, y, z, full);
 		boolean[] sides = {false,false,false,false,true,true};
@@ -299,13 +296,14 @@ public class RenderIRebar {
 	
 	
 	
-	private void tessAddCuboid(Tessellator tessellator, Icon icon, double xMin, double zMin, double yMin, double xMax, double zMax, double yMax, boolean[] sides){
+	public void tessAddCuboid(Tessellator tessellator, Icon icon, double xMin, double zMin, double yMin, double xMax, double zMax, double yMax, boolean[] sides){
 		
         double d0 = (double)icon.getMinU();
         double d1 = (double)icon.getMaxU();
         double d2 = (double)icon.getMaxU();
         double d3 = (double)icon.getMinV();
         double d4 = (double)icon.getMaxV();
+       // System.out.println(Arrays.toString(sides));
         if(!sides[2])
         {
         ///////////////side1///////////////

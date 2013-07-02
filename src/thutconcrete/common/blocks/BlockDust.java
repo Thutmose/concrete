@@ -70,7 +70,16 @@ public class BlockDust extends Block16Fluid
 		for(int i = 0;i<4;i++){
 			combinationList.add(BlockLava.getInstance(i).blockID+4096*BlockLava.getInstance(i).blockID);
 		}
-
+//		breaks.add(78);
+//		breaks.add(38);
+//		breaks.add(37);
+//		breaks.add(31);
+//		breaks.add(Block.crops.blockID);
+//		breaks.add(Block.potato.blockID);
+//		breaks.add(Block.carrot.blockID);
+//		breaks.add(Block.melonStem.blockID);
+//		breaks.add(Block.reed.blockID);
+//		breaks.add(Block.leaves.blockID);
 		
 		data = new Integer[][]{
 				{
@@ -81,10 +90,11 @@ public class BlockDust extends Block16Fluid
 					0,//a randomness coefficient, this is multiplied by a random 0-10 then added to the hardening differential and viscosity.,
 					0,//The will fall of edges factor, this is 0 or 1,
 					0,//0 = not colourable, 1 = colourable.
+					1,//1 = replaces air, 0= doesn't replace air
 				},
 				{},
 				combinationList.toArray(new Integer[0]),
-				{Block.leaves.blockID}
+				{78,38,37,31,Block.crops.blockID,Block.potato.blockID,Block.carrot.blockID,Block.melonStem.blockID,Block.reed.blockID}
 			};
 			fluid16Blocks.put(this.thisID,data);
 	}

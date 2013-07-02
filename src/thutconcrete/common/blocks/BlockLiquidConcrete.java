@@ -12,7 +12,6 @@ import thutconcrete.common.ConcreteCore;
 import thutconcrete.common.corehandlers.TSaveHandler;
 import thutconcrete.common.tileentity.TileEntityBlock16Fluid;
 import thutconcrete.common.utils.ISaveable;
-import thutconcrete.common.utils.ISoldifiable;
 import thutconcrete.common.utils.ThreadSafeWorldOperations;
 
 import cpw.mods.fml.relauncher.Side;
@@ -39,7 +38,7 @@ import net.minecraftforge.common.ForgeDirection;
 import net.minecraftforge.liquids.IBlockLiquid;
 import net.minecraftforge.liquids.ILiquid;
 
-public class BlockLiquidConcrete extends Block16Fluid implements IBlockLiquid, ISoldifiable
+public class BlockLiquidConcrete extends Block16Fluid implements IBlockLiquid
 {
 
 	public static BlockLiquidConcrete instance;
@@ -124,8 +123,11 @@ public class BlockLiquidConcrete extends Block16Fluid implements IBlockLiquid, I
 		combinationList.add(BlockLiquidREConcrete.instance.blockID+4096*BlockLiquidREConcrete.instance.blockID);
 		combinationList.add(BlockREConcrete.instance.blockID+4096*BlockLiquidREConcrete.instance.blockID);
 
-		
+
 		desiccantList.add(0+hardenRate*4096);
+		desiccantList.add(Block.dirt.blockID+hardenRate*4096);
+		desiccantList.add(Block.grass.blockID+hardenRate*4096);
+		desiccantList.add(Block.sand.blockID+hardenRate*4096);
 
 		desiccantList.add(BlockREConcrete.instance.blockID+hardenRate*4096*4);
 		desiccantList.add(BlockMisc.instance.blockID+hardenRate*4096*4);
@@ -141,9 +143,11 @@ public class BlockLiquidConcrete extends Block16Fluid implements IBlockLiquid, I
 					0,//a randomness coefficient, this is multiplied by a random 0-10 then added to the hardening differential and viscosity.,
 					1,//The will fall of edges factor, this is 0 or 1,
 					0,//0 = not colourable, 1 = colourable.
+					1,//1 = replaces air, 0= doesn't replace air
 				},
 				desiccantList.toArray(new Integer[0]),
 				combinationList.toArray(new Integer[0]),
+				{78,38,37,31,Block.crops.blockID,Block.potato.blockID,Block.carrot.blockID,Block.melonStem.blockID,Block.reed.blockID,Block.leaves.blockID}
 			};
 			fluid16Blocks.put(BlockLiquidConcrete.instance.blockID,data);
 

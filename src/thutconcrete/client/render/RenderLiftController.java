@@ -4,7 +4,7 @@ import org.lwjgl.opengl.GL11;
 
 import thutconcrete.common.blocks.BlockLift;
 import thutconcrete.common.tileentity.TileEntityLiftAccess;
-import thutconcrete.common.tileentity.TileEntitySeismicMonitor;
+import thutconcrete.common.tileentity.TileEntitySensors;
 
 import cpw.mods.fml.client.registry.ISimpleBlockRenderingHandler;
 import cpw.mods.fml.client.registry.RenderingRegistry;

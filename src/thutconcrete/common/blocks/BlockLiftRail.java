@@ -53,7 +53,7 @@ public class BlockLiftRail extends BlockRebar implements ITileEntityProvider
     	if(item!=null)
     	{
 	    	int itemID = item.itemID;
-	    	if(side==0||side==1&&itemID<4095)
+	    	if((side==0||side==1)&&itemID<4095)
 	    	{
 		    	if(Block.blocksList[itemID] instanceof IRebar)
 		    	{
@@ -65,6 +65,14 @@ public class BlockLiftRail extends BlockRebar implements ITileEntityProvider
 			    	}
 		    	}
 	    	}
+    	}
+    	else
+    	{
+    		TileEntity te = world.getBlockTileEntity(x, y, z);
+    		if(te!=null && te instanceof TileEntityLiftAccess)
+    		{
+    			player.addChatMessage(((TileEntityLiftAccess)te).connectionInfo());
+    		}
     	}
         return placed;
     }

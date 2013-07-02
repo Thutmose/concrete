@@ -1,10 +1,15 @@
 package thutconcrete.common.blocks;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 
+import atomicscience.api.IAntiPoisonBlock;
+import atomicscience.api.poison.Poison;
+
+import thutconcrete.api.utils.IStampableBlock;
 import thutconcrete.client.render.BlockRenderHandler;
 import thutconcrete.common.ConcreteCore;
 import thutconcrete.common.blocks.Block16Fluid.WetConcrete;
@@ -13,7 +18,6 @@ import thutconcrete.common.items.ItemConcreteDust;
 import thutconcrete.common.tileentity.TileEntityBlock16Fluid;
 import thutconcrete.common.utils.IRebar;
 import thutconcrete.common.utils.ISaveable;
-import thutconcrete.common.utils.ISoldifiable;
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
 import net.minecraft.block.Block;
@@ -37,7 +41,7 @@ import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
 import net.minecraftforge.common.ForgeDirection;
 
-public class BlockLiquidREConcrete extends Block16Fluid implements IRebar, ISoldifiable
+public class BlockLiquidREConcrete extends Block16Fluid implements IRebar, ITileEntityProvider, IStampableBlock, IAntiPoisonBlock
 {
 	
 	public static Block instance;
@@ -45,8 +49,11 @@ public class BlockLiquidREConcrete extends Block16Fluid implements IRebar, ISold
 	static Material wetConcrete = (new WetConcrete(MapColor.stoneColor));
 	Integer[][] data;
 	boolean[] side = new boolean[6];
-	
-	public BlockLiquidREConcrete(int par1) {
+    @SideOnly(Side.CLIENT)
+    public Icon theIcon;
+    public boolean solidifiable;
+    
+    public BlockLiquidREConcrete(int par1) {
 		super(par1, Material.iron);
 		setUnlocalizedName("REconcreteLiquid");
 		this.setResistance((float) 10.0);
@@ -59,7 +66,6 @@ public class BlockLiquidREConcrete extends Block16Fluid implements IRebar, ISold
     {
         return false;
     }
-	
     /**
      * Returns the ID of the items to drop on destruction.
      */
@@ -86,15 +92,17 @@ public class BlockLiquidREConcrete extends Block16Fluid implements IRebar, ISold
 		combinationList.add(BlockLiquidREConcrete.instance.blockID+4096*BlockLiquidREConcrete.instance.blockID);
 		combinationList.add(BlockREConcrete.instance.blockID+4096*BlockLiquidREConcrete.instance.blockID);
 		
-		int rate = Math.max(BlockLiquidConcrete.hardenRate/4,1);
+		int rate = Math.max(BlockLiquidConcrete.hardenRate,1);
 		
 		desiccantList.add(0+rate*4096);
+		desiccantList.add(Block.dirt.blockID+rate*4096);
+		desiccantList.add(Block.grass.blockID+rate*4096);
+		desiccantList.add(Block.sand.blockID+rate*4096);
 
 		desiccantList.add(BlockREConcrete.instance.blockID+rate*4096*3);
 		desiccantList.add(BlockMisc.instance.blockID+rate*4096*3);
 	
 		desiccantList.add(BlockConcrete.instance.blockID+rate*4096);
-		
 		
 		data = new Integer[][]{
 				{	
@@ -105,21 +113,15 @@ public class BlockLiquidREConcrete extends Block16Fluid implements IRebar, ISold
 					0,//a randomness coefficient, this is multiplied by a random 0-10 then added to the hardening differential and viscosity.,
 					1,//The will fall of edges factor, this is 0 or 1,
 					0,//0 = not colourable, 1 = colourable.
+					0,//1 = replaces air, 0= doesn't replace air
 				},
-				
 				desiccantList.toArray(new Integer[0]),
 				combinationList.toArray(new Integer[0]),
 			};
 			fluid16Blocks.put(BlockLiquidREConcrete.instance.blockID,data);
 	}
-	
-
-	
 
 	/////////////////////////////////////////Block Bounds Stuff//////////////////////////////////////////////////////////
-	
-	
-	//*
     /**
      * Adds all intersecting collision boxes to a list. (Be sure to only add boxes to the list if they intersect the
      * mask.) Parameters: World, X, Y, Z, mask, list, colliding entity
@@ -268,57 +270,76 @@ public class BlockLiquidREConcrete extends Block16Fluid implements IRebar, ISold
         return this.theIcon;
     }
 
-    @SideOnly(Side.CLIENT)
-    public Icon theIcon;
-	
-
-	    /**
-	     * The type of render function that is called for this block
-	     */
-	    @Override
-	    public int getRenderType()
-	    {
-	        return BlockRenderHandler.ID;
-	    }
-
-		public boolean[] sides(IBlockAccess worldObj, int x, int y, int z) {
-			boolean[] side = new boolean[6];
-	    	int[][]sides = {{1,0,0},{-1,0,0},{0,0,1},{0,0,-1},{0,1,0},{0,-1,0}};
-			for(int i = 0; i<6; i++){
-				int id = worldObj.getBlockId(x+sides[i][0], y+sides[i][1], z+sides[i][2]);
-				Block block = Block.blocksList[id];
-				side[i] = (block instanceof IRebar);
-			}
-			return side;
+	public boolean[] sides(IBlockAccess worldObj, int x, int y, int z) {
+		boolean[] side = new boolean[6];
+    	int[][]sides = {{1,0,0},{-1,0,0},{0,0,1},{0,0,-1},{0,1,0},{0,-1,0}};
+		for(int i = 0; i<6; i++){
+			int id = worldObj.getBlockId(x+sides[i][0], y+sides[i][1], z+sides[i][2]);
+			Block block = Block.blocksList[id];
+			side[i] = (block instanceof IRebar);
 		}
+		return side;
+	}
 
-		@Override
-		public boolean[] sides(World worldObj, int x, int y, int z) {
-			boolean[] side = new boolean[6];
-	    	int[][]sides = {{1,0,0},{-1,0,0},{0,0,1},{0,0,-1},{0,1,0},{0,-1,0}};
-			for(int i = 0; i<6; i++){
-				int id = worldObj.getBlockId(x+sides[i][0], y+sides[i][1], z+sides[i][2]);
-				Block block = Block.blocksList[id];
-				side[i] = (block instanceof IRebar);
-			}
-			return side;
-		}
+	@Override
+	public Icon getIcon(Block block) {
+		return this.blockIcon;
+	}
 
-		@Override
-		public Icon getIcon(Block block) {
-			return this.blockIcon;
-		}
+	 @SideOnly(Side.CLIENT)
+    /**
+     * Retrieves the block texture to use based on the display side. Args: iBlockAccess, x, y, z, side
+     */
+    public Icon getBlockTexture(IBlockAccess par1IBlockAccess, int x, int y, int z, int side)
+    {
+	 	return getSideIcon(par1IBlockAccess, x, y, z, side);
+    }
+	 
 
-		 @SideOnly(Side.CLIENT)
+	@Override
+	public TileEntity createNewTileEntity(World world) {
+		return new TileEntityBlock16Fluid();
+	}
 
-		    /**
-		     * Retrieves the block texture to use based on the display side. Args: iBlockAccess, x, y, z, side
-		     */
-		    public Icon getBlockTexture(IBlockAccess par1IBlockAccess, int x, int y, int z, int par5)
-		    {
-			 return this.blockIcon;
-			 	
-		    }
+	@Override
+	public boolean isPoisonPrevention(World par1World, int x, int y, int z,
+			Poison type) {
+		return true;
+	}
 
+	@Override
+	public Icon getSideIcon(IBlockAccess par1IBlockAccess, int x, int y, int z,
+			int side) {
+		 TileEntityBlock16Fluid te = (TileEntityBlock16Fluid) par1IBlockAccess.getBlockTileEntity(x, y, z);
+		 if(te.icons[side]==null)
+		 {
+			 te.icons[side]=this.iconArray[te.metaArray[side]&15];
+		 }
+		 return te.icons[side];
+	}
+
+	@Override
+	public int sideIconBlockId(IBlockAccess world, int x, int y, int z,
+			int side) {
+		TileEntityBlock16Fluid te = (TileEntityBlock16Fluid) world.getBlockTileEntity(x, y, z);
+		
+		return te.iconIDs[side];
+	}
+
+	@Override
+	public int sideIconMetadata(IBlockAccess world, int x, int y, int z,
+			int side) {
+		TileEntityBlock16Fluid te = (TileEntityBlock16Fluid) world.getBlockTileEntity(x, y, z);
+		
+		return te.metaArray[side];
+	}
+
+	@Override
+	public int sideIconSide(IBlockAccess world, int x, int y, int z,
+			int side) {
+		TileEntityBlock16Fluid te = (TileEntityBlock16Fluid) world.getBlockTileEntity(x, y, z);
+		
+		return te.sideArray[side];
+	}
 			 
 }

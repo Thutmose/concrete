@@ -18,7 +18,6 @@ import atomicscience.api.IHeatSource;
 import thutconcrete.api.utils.Vector3;
 import thutconcrete.common.ConcreteCore;
 import thutconcrete.common.Volcano;
-import thutconcrete.common.utils.ISoldifiable;
 
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
@@ -41,7 +40,7 @@ import net.minecraftforge.common.ForgeDirection;
 import net.minecraftforge.liquids.IBlockLiquid;
 import net.minecraftforge.liquids.ILiquid;
 
-public class BlockLava extends Block16Fluid implements ISoldifiable, IBlockLiquid, IHeatSource
+public class BlockLava extends Block16Fluid implements IBlockLiquid, IHeatSource
 	{
 	public static BlockLava[] instances = new BlockLava[16];
 	public int typeid;
@@ -120,7 +119,9 @@ public class BlockLava extends Block16Fluid implements ISoldifiable, IBlockLiqui
 		List<Integer> desiccantList = new ArrayList<Integer>();
 		List<Integer> configList = new ArrayList<Integer>();
 		
+
 		combinationList.add(4096*BlockLava.getInstance(typeid).blockID);
+
 		combinationList.add(Block.waterMoving.blockID+4096*BlockLava.getInstance(typeid).blockID);
 		combinationList.add(Block.waterStill.blockID+4096*BlockLava.getInstance(typeid).blockID);
 		
@@ -177,12 +178,14 @@ public class BlockLava extends Block16Fluid implements ISoldifiable, IBlockLiqui
 		configList.add(typeid==0?2:10); //Add random Factor
 		configList.add(fluidity); //Make this a fluid
 		configList.add(0);//no colour
+		configList.add(1);//Replaces Air
 
 		
 		data = new Integer[][]{
 				configList.toArray(new Integer[0]),
 				desiccantList.toArray(new Integer[0]),
 				combinationList.toArray(new Integer[0]),
+				{78,38,37,31,Block.crops.blockID,Block.potato.blockID,Block.carrot.blockID,Block.melonStem.blockID,Block.reed.blockID,Block.leaves.blockID, Block.wood.blockID}
 			};
 			fluid16Blocks.put(BlockLava.getInstance(typeid).blockID,data);
 	}
@@ -237,13 +240,12 @@ public class BlockLava extends Block16Fluid implements ISoldifiable, IBlockLiqui
 
 		doHardenTick(worldObj, x, y, z);
 		
-	//	if((worldObj.getBlockId( x, y-1, z)==blockID&&worldObj.getBlockMetadata(x, y-1, z)!=0))
 		int id = 0;
 		int h = y;
 		while(h>0)
 		{
 			id = worldObj.getBlockId(x, h-1, z);
-			if((new Vector3(x, h-1, z)).isAir(worldObj)||breaks.contains(id)||id==Block.waterMoving.blockID||id==Block.waterStill.blockID)
+			if((new Vector3(x, h-1, z)).isAir(worldObj)||willBreak(blockID, id)||id==Block.waterMoving.blockID||id==Block.waterStill.blockID)
 			{
 				h--;
 			}

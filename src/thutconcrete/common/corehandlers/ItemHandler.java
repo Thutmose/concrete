@@ -59,7 +59,7 @@ public class ItemHandler {
 			brushes[i] = stack;
 		}
 		ItemPaintBrush.emptyBrushID = id;
-		itemList.add(new ItemSeismicLinker(id++));
+		itemList.add(new ItemDataLinker(id++));
 	}
 	
 	public void registerItems(){

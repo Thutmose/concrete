@@ -1,5 +1,7 @@
 package thutconcrete.common.tileentity;
 
+import static thutconcrete.api.datasources.DataSources.*;
+
 import icbm.api.explosion.ExplosionEvent;
 import icbm.api.explosion.IExplosive;
 
@@ -13,10 +15,13 @@ import java.util.Random;
 import java.util.Vector;
 import java.util.concurrent.ConcurrentHashMap;
 
+import thutconcrete.api.datasources.IDataSource;
 import thutconcrete.api.utils.Vector3;
+import thutconcrete.api.utils.Vector3.Matrix3;
+
 import thutconcrete.common.Volcano;
+import thutconcrete.common.network.PacketDataSource;
 import thutconcrete.common.network.PacketInt;
-import thutconcrete.common.network.PacketSeismicMonitor;
 
 import cpw.mods.fml.common.FMLCommonHandler;
 import cpw.mods.fml.common.network.FMLNetworkHandler;
@@ -43,6 +48,7 @@ import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.AxisAlignedBB;
 import net.minecraft.util.DamageSource;
 import net.minecraft.util.Icon;
+import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
 import net.minecraftforge.common.ForgeDirection;
 import net.minecraftforge.common.MinecraftForge;
@@ -50,45 +56,50 @@ import net.minecraftforge.event.ForgeSubscribe;
 import net.minecraftforge.event.entity.EntityJoinWorldEvent;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
 
-public class TileEntitySeismicMonitor extends TileEntity implements IPeripheral
+public class TileEntitySensors extends TileEntity implements IPeripheral, IDataSource
 {
 	
-	public static int VALUECOUNT = 160;
+	public static int VALUECOUNT = 1600;
 	
 	public boolean hasSensors = false;
 	
 	public boolean emitRedstone = false;
 	
+	public boolean filter = false;
+	
 	public static double speed = 1000;
 	
-	public static int MAXID = 0;
 	public int id = -1;
 	
 	public double coef = 1;
 	public int offset = 0;
 	
 	public int side = 2;
-	
-	public static Map<Integer, TileEntitySeismicMonitor> stationMap = new ConcurrentHashMap<Integer, TileEntitySeismicMonitor>();
-	
-	public Map<EntityTNTPrimed, Double> tnt = new ConcurrentHashMap<EntityTNTPrimed, Double>();
 
-	public static int FUTURE = 100;
-	ArrayList<Double> values = new ArrayList<Double>(VALUECOUNT);
+	public Map<EntityTNTPrimed, Integer> tnt = new ConcurrentHashMap<EntityTNTPrimed, Integer>();
+
+	public static int FUTURE = 1;
+	public ArrayList<Double> values = new ArrayList<Double>(VALUECOUNT);
 	public LinkedList<Double> futureValues = new LinkedList<Double>();
 	ArrayList<Double> values_old = new ArrayList<Double>(VALUECOUNT);
-	
-	public TileEntitySeismicMonitor[] stations = new TileEntitySeismicMonitor[16];
+
+	//public TileEntitySeismicMonitor[] stations = new TileEntitySeismicMonitor[16];
+	public IDataSource[] stations = new IDataSource[16];
 	public int[] stationIDs = {-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1};
 	
 	public int button = 0;
 	
+	Matrix3 topBox = new Matrix3(new Vector3(-1.5,0.25,-0.4), new Vector3(1.5, 0.5, 0.4));
 	Vector<Volcano> volcanoList = new Vector<Volcano>();
 	
 	int num = 0;
 	int count = 0;
 	
 	Random r = new Random(1000);
+	
+	public boolean hasDisplay = false;
+	
+	public boolean grid = false;
 	
 	public double scale = 10;
 	public int exponent = 1;
@@ -99,7 +110,7 @@ public class TileEntitySeismicMonitor extends TileEntity implements IPeripheral
 	
 	int prevPower = 0;
 	
-	long time = 0;
+	public long time = 0;
 	public int rate = 1;
 	IComputerAccess comp;
 	
@@ -108,7 +119,7 @@ public class TileEntitySeismicMonitor extends TileEntity implements IPeripheral
 	{
 		if(evt.entity instanceof EntityTNTPrimed && evt.world == worldObj)
 		{
-			tnt.put((EntityTNTPrimed)evt.entity, (double) 80);
+			tnt.put((EntityTNTPrimed)evt.entity, 80);
 		}
 	}
 	
@@ -118,14 +129,13 @@ public class TileEntitySeismicMonitor extends TileEntity implements IPeripheral
 		if(evt.explosive!=null)
 		{
 			double energy = evt.explosive.getEnergy();
-			System.out.println(energy+" "+evt.explosive.getExplosiveName());
 			Vector3 explosion = new Vector3(evt.x, evt.y, evt.z);
 			Vector3 here = new Vector3(this);
 			double distanceSq = explosion.distToSq(here);
 			int shift = ((int) (Math.sqrt(distanceSq)*VALUECOUNT/speed))%(FUTURE*VALUECOUNT);
 			double signal = energy/distanceSq;
+			System.out.println(signal+" "+evt.explosive.getExplosiveName()+" "+explosion.toString()+" "+values.size());
 			futureValues.set(shift, signal);
-			
 		}
 	}
 
@@ -146,14 +156,11 @@ public class TileEntitySeismicMonitor extends TileEntity implements IPeripheral
 			paused = power!=0;
 		}
 		
-		
-		//*/
 		if(tnt.size()>0)
 		{
-			//System.out.println("tnt");
 			for(EntityTNTPrimed t:tnt.keySet())
 			{
-				double d = tnt.get(t) - 1;
+				int d = tnt.get(t) - 1;
 				tnt.put(t, d);
 				if(d<1)
 				{
@@ -164,25 +171,39 @@ public class TileEntitySeismicMonitor extends TileEntity implements IPeripheral
 					int shift = ((int) (VALUECOUNT*Math.sqrt(distanceSq)/speed))%(FUTURE*VALUECOUNT);
 					double signal = energy/distanceSq;
 					futureValues.set(shift, signal);
-					System.out.println(shift+" "+energy+" "+distanceSq+" "+futureValues.size()+" "+values.size());
+				//	System.out.println(shift+" "+energy+" "+distanceSq+" "+futureValues.size()+" "+values.size());
 					
 					tnt.remove(t);
 				}
 			}
 		}
-		//*/
-		if(!paused&&hasSensors)
+		
+		if(filter&&rate<1)
 		{
+			rate = 1;
+		}
+		
+		if(hasDisplay&&!paused&&hasSensors)
+		{
+			List<Entity> list = worldObj.getEntitiesWithinAABB(Entity.class, getBox());
+			if(list.size()>0)
+			{
+				for(Entity e: list)
+				{
+					topBox.doCollision(new Vector3(this).add(new Vector3(0.5,0.5,0.5)), new Vector3(), e, new Vector3(), new Vector3());
+				}
+			}
+			
+			
 			boolean before = emitRedstone;
-			for(TileEntitySeismicMonitor s:stations)
+			
+			for(IDataSource s:stations)
 			{
 				if(s!=null)
 				{
-					s.scale = scale;
-					s.exponent = exponent;
-					s.rate = rate;
+					s.setScales(coef, exponent, rate, time);
 					s.takeData(time);
-					emitRedstone = emitRedstone || s.emitRedstone;
+					emitRedstone = emitRedstone || s.isDataOutOfBounds();
 				}
 			}
 			if(before!=emitRedstone)
@@ -198,7 +219,6 @@ public class TileEntitySeismicMonitor extends TileEntity implements IPeripheral
 		if(emitRedstone)
 		{
 			count++;
-		//	System.out.println(emitRedstone);
 		}
 		
 		if(count>5)
@@ -221,7 +241,13 @@ public class TileEntitySeismicMonitor extends TileEntity implements IPeripheral
 		}
 		time++;
 		changed = false;
-		syncTime();
+		if(hasSensors&&hasDisplay)
+			syncTime();
+	}
+	
+	public AxisAlignedBB getBox()
+	{
+		return AxisAlignedBB.getBoundingBox(0.5 - 1.5, 0.5 - 1, 0.5 - 1.5, 0.5 + 1, 0.5 + 1, 0.5 + 1).offset(xCoord, yCoord, zCoord);
 	}
 	
 	public synchronized void takeData(long time)
@@ -244,27 +270,33 @@ public class TileEntitySeismicMonitor extends TileEntity implements IPeripheral
 			}
 		}
 		
-		double dv = 0;
-		for(Volcano v: volcanoList)
+		for(int i = 0; i<10; i++)
 		{
-			double distanceSq = v.distanceSq(this);
-			dv += (v.strength(time-(Math.sqrt(distanceSq)/speed)))/distanceSq;
-		}
-		dv+=futureValues.size()>0?futureValues.pop():0;
-		futureValues.add((double) 0);
-		changed = true;
 		
-	//	System.out.println(dv+" "+scale+" "+exponent+worldObj);
-		emitRedstone = emitRedstone||dv>scale;
-		values.add(0,dv);
-		if(values.size()>VALUECOUNT)
-		{
-			values_old.add(0,values.get(VALUECOUNT));
-			values.remove(VALUECOUNT);
-		}
-		if(values_old.size()>VALUECOUNT)
-		{
-			values_old.remove(VALUECOUNT);
+			double dv = 0;
+			for(Volcano v: volcanoList)
+			{
+				double distanceSq = v.distanceSq(this);
+				double t = time + (double)(i)/(10);
+				dv += (v.strength(t-(Math.sqrt(distanceSq)/speed)))/distanceSq;
+			}
+			dv+=futureValues.size()>0?futureValues.pop():0;
+			futureValues.add((double) 0);
+			changed = true;
+			
+			emitRedstone = emitRedstone||dv>scale;
+			values.add(0,dv);
+			
+			if(values.size()>VALUECOUNT)
+			{
+				values_old.add(0,values.get(VALUECOUNT));
+				values.remove(VALUECOUNT);
+			}
+			if(values_old.size()>VALUECOUNT)
+			{
+				values_old.remove(VALUECOUNT);
+			}
+		
 		}
 	}
 	
@@ -274,38 +306,41 @@ public class TileEntitySeismicMonitor extends TileEntity implements IPeripheral
 		{
 			int button = getButtonFromClick(hitX, hitY, hitZ);
 			toggleButton(button);
-			System.out.println(button+" "+getButton(button)+" "+worldObj);
 			return true;
 		}
 		if(side==this.side)
 		{
 			int button = getSideButtonFromClick(side, hitX, hitY, hitZ);
-		//	getExponentFromButton(button);
-			if(button==8)
+		//	System.out.println(button);
+			if(button==10)
 				setScale(exponent+1);
-			if(button==5)
+			if(button==6)
 				setScale(exponent-1);
-			if(button==4)
+			if(button==5)
 				setScale(coef+0.1);
 			if(button==1)
 				setScale(coef-0.1);
-			if(button==6)
-				setRate(rate-1);
 			if(button==7)
+				setRate(rate-1);
+			if(button==9)
 				setRate(rate+1);
-			if(button==10)
+			if(button==12)
 				setRate(rate-10);
-			if(button==11)
+			if(button==14)
 				setRate(rate+10);
+			if(button==8)
+				filter=!filter;
+			if(button==13)
+				grid=!grid;
 			if(button==2)
 				offset = offset<=0?0:offset-1;
-			if(button==9)
-				paused = !paused;
 			if(button==3)
-				offset = offset>=rate-1?rate-1:offset+1;
-			if(button==15||button==14)
-				clearData();
-		//	System.out.println(button+" "+rate+" "+exponent+" "+coef);
+				paused = !paused;
+			if(button==4)
+				offset = offset>=VALUECOUNT-rate?VALUECOUNT-rate:offset+1;
+			if(button==18)
+				clearSensors();
+			
 			return true;
 		}
 		if(side==ForgeDirection.getOrientation(this.side).getOpposite().ordinal())
@@ -313,14 +348,14 @@ public class TileEntitySeismicMonitor extends TileEntity implements IPeripheral
 			int button = getSideButtonFromClick(side, hitX, hitY, hitZ);
 			if(button==4)
 			{
-				stations = new TileEntitySeismicMonitor[16];
+				stations = new TileEntitySensors[16];
 				stationIDs = new int[]{-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1};
 			}
 		}
 		return false;
 	}
 	
-	 public int getButtonFromClick(float hitX, float hitY, float hitZ)
+	public int getButtonFromClick(float hitX, float hitY, float hitZ)
 	   {
 		   int ret = 0;
 		   
@@ -378,22 +413,22 @@ public class TileEntitySeismicMonitor extends TileEntity implements IPeripheral
 	           }
 	           case 2:
 	           {
-	        	   ret = 1+(int)(((1-hitX)*4)%4) + 4*(int)(((1-hitY)*4)%4);
+	        	   ret = 1+(int)(((1-hitX)*5)%5) + 5*(int)(((1-hitY)*5)%5);
 	        	   return ret;
 	           }
 	           case 3:
 	           {	        	   
-	        	   ret = 1+(int)(((hitX)*4)%4) + 4*(int)(((1-hitY)*4)%4);
+	        	   ret = 1+(int)(((hitX)*5)%5) + 5*(int)(((1-hitY)*5)%5);
 	        	   return ret;
 	           }
 	           case 4:
 	           {
-	        	   ret =1+4*(int)(((1-hitY)*4)%4) + (int)(((hitZ)*4)%4);
+	        	   ret =1+5*(int)(((1-hitY)*5)%5) + (int)(((hitZ)*5)%5);
 	        	   return ret;
 	           }
 	           case 5:
 	           {
-	        	   ret = 1+4*(int)(((1-hitY)*4)%4) + (int)(((1-hitZ)*4)%4);
+	        	   ret = 1+5*(int)(((1-hitY)*5)%5) + (int)(((1-hitZ)*5)%5);
 	        	   return ret;
 	           }
             default:
@@ -405,14 +440,13 @@ public class TileEntitySeismicMonitor extends TileEntity implements IPeripheral
 		   
 	   }
 	 
-	
 	public void syncTime()
 	{
-		for(TileEntitySeismicMonitor s : stations)
+		for(IDataSource s : stations)
 		{
-			if(s!=null)
+			if(s!=null&&s!=this)
 			{
-				s.time = time;
+				s.syncTime(time);
 			}
 		}
 	}
@@ -438,31 +472,41 @@ public class TileEntitySeismicMonitor extends TileEntity implements IPeripheral
 			MAXID++;
 			worldObj.markBlockForUpdate(xCoord, yCoord, zCoord);
 		}
+		setSide(side);
+		sourceMap.put(id, this);
 		for(int i = 0; i<FUTURE*VALUECOUNT;i++)
 		{
 			futureValues.add((double) 0);
 		}
-		
-		popMap();
+		hasDisplay = getBlockMetadata()==0;
+		if(hasDisplay)
+		{
+			popMap();
+			if(stations[0]==null)
+			{
+				addStation(this, 0);
+				worldObj.markBlockForUpdate(xCoord, yCoord, zCoord);
+			}
+		}
 	}
 	
-	public void addStation(TileEntitySeismicMonitor station, int index)
+	public void addStation(IDataSource iDataSource, int index)
 	{
 		boolean toClear = false;
-		if(index>=0&&index<16)
+		if(index>=0&&index<16&&iDataSource!=null)
 		{
-			if(stations[index]!=station||stationIDs[index]!=station.id)
+			if(stations[index]!=iDataSource||stationIDs[index]!=iDataSource.getID())
 			{
-				stations[index] = station;
-				stationIDs[index]= station.id;
+				stations[index] = iDataSource;
+				stationIDs[index]= iDataSource.getID();
 				toClear = true;
-				System.out.println("station added");
+			//	System.out.println("station added");
 				hasSensors = true;
 			}
 		}
 		if(toClear)
 		{
-			clearData();
+			clearSensors();
 		}
 	}
 	
@@ -471,34 +515,43 @@ public class TileEntitySeismicMonitor extends TileEntity implements IPeripheral
 		if(index<0||index>15)
 			return;
 		boolean toClear = false;
-		if(stationMap.containsKey(i))
+		if(sourceMap.containsKey(i))
 		{
-			if(stations[index]!=stationMap.get(i)||i != stationIDs[index])
+			if(sourceMap.get(i)!=null&&(stations[index]!=sourceMap.get(i)||i != stationIDs[index]))
 			{
-				stations[index] = stationMap.get(i);
+				stations[index] = (IDataSource)sourceMap.get(i);
 				stationIDs[index]= i;
-				System.out.println("station added");
 				toClear = true;
 				hasSensors = true;
 			}
 		}
 		if(toClear)
 		{
-			clearData();
+			clearSensors();
 		}
 		//System.out.println(i+" "+this.id);
+	}
+	
+	public void clearSensors()
+	{
+		if(hasSensors&&hasDisplay)
+		{
+			for(IDataSource s : stations)
+			{
+				if(s!=null&&s!=this)
+				{
+					s.clearData();
+				}
+			}
+		}
 	}
 
 	public void clearData()
 	{
-		for(TileEntitySeismicMonitor s : stations)
-		{
-			if(s!=null)
-			{
-				s.values = new ArrayList<Double>(VALUECOUNT);
-			}
-		}
-		offset=0;
+		values = new ArrayList<Double>(VALUECOUNT);
+		offset= 0;
+		rate = 1;
+		coef = 1;
 		setRate(rate);
 		setScale(exponent);
 	}
@@ -568,7 +621,7 @@ public class TileEntitySeismicMonitor extends TileEntity implements IPeripheral
 		}
 		if(method==3)
 		{
-			if(arguments.length>0)
+			if(arguments.length==1)
 			{
 				int num = 0;
 				
@@ -581,6 +634,31 @@ public class TileEntitySeismicMonitor extends TileEntity implements IPeripheral
 					num = Integer.parseInt((String)arguments[0]);
 				}
 				setScale(num);
+			}
+			if(arguments.length==2)
+			{
+				int num = 0;
+				double num1 = 1;
+				
+				if(arguments[0] instanceof Double)
+				{
+					num = ((Double)arguments[0]).intValue();
+				}
+				if(arguments[0] instanceof String)
+				{
+					num = Integer.parseInt((String)arguments[0]);
+				}
+				
+				if(arguments[1] instanceof Double)
+				{
+					num1 = (Double)arguments[1];
+				}
+				if(arguments[1] instanceof String)
+				{
+					num1 = Double.parseDouble((String)arguments[0]);
+				}
+				setScale(num);
+				setScale(num1);
 			}
 		}
 		
@@ -613,7 +691,6 @@ public class TileEntitySeismicMonitor extends TileEntity implements IPeripheral
 		{
 			map.put(i+1, vals[i]);
 		}
-		//System.out.println(map.toString());
 		ret = new Map[] {map};
 		return ret;
 	}
@@ -622,7 +699,7 @@ public class TileEntitySeismicMonitor extends TileEntity implements IPeripheral
 	{
 		Object[] ret;
 		List<Object> obj = new ArrayList<Object>();
-		for(TileEntitySeismicMonitor s: stations)
+		for(IDataSource s: stations)
 		{
 			Double[] vals = s.getValues();
 			Map map = new HashMap();
@@ -630,7 +707,6 @@ public class TileEntitySeismicMonitor extends TileEntity implements IPeripheral
 			{
 				map.put(i+1, vals[i]);
 			}
-			//System.out.println(map.toString());
 		}
 		ret = obj.toArray();
 		return ret;
@@ -639,7 +715,7 @@ public class TileEntitySeismicMonitor extends TileEntity implements IPeripheral
     @Override
     public Packet getDescriptionPacket()
     {
-        return PacketSeismicMonitor.getPacket(this);
+        return PacketDataSource.getPacket(this, "Thut's Concrete");
     }
 	
 	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -676,24 +752,29 @@ public class TileEntitySeismicMonitor extends TileEntity implements IPeripheral
 		setScale(exponent);
 	}
 	
+	public void setScale()
+	{
+		setScale(coef);
+	}
+	
 	public void setRate(int num)
 	{
-		rate = Math.min(Math.max(num,0),VALUECOUNT);
+		rate = Math.min(Math.max(num,1),VALUECOUNT-1);
 		if(!worldObj.isRemote)
 			worldObj.markBlockForUpdate(xCoord, yCoord, zCoord);
 	}
 	
 	public Double[] getValues() {
-		return values.toArray(new Double[0]);
+		return values.toArray(new Double[0]).clone();
 	}
 	public Double[] getValues(int i) {
 		if(i<0||i>15) return null;
 		if(stationIDs[i]!=-1&&stations[i]!=null)
-		return stations[i].getValues();
+		return stations[i].getValues().clone();
 		return null;
 	}
 	public Double[] getOldValues() {
-		return values_old.toArray(new Double[0]);
+		return values_old.toArray(new Double[0]).clone();
 	}
 	
     public Block thisBlock()
@@ -755,8 +836,8 @@ public class TileEntitySeismicMonitor extends TileEntity implements IPeripheral
 	      rate = par1.getInteger("rate");
 	      exponent = par1.getInteger("exponent");
 	      side = par1.getInteger("side");
-	      coef = Math.min(par1.getDouble("coef"),1);
-	      stationMap.put(id, this);
+	      coef = Math.min(par1.getDouble("coef"),coef);
+	      sourceMap.put(id, this);
 	      MAXID = Math.max(MAXID, par1.getInteger("maxID"));
 	      for(int i = 0; i<16; i++)
 	      {
@@ -776,7 +857,7 @@ public class TileEntitySeismicMonitor extends TileEntity implements IPeripheral
 		   par1.setDouble("coef", coef);
 		   for(int i = 0; i<16; i++)
 		   {
-			   TileEntitySeismicMonitor s = stations[i];
+			   IDataSource s = stations[i];
 			   par1.setInteger("station"+i, stationIDs[i]);
 		   }
 		   par1.setInteger("button", button);
@@ -784,11 +865,10 @@ public class TileEntitySeismicMonitor extends TileEntity implements IPeripheral
 	
 	public void popMap()
 	{
-		stationMap.put(id, this);
 		for(int i = 0; i<16; i++)
 		{
-			if(stationMap.get(stationIDs[i])!=null)
-				addStation(stationMap.get(stationIDs[i]), i);
+			if(sourceMap.get(stationIDs[i])!=null)
+				addStation(sourceMap.get(stationIDs[i]), i);
 		}
 	}
 	
@@ -802,6 +882,7 @@ public class TileEntitySeismicMonitor extends TileEntity implements IPeripheral
 	   if(side!=0&&side!=1)
 	   {
 		   this.side = side;
+		   topBox = new Matrix3(new Vector3(-1.5,0.25,-0.4), new Vector3(1.5, 0.5, 0.4), new Vector3(0, side==2||side==3?0:90));
 		   worldObj.markBlockForUpdate(xCoord, yCoord, zCoord);
 	   }
    }
@@ -841,9 +922,76 @@ public class TileEntitySeismicMonitor extends TileEntity implements IPeripheral
 	@SideOnly(Side.CLIENT)
 	public AxisAlignedBB getRenderBoundingBox()
 	{
-		return INFINITE_EXTENT_AABB;
+		return AxisAlignedBB.getBoundingBox(-2, 0, -2, 2, 3, 2).offset(xCoord, yCoord, zCoord);
+	}
+
+	@Override
+	public void setScales(double yCoef, int yExponent, int rate, long time) {
+		coef = yCoef;
+		exponent = yExponent;
+		this.rate = rate;
+		this.time = time;
+		this.setScale();
+	}
+
+	@Override
+	public boolean isDataOutOfBounds() 
+	{
+		return emitRedstone;
+	}
+
+	@Override
+	public void syncTime(long time) {
+		this.time = time;
+	}
+
+	@Override
+	public int getID() 
+	{
+		return id;
+	}
+
+	@Override
+	public void setID(int id) 
+	{
+		this.id = id;
+	}
+
+	@Override
+	public void setData(Double[] data) 
+	{
+		values.clear();
+		values = (ArrayList<Double>) Arrays.asList(data.clone());
+	}
+
+	@Override
+	public int maxValues() 
+	{
+		return values.size();
 	}
 	
-	
-	
+	public int maxValuesAll()
+	{
+		if(hasDisplay&&hasSensors)
+		{
+			int max = 0;
+			for(int i = 0; i<16; i++)
+			{
+				IDataSource s = stations[i];
+				if(s!=null&&getButton(i+1))
+				{
+					if(s!=this)
+					{
+						max = Math.max(max, s.maxValues());
+					}
+					else
+					{
+						max = Math.max(max, values.size());
+					}
+				}
+			}
+			return max;
+		}
+		return 0;
+	}
 }

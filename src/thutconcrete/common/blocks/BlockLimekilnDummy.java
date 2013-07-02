@@ -2,6 +2,9 @@ package thutconcrete.common.blocks;
 
 import java.util.Random;
 
+import cpw.mods.fml.relauncher.Side;
+import cpw.mods.fml.relauncher.SideOnly;
+
 import thutconcrete.common.ConcreteCore;
 import thutconcrete.common.tileentity.TileEntityLimekiln;
 import thutconcrete.common.tileentity.TileEntityLimekilnDummy;
@@ -28,7 +31,6 @@ public class BlockLimekilnDummy extends BlockContainer
 		setUnlocalizedName("blockLimekilnDummy");
 		setStepSound(Block.soundStoneFootstep);
 		setHardness(3.5f);
-		//setCreativeTab(ConcreteCore.tabThut);
 		instance = this;
 	}
 	
@@ -37,6 +39,16 @@ public class BlockLimekilnDummy extends BlockContainer
 	{
 		return Block.brick.blockID;
 	}
+	
+	 @SideOnly(Side.CLIENT)
+
+    /**
+     * only called by clickMiddleMouseButton , and passed to inventory.setCurrentItem (along with isCreative)
+     */
+    public int idPicked(World par1World, int par2, int par3, int par4)
+    {
+		 return Block.brick.blockID;
+    }
 	
 	@Override
 	public TileEntity createNewTileEntity(World world)

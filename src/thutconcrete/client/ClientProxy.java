@@ -31,12 +31,10 @@ public class ClientProxy extends CommonProxy{
 
 		RenderingRegistry.registerBlockHandler(BlockRenderHandler.ID,new BlockRenderHandler());
 		
-		RenderSeismicMonitor panelRenderer = new RenderSeismicMonitor();
-		ClientRegistry.bindTileEntitySpecialRenderer(TileEntitySeismicMonitor.class, panelRenderer);
-	//	RenderingRegistry.registerBlockHandler(panelRenderer);
-
-		RenderLiftController liftRenderer = new RenderLiftController();
-		ClientRegistry.bindTileEntitySpecialRenderer(TileEntityLiftAccess.class, liftRenderer);
+		ClientRegistry.bindTileEntitySpecialRenderer(TileEntitySensors.class, new RenderSensorDisplay());
+		ClientRegistry.bindTileEntitySpecialRenderer(TileEntityLiftAccess.class, new RenderLiftController());
+		ClientRegistry.bindTileEntitySpecialRenderer(TileEntityRTG.class, new RenderRTG());
+		ClientRegistry.bindTileEntitySpecialRenderer(TileEntityBlock16Fluid.class, new RenderTEB16F());
 
 		//RenderingRegistry.registerEntityRenderingHandler(EntityRocket.class, new RenderRocket());
 		RenderingRegistry.registerEntityRenderingHandler(EntityBeam.class, new RenderBeam(RenderBeam.laser));

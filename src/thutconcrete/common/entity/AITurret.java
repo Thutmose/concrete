@@ -49,8 +49,6 @@ public class AITurret
 	{
 		if(turret.powered&&time%(target==null?20:1)==0)
 		{
-
-			System.out.println("powered "+target);
 			double dist = target!=null?turret.origin.distToEntity(target):-1;
 			if(dist==-1||dist>range)
 			{
@@ -60,7 +58,7 @@ public class AITurret
 			
 			if(target!=null)
 			{
-				System.out.println("target not null");
+				syncTarget();
 				changePointing();
 				if(target==null)
 					return;
@@ -90,6 +88,7 @@ public class AITurret
 	
 	public void changePointing()
 	{
+		getClientTarget();
 		setVectors();
 		if(target==null)
 			return;
@@ -98,7 +97,6 @@ public class AITurret
 			nullTarget();
 			return;
 		}
-		getClientTarget();
 		if(sweepDir.y==0&&sweepDir.z==0) 
 		{
 			locked = true;
@@ -130,7 +128,6 @@ public class AITurret
 
 	public void getTarget()
 	{
-		
 		if(!turret.worldObj.isRemote)
 		{
 			List<Entity> list = turret.worldObj.getEntitiesWithinAABB(EntityLiving.class, 
@@ -170,11 +167,20 @@ public class AITurret
 		}
 		else
 		{
-			if(getClientTarget())
-			{
-			//	getClientTarget();
-				setVectors();
-			}
+			getClientTarget();
+			setVectors();
+		}
+	}
+	
+	public void syncTarget()
+	{
+		if(!turret.worldObj.isRemote)
+		{
+			turret.getDataWatcher().updateObject(31, Integer.valueOf(target!=null?(int)target.entityId:-1));
+		}
+		else
+		{
+			getClientTarget();
 		}
 	}
 	
@@ -233,7 +239,7 @@ public class AITurret
 			aimDir.y = theta;
 			aimDir = aimDir.toCartesian();
 
-			System.out.println(theta+" "+targetDirSp.toString()+" "+(num)+" "+(g.y*x)+" "+Math.atan(num/(g.y*x)));
+		//	System.out.println(theta+" "+targetDirSp.toString()+" "+(num)+" "+(g.y*x)+" "+Math.atan(num/(g.y*x)));
 		//	System.out.println(targetDir.toString()+" "+targetDirSp.toCartesian().toString());
 			
 			sweepDir = turret.turretDir.anglesTo(aimDir);
@@ -243,12 +249,13 @@ public class AITurret
 	
 	public void nullTarget()
 	{
-		target = null;
-
 		if(!turret.worldObj.isRemote)
 		{
 			turret.getDataWatcher().updateObject(31, Integer.valueOf((int)-1));
 		}
+
+		target = null;
+
 	}
 	
 	

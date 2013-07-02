@@ -4,11 +4,13 @@ import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
+import thutconcrete.api.datasources.DataSources;
 import thutconcrete.api.network.IPacketProcessor;
 import thutconcrete.common.entity.EntityLift;
 import thutconcrete.common.tileentity.TileEntityLiftAccess;
 import thutconcrete.common.tileentity.TileEntityLimekiln;
-import thutconcrete.common.tileentity.TileEntitySeismicMonitor;
+import thutconcrete.common.tileentity.TileEntityRTG;
+import thutconcrete.common.tileentity.TileEntitySensors;
 import net.minecraft.network.packet.Packet250CustomPayload;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.world.World;
@@ -28,7 +30,7 @@ public class PacketInt implements IPacketProcessor
         int z = dat.readInt();
         int f = dat.readInt();
         TileEntity te = world.getBlockTileEntity(x, y, z);
-        
+        System.out.println(te);
 		if(te instanceof TileEntityLimekiln)
 		{
 	        TileEntityLimekiln tel = (TileEntityLimekiln)te;
@@ -48,10 +50,12 @@ public class PacketInt implements IPacketProcessor
 			
 		//	System.out.println("set: "+(f&15)+" "+(f>>4)+" "+f);
 		}
-		else if(te instanceof TileEntitySeismicMonitor)
+		else if(te instanceof TileEntityRTG)
 		{
-			TileEntitySeismicMonitor tel = (TileEntitySeismicMonitor)te;
-			tel.setScale(f);
+			TileEntityRTG tel = (TileEntityRTG)te;
+			tel.id = f;
+			DataSources.MAXID = Math.max(dat.readInt(), DataSources.MAXID);
+			tel.energyStored = dat.readDouble();
 		}
 	}
 	
@@ -62,6 +66,8 @@ public class PacketInt implements IPacketProcessor
 			int z = te.zCoord;
 			int f = 0;
 			int v = 0;
+			double d = 0;
+			boolean hasDouble = false;
 			
 			if(te instanceof TileEntityLimekiln)
 			{
@@ -76,10 +82,13 @@ public class PacketInt implements IPacketProcessor
 					v = tel.lift.id;
 			//	System.out.println("read: "+tel.side+" "+tel.floor+" "+f);
 			}
-			else if(te instanceof TileEntitySeismicMonitor)
+			else if(te instanceof TileEntityRTG)
 			{
-				TileEntitySeismicMonitor tel = (TileEntitySeismicMonitor)te;
-				f = tel.exponent;
+				TileEntityRTG tel = (TileEntityRTG)te;
+				f = tel.id;
+				v = DataSources.MAXID;
+				d = tel.energyStored;
+				hasDouble = true;
 			}
 		 	ByteArrayOutputStream bos = new ByteArrayOutputStream(24);
 		 	DataOutputStream dos = new DataOutputStream(bos);
@@ -92,6 +101,8 @@ public class PacketInt implements IPacketProcessor
 	            dos.writeInt(z);
 	            dos.writeInt(f);
 	            dos.writeInt(v);
+	            if(hasDouble)
+	            	dos.writeDouble(d);
 	        }
 	        catch (IOException e)
 	        {

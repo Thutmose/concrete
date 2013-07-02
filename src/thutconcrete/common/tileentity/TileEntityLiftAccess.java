@@ -1,8 +1,12 @@
 package thutconcrete.common.tileentity;
 
+
+import static net.minecraftforge.common.ForgeDirection.*;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Vector;
 
 import javax.print.attribute.standard.SheetCollate;
 
@@ -20,11 +24,13 @@ import dan200.computer.api.IPeripheral;
 
 import thutconcrete.api.network.PacketStampable;
 import thutconcrete.api.utils.IStampableTE;
+import thutconcrete.api.utils.Vector3;
 import thutconcrete.common.blocks.BlockLift;
 import thutconcrete.common.blocks.BlockLiftRail;
 import thutconcrete.common.entity.EntityLift;
 import thutconcrete.common.network.PacketInt;
 import thutconcrete.common.network.PacketLift;
+import universalelectricity.core.block.IElectricityStorage;
 import net.minecraft.block.Block;
 import net.minecraft.entity.Entity;
 import net.minecraft.item.Item;
@@ -48,6 +54,14 @@ public class TileEntityLiftAccess extends TileEntity implements IPeripheral, IGr
 	
 	boolean listNull = false;
 	List<Entity> list = new ArrayList<Entity>();
+	Vector3 here;
+	
+	public Vector3 root = new Vector3();
+	public IElectricityStorage source;
+	public TileEntityLiftAccess rootNode;
+	public Vector<TileEntityLiftAccess> connected = new Vector<TileEntityLiftAccess>();
+	ForgeDirection sourceSide;
+	public double energy;
 	
 	public long time = 0;
 	public int metaData = 0;
@@ -64,6 +78,8 @@ public class TileEntityLiftAccess extends TileEntity implements IPeripheral, IGr
 	
 	int tries = 0;
 	
+	public boolean toClear = false;
+	
 	public boolean first = true;
 	public boolean read = false;
 	public boolean redstone = true;
@@ -74,7 +90,7 @@ public class TileEntityLiftAccess extends TileEntity implements IPeripheral, IGr
 		if(first)
 		{
 			blockID = worldObj.getBlockId(xCoord, yCoord, zCoord);
-			
+			here = new Vector3(this);
 			GridTileLoadEvent evt = new GridTileLoadEvent(this, worldObj, getLocation());
 			MinecraftForge.EVENT_BUS.post(evt);
 			first = false;
@@ -83,36 +99,125 @@ public class TileEntityLiftAccess extends TileEntity implements IPeripheral, IGr
 		if(lift!=null&&blockID==BlockLift.instance.blockID&&getBlockMetadata()==1)
 		{
 			calledFloor = lift.destinationFloor;
-			worldObj.markBlockForUpdate(xCoord, yCoord, zCoord);
+			if(calledFloor!=lift.destinationFloor)
+				worldObj.markBlockForUpdate(xCoord, yCoord, zCoord);
 		}
 		
 		if(blockID == BlockLiftRail.staticBlock.blockID&&time%10==0)
 		{
-			
+			if(rootNode==null)
+			{
+				checkPower();
+			}
+			if(rootNode==this&&time%100==0)
+			{
+				TileEntity te = here.offset(sourceSide).getTileEntity(worldObj);
+				if(te!=source)
+				{
+					clearConnections();
+				}
+			}
 			if(!loaded||listNull||time%1000==0)
 			{
 				list = worldObj.getEntitiesWithinAABB(EntityLift.class, AxisAlignedBB.getBoundingBox(xCoord+0.5-2, 0, zCoord+0.5-2, xCoord+0.5+2, 255, zCoord+0.5+2));
 				loaded = true;
 			}
 			boolean check = false;
-		//	boolean toUpdate = false;
 			for(Entity e:list)
 			{
-			//	System.out.println("rail check");
 				if(e!=null)
 				{
-					check  = check || ((int)e.posY) == yCoord;
-				//	toUpdate = toUpdate || e.motionY!=0;
+					((EntityLift)e).source = source;
+					boolean flag = ((EntityLift)e).destinationFloor!=0&&((int)((EntityLift)e).prevFloorY)==yCoord;
+					check  = check || ((int)(e.posY) == yCoord && !flag);
 				}
 				else
 				{
 					listNull = true;
 				}
 			}
-		//	if(toUpdate)
-				setCalled(check);
+			setCalled(check);
 		}
 		time++;
+	}
+	
+	public void checkPower()
+	{
+		TileEntity down = here.offset(DOWN).getTileEntity(worldObj);
+		int id = here.offset(DOWN).getBlockId(worldObj);
+		if(down==null)
+		{
+			boolean found = false;
+			for(ForgeDirection side: VALID_DIRECTIONS)
+			{
+				if(side!=UP&&side!=DOWN)
+				{
+					TileEntity te = here.offset(side).getTileEntity(worldObj);
+					if(te instanceof IElectricityStorage)
+					{
+						found = true;
+						source = (IElectricityStorage)te;
+						rootNode = this;
+						sourceSide = side;
+					}
+				}
+			}
+			if(!found)
+				clearConnections();
+			else
+			{
+				TileEntity up = here.offset(UP).getTileEntity(worldObj);
+				if(up!=null&&up instanceof TileEntityLiftAccess)
+				{
+					((TileEntityLiftAccess)up).clearConnections();
+				}
+			}
+		}
+		else if(down instanceof TileEntityLiftAccess)
+		{
+			source = ((TileEntityLiftAccess)down).source;
+			rootNode = ((TileEntityLiftAccess)down).rootNode;
+		}
+	}
+	
+	public void clearConnections()
+	{
+		if(here!=null)
+		{
+			source = null;
+			rootNode = null;
+			TileEntity up = here.offset(UP).getTileEntity(worldObj);
+			if(up!=null&&up instanceof TileEntityLiftAccess)
+			{
+				((TileEntityLiftAccess) up).clearConnections();
+			}
+		}
+	}
+	
+	public double getEnergy()
+	{
+		if(source!=null)
+			return source.getJoules();
+		else
+			return 0;
+	}
+	
+	public void setEnergy(double energy)
+	{
+		if(source!=null)
+		{
+			source.setJoules(energy);
+		}
+	}
+	
+	public String connectionInfo()
+	{
+		String ret = "";
+		if(source!=null)
+		{
+			ret = "Energy stored: "+getEnergy();
+		}
+		return ret;
 	}
 	
     /**
@@ -120,11 +225,12 @@ public class TileEntityLiftAccess extends TileEntity implements IPeripheral, IGr
      */
     public void invalidate()
     {
+        this.tileEntityInvalid = true;
+        clearConnections();
 		GridTileUnloadEvent evt = new GridTileUnloadEvent(this, worldObj, getLocation());
 		MinecraftForge.EVENT_BUS.post(evt);
-        this.tileEntityInvalid = true;
     }
-
+    
     /**
      * validates a tile entity
      */
@@ -166,6 +272,7 @@ public class TileEntityLiftAccess extends TileEntity implements IPeripheral, IGr
 		   par1.setInteger("block id", blockID);
 		   par1.setInteger("side", side);
 		   par1.setInteger("floor", floor);
+		   root.writeToNBT(par1, "root");
 		   if(lift!=null)
 		   {
 			   liftID = lift.id;
@@ -181,6 +288,7 @@ public class TileEntityLiftAccess extends TileEntity implements IPeripheral, IGr
 	      side = par1.getInteger("side");
 	      floor = par1.getInteger("floor");
 	      liftID = par1.getInteger("lift");
+	      root = root.readFromNBT(par1, "root");
 	      if(EntityLift.lifts.containsKey(liftID))
 	      {
 	    	  lift = EntityLift.lifts.get(liftID);
@@ -189,15 +297,15 @@ public class TileEntityLiftAccess extends TileEntity implements IPeripheral, IGr
 
 	   public void doButtonClick( int side, float hitX, float hitY, float hitZ)
 	   {
-		   if(!worldObj.isRemote)
+		   if(!worldObj.isRemote&&lift!=null)
 		   {
 			   if(side == this.side)
 			   {
-				//   System.out.println("click" +" "+side+" "+this.side+" "+lift);
 				   int button = getButtonFromClick(side, hitX, hitY, hitZ);
 				   buttonPress(button);
 				   calledFloor = lift.destinationFloor;
 				   worldObj.markBlockForUpdate(xCoord, yCoord, zCoord);
+				   System.out.println(calledFloor+" "+button+" "+lift);
 			   }
 		   }
 	   }
@@ -222,9 +330,12 @@ public class TileEntityLiftAccess extends TileEntity implements IPeripheral, IGr
 	   
 	   public void setCalled(boolean called)
 	   {
-		   this.called = called;
-		   updateBlock();
-		   notifySurroundings();
+		   if(called!=this.called)
+		   {
+			   this.called = called;
+			   updateBlock();
+			   notifySurroundings();
+		   }
 	   }
 	   
 	   public void setSide(int side)
@@ -428,43 +539,36 @@ public class TileEntityLiftAccess extends TileEntity implements IPeripheral, IGr
 
 		@Override
 		public WorldCoord getLocation() {
-		//	System.out.println("1");
 			return new WorldCoord( xCoord, yCoord, zCoord );
 		}
 
 		@Override
 		public boolean isValid() {
-		//	System.out.println("2");
 			return true;
 		}
 
 		@Override
 		public void setPowerStatus(boolean hasPower) {
-		//	System.out.println("1");
 			this.hasPower = hasPower;
 		}
 
 		@Override
 		public boolean isPowered() {
-		//	System.out.println("3");
 			return hasPower;
 		}
 
 		@Override
 		public IGridInterface getGrid() {
-		//	System.out.println("4");
 			return igi;
 		}
 
 		@Override
 		public void setGrid(IGridInterface gi) {
-		//	System.out.println("5");
 			igi = gi;
 		}
 
 		@Override
 		public World getWorld() {
-		//	System.out.println("6");
 			return worldObj;
 		}
 
@@ -480,5 +584,6 @@ public class TileEntityLiftAccess extends TileEntity implements IPeripheral, IGr
 		public float getPowerDrainPerTick() {
 			return 0.0625F;
 		}
+
 }
 

@@ -10,6 +10,7 @@ import thutconcrete.common.corehandlers.ConfigHandler;
 
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.tileentity.TileEntity;
+import net.minecraft.util.MathHelper;
 import net.minecraft.world.World;
 
 public class Volcano {
@@ -155,7 +156,8 @@ public class Volcano {
 	
 	public double strength(double d)
 	{
-		return activeFactor*majorFactor*minorFactor*growthFactor*(type+1)*Math.sin((frequency+shift)*d/TIMERATIO);
+		//return activeFactor*majorFactor*minorFactor*growthFactor*(type+1)*Math.sin((frequency+shift)*d/TIMERATIO);
+		return activeFactor*majorFactor*minorFactor*growthFactor*(type+1)*MathHelper.sin((float) ((frequency+shift)*d/TIMERATIO));
 	}
 	
 	public double distanceSq(TileEntity te)

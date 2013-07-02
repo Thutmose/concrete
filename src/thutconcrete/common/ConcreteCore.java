@@ -261,35 +261,6 @@ public class ConcreteCore {
 	}
 	
 	
-	
-	
-	
-	/*/
-	
-	
-	public static Map<String, Byte> volcanoMap = new HashMap<String, Byte>();
-	
-	public static int getVolcano(int x, int z){
-		if(!(volcanoMap.containsKey(Integer.toString(x)+Integer.toString(z)))){
-			addVolcano(x,z);
-		}
-		return volcanoMap.get(Integer.toString(x)+Integer.toString(z));
-	}
-	
-	public static void addVolcano(int x, int z){
-		Random rX = new Random(x);
-		Random rZ = new Random(z);
-		Byte Height = (byte) (rX.nextInt(30)+rZ.nextInt(30));
-		volcanoMap.put(Integer.toString(x)+Integer.toString(z), Height);
-	}
-	
-	
-	
-	
-	//*/
-	
-	
-	
 	public void initOreMap()
 	{
 		oreMap0.put("copper", 500);

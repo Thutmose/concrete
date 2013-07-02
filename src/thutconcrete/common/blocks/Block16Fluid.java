@@ -51,19 +51,21 @@ public class Block16Fluid extends Block
 	* format for the Integer[][] used in the fluid16Blocks map.
 	* 
 	* 
-			data = new Integer[][]{
-				{
-					ID that this returns when meta hits -1, 
-					the viscosity factor,  
-					a secondary ID that this can turn into used for hardening,
-					The hardening differential that prevents things staying liquid forever.,
-					a randomness coefficient, this is multiplied by a random 0-10 then added to the hardening differential and viscosity.,
-					The will fall of edges factor, this is 0 or 1,
-					0 = not colourable, 1 = colourable.
-				}
-				{Array of desiccants, format: id+4096*efficiency}
-				{Array of combination targets format: IDtarget + (4096*IDturnTo)}
-			};
+		data = new Integer[][]{
+			{
+				ID that this returns when meta hits -1, 
+				the viscosity factor,  
+				a secondary ID that this can turn into used for hardening,
+				The hardening differential that prevents things staying liquid forever.,
+				a randomness coefficient, this is multiplied by a random 0-10 then added to the hardening differential and viscosity.,
+				The will fall of edges factor, this is 0 or 1,
+				0 = not colourable, 1 = colourable.
+				1 = replaces Air blocks, 0 = doesn't replace air
+			}
+			{Array of desiccants, format: id+4096*efficiency}
+			{Array of combination targets format: IDtarget + (4096*IDturnTo)}
+			{Ids that this will break}
+		};
 	*		
 	*/
 	private Random r = new Random();
@@ -75,14 +77,10 @@ public class Block16Fluid extends Block
 	public int placeamount = 16;
 	public boolean stampable = false;
 	
-   // @SideOnly(Side.CLIENT)
 	public static Icon[] iconArray = new Icon[16];
 	
 	public static double SOLIDIFY_CHANCE = 0.0004;
 	
-	public static Block16Fluid instance;
-	
-	public static List<Integer> breaks = new ArrayList<Integer>();
 	public static Map<Integer, Integer[][]> fluid16Blocks = new HashMap<Integer, Integer[][]>();
 
     public Block16Fluid(int par1, Material par2)
@@ -90,24 +88,11 @@ public class Block16Fluid extends Block
     	super(par1, par2);
         this.setBlockBounds(0.0F, 0.0F, 0.0F, 1.0F, 0.0625F, 1.0F);
 		this.setTickRandomly(true);
-		breaks.add(78);
-		breaks.add(38);
-		breaks.add(37);
-		breaks.add(31);
-		breaks.add(Block.crops.blockID);
-		breaks.add(Block.potato.blockID);
-		breaks.add(Block.carrot.blockID);
-		breaks.add(Block.melonStem.blockID);
-		breaks.add(Block.reed.blockID);
-		breaks.add(Block.leaves.blockID);
-		instance = this;
-		
     }
     @Override
     public boolean canCreatureSpawn(EnumCreatureType type,World worldObj, int x, int y, int z){
     	return false;
     }
-
 
     public boolean isBlockNormalCube(World world, int x, int y, int z)
     {
@@ -150,12 +135,8 @@ public class Block16Fluid extends Block
     @Override
     public void onBlockAdded(World worldObj, int x, int y, int z)
     {
-    	if(this.solidifiable)
-    	{
-			worldObj.scheduleBlockUpdate(x, y, z, blockID, 10);
-			tickSides(worldObj, x, y, z, 10);
-    	}
-    //	setTEUpdate(worldObj, x, y, z);
+		worldObj.scheduleBlockUpdate(x, y, z, blockID, 10);
+		tickSides(worldObj, x, y, z, 10);
     }
     /**
      * Sets the block's bounds for rendering it as an item
@@ -181,11 +162,11 @@ public class Block16Fluid extends Block
         float f = (float)((1 + j)) / 16.0F;
         this.setBlockBounds(0.0F, 0.0F, 0.0F, 1.0F, f, 1.0F);
     }
-    
-    public void harvestBlock(World par1World, EntityPlayer par2EntityPlayer, int par3, int par4, int par5, int par6)
-    {
-        super.harvestBlock(par1World, par2EntityPlayer, par3, par4, par5, par6);
-    }
+   
+//    public void harvestBlock(World par1World, EntityPlayer par2EntityPlayer, int par3, int par4, int par5, int par6)
+//    {
+//        super.harvestBlock(par1World, par2EntityPlayer, par3, par4, par5, par6);
+//    }
     
     public void onBlockPlacedBy(World worldObj,int x,int y,int z,EntityLiving entity, ItemStack item)
     {
@@ -206,8 +187,8 @@ public class Block16Fluid extends Block
     		int itemMeta = item.getItemDamage();
     		int id = worldObj.getBlockId(x, y, z);
     		Block16Fluid block = (Block16Fluid)Block.blocksList[id];
-
-	    	if(meta!=0&&itemID<4096&&block.willCombine(itemID, id))
+    		Vector3 vec = new Vector3(x,y,z);
+	    	if(meta!=0&&itemID<4096&&block.willCombine(itemID, vec, worldObj))
 	    	{
 	    		ret = placedStack(worldObj, item, x, y, z, ForgeDirection.getOrientation(side), block, player);
 	    	}
@@ -252,6 +233,8 @@ public class Block16Fluid extends Block
 	{ 
 		doFluidTick(worldObj, x, y, z);
 		doHardenTick(worldObj, x, y, z);
+		if(isHardenable(worldObj, new Vector3(x,y,z)))
+			worldObj.scheduleBlockUpdate( x, y, z,blockID ,tickRate(worldObj));
     }
 	
 	public int tickRate(World worldObj)
@@ -287,7 +270,8 @@ public class Block16Fluid extends Block
         int i = r.nextInt(n);
         int highestMeta = 0;
         int k = 0;
-        for(int j = 0; j<n; j++){
+        for(int j = 0; j<n; j++)
+        {
             int id = worldObj.getBlockId(x+sides[i][0], y, z+sides[i][1]);
             int meta = worldObj.getBlockMetadata(x+sides[i][0], y, z+sides[i][1]);
         	block = Block.blocksList[id];
@@ -324,8 +308,10 @@ public class Block16Fluid extends Block
      */
     public boolean tryFall(World worldObj, int x, int y, int z){
     	int id = worldObj.getBlockId(x, y, z);
+    	if(!(Block.blocksList[id] instanceof Block16Fluid)) return false;
     	int h = y;
     	int id1 = worldObj.getBlockId(x, h-1, z);
+    	Vector3 vec1 = new Vector3(x, h-1, z);
     	double dx=0,dz=0;
 
         boolean fallOff = willFallOffEdges(id);
@@ -334,76 +320,73 @@ public class Block16Fluid extends Block
         boolean falldown = true;
     	boolean fell = false;
     	
-    	if(!(Block.blocksList[id] instanceof Block16Fluid)) return false;
-		if(!(id1==0||breaks.contains(id1)||id1==BlockRebar.instance.blockID))
-		{
-			boolean combine = willCombine(id, id1);
-			if(combine)
-			{
-				fell = merge(worldObj,x, y, z, x+(int)(dx*(y-h)), h-1, z+(int)(dz*(y-h)));
-		//		System.out.println("merged "+fell);
-			}
-		}
-    	
-    	if(((Block16Fluid)Block.blocksList[id]).dust)
+    	boolean combineDown = willCombine(id, vec1, worldObj);
+    	if(combineDown)
     	{
-    		dx = ThreadSafeWorldOperations.getWind(worldObj, x, z)[0];
-    		dz = ThreadSafeWorldOperations.getWind(worldObj, x, z)[1];
-    		
-	    	boolean combine;
-	    	while(h>1)
+	    	if(((Block16Fluid)Block.blocksList[id]).dust)
 	    	{
-	    		id1 = worldObj.getBlockId(x+(int)(dx*(1+y-h)), h-1, z+(int)(dz*(1+y-h)));
-	    		combine = willCombine(id, id1);
-	    		if(!(id1==0||breaks.contains(id1)||combine))
-	    		{
-	    			break;
-	    		}
-	    		h--;
+	    		dx = ThreadSafeWorldOperations.getWind(worldObj, x, z)[0];
+	    		dz = ThreadSafeWorldOperations.getWind(worldObj, x, z)[1];
+	    		
+		    	boolean combine;
+		    	while(h>1)
+		    	{
+		    		vec1 = new Vector3(x+(int)(dx*(1+y-h)), h-1, z+(int)(dz*(1+y-h)));
+		    		id1 = vec1.getBlockId(worldObj);
+		    		
+		    		combine = willCombine(id, vec1, worldObj);
+		    		if(!(combine))
+		    		{
+		    			break;
+		    		}
+		    		h--;
+		    	}
+		        fell = fell||merge(worldObj,x, y, z, x+(int)(dx*(y-h)), h, z+(int)(dz*(y-h)));
 	    	}
-	        fell = fell||merge(worldObj,x, y, z, x+(int)(dx*(y-h)), h, z+(int)(dz*(y-h)));
-    	}
-    	else
-    	{
-	    	boolean combine;
-	    	while(h>1)
+	    	else
 	    	{
-	    		Vector3 vec = new Vector3(x,h-1,z);
-	    		id1 = vec.getBlockId(worldObj);
-	    		combine = willCombine(id, id1)&&(vec.getBlock(worldObj) instanceof Block16Fluid? vec.getBlockMetadata(worldObj)!=0:true);
-	    		if(!(id1==0||breaks.contains(id1)||combine))
-	    		{
-	    			break;
-	    		}
-	    		h--;
+		    	boolean combine;
+		    	while(h>1)
+		    	{
+		    		Vector3 vec = new Vector3(x,h-1,z);
+		    		id1 = vec.getBlockId(worldObj);
+		    		combine = willCombine(id, vec, worldObj)&&(vec.getBlock(worldObj) instanceof Block16Fluid? vec.getBlockMetadata(worldObj)!=0:true);
+		    		if(!(id1==0||willBreak(id, id1)||combine))
+		    		{
+		    			break;
+		    		}
+		    		h--;
+		    	}
+	    		fell = fell||merge(worldObj,x, y, z,x,h,z);
 	    	}
-    		fell = fell||merge(worldObj,x, y, z,x,h,z);
-	  //  	System.out.println("fell: "+fell);
     	}
-        
-        
+        boolean trySide = false;
         if(!fell&&(fallOff||flowOff))
         {
         	int[][]sides = {{1,0},{-1,0},{0,1},{0,-1}};//,{1,1},{-1,1},{1,-1},{-1,-1}};
-           
+        	
             int i = r.nextInt(sides.length);
-           
+            
             int lowestMeta = 0;
             int k = 0;
             int dh = 0;
             for(int j = 0; j<sides.length; j++){
             		h = y;
             		Vector3 side = new Vector3(x+sides[i][0], y, z+sides[i][1]);
+            		
+            		if(!willCombine(id, side, worldObj))
+            			continue;
+            		
                     int idSideDown;
-                    
-                    if(side.isAir(worldObj))
+                    trySide = true;
+                    if(willCombine(id, side, worldObj))
                     {
                     	while(h>0)
                     	{
                     		Vector3 sideDown = new Vector3(x+sides[i][0], h-1, z+sides[i][1]);
                     		idSideDown = sideDown.getBlockId(worldObj);
-                        	boolean combine = willCombine(id, idSideDown);
-                    		if(!(sideDown.isAir(worldObj)||breaks.contains(idSideDown)||combine))
+                        	boolean combine = willCombine(id, sideDown, worldObj);
+                    		if(!(willBreak(id,idSideDown)||combine))
                     		{
                     			break;
                     		}
@@ -420,8 +403,7 @@ public class Block16Fluid extends Block
                     
                     i = (i+1)%sides.length;
             }
-            
-            if(lowestMeta!=0)
+            if(trySide&&lowestMeta!=0)
             {
             	fell = fell||fallOff?merge(worldObj, x,y,z,x+sides[k][0], y-1, z+sides[k][1]):equalize(worldObj, x,y,z,x+sides[k][0], y-1, z+sides[k][1]);
             }
@@ -448,18 +430,15 @@ public class Block16Fluid extends Block
         int id1 = id1Old = vec1.getBlockId(worldObj);
         int meta1 = meta1Old = vec1.getBlockMetadata(worldObj);
         
-        boolean canBreak = willBreak(id1);
-      //  System.out.println("checking merge "+id+" "+id1+" "+vec.toString(true)+" "+vec1.toString(true)+vec1.toString()+" "+worldObj.getBlockId(x, y, z));
-        boolean breakException = breakException(id, id1);
-        if(canBreak&&!breakException){
-         //   System.out.println("broke "+id+" "+id1+" "+vec.toString(true)+" "+vec1.toString(true));
+        boolean canBreak = willBreak(id, id1);
+        if(canBreak){
         	vec1.setAir(worldObj);
         	id1 = 0;
         	meta1=16;
         }
-        boolean combine = willCombine(id, id1)||vec1.isAir(worldObj);
-        if(combine){
-        //	 System.out.println("attempting combine "+id+" "+id1+" "+vec.toString(true)+" "+vec1.toString(true));
+        boolean combine = willCombine(id, vec1, worldObj);
+        if(combine)
+        {
             int newColour = getMetaData(worldObj, vec);
             boolean changed = false;
             Block block1 = Block.blocksList[id1];
@@ -533,7 +512,6 @@ public class Block16Fluid extends Block
         	//System.out.println("changed: "+changed);
         	return changed;
         }
-
         return false;
     }
 
@@ -552,20 +530,21 @@ public class Block16Fluid extends Block
         
         int id1 = vec1.getBlockId(worldObj);
         int meta1 = meta1Old = vec1.getBlockMetadata(worldObj);
-        boolean canBreak = willBreak(id1);
+        boolean canBreak = willBreak(id,id1);
         
         if(id==id1&&meta==meta1) return false;
 
-        boolean combine = willCombine(id, id1)||vec1.isAir(worldObj);
-        boolean breakException = breakException(id, id1);
+        boolean combine = willCombine(id, vec1, worldObj);
 
-        if(canBreak&&!breakException){
+        if(canBreak)
+        {
         	vec1.setAir(worldObj);
         	id1 = 0;
         	meta1=0;
         }
         
-        if(combine){
+        if(combine)
+        {
             Block block1 = Block.blocksList[id1];
             int diff = hardenDifferential(id) + spread;
 
@@ -654,23 +633,18 @@ public class Block16Fluid extends Block
        
     /////////////////////////////////////////////////Checks used in the fluid code////////////////////////////////////////////////////
     
-    public boolean willBreak(int id)
+    public static boolean willBreak(int idbreaker, int idbroken)
     {
-    	return breaks.contains(id);
-    }
-    
-    public boolean breakException(int idfrom, int id)
-    {
-    	if(fluid16Blocks.get(idfrom)==null) return false;
-    	if(fluid16Blocks.get(idfrom).length<4) return false;
-    	for(int i = 0; i<fluid16Blocks.get(idfrom)[3].length;i++)
+    	if(fluid16Blocks.get(idbreaker)==null) return false;
+    	if(fluid16Blocks.get(idbreaker).length<4) return false;
+    	boolean ret = false;
+    	for(Integer i:fluid16Blocks.get(idbreaker)[3])
     	{
-    		if(fluid16Blocks.get(idfrom)[3][i]==id)
-    		{
-    			return true;
-    		}
-    	}	
-    	return false;
+    		ret = i == idbroken;
+    		if(ret)
+    			break;
+    	}
+    	return ret;
     }
     
     private boolean canHardenNextTo(int idFrom, int idTo)
@@ -686,7 +660,7 @@ public class Block16Fluid extends Block
     	return false;
     }
     
-    public boolean willCombine(int idFrom, int idTo)
+    public boolean combineFromList(int idFrom, int idTo)
     {
     	if(fluid16Blocks.get(idFrom)==null)return false;
     	Integer[][] blockData = fluid16Blocks.get(idFrom);
@@ -696,7 +670,35 @@ public class Block16Fluid extends Block
     			return true;
     		}
     	}
+
     	return false;
+    }
+    
+    public boolean willCombine(int id, Vector3 vec, World worldObj)
+    {
+    	int id1 = vec.getBlockId(worldObj);
+    	
+    	if(vec.getBlock(worldObj) instanceof Block16Fluid && vec.getBlockMetadata(worldObj)==0)
+    	{
+    		return false;
+    	}
+    	
+    	boolean ret = combineFromList(id, id1);
+    	boolean flag = willCombineAir(id);
+    	
+    	if(flag)
+    	{
+    		ret = ret || vec.isAir(worldObj);
+    	}
+    	
+    	return ret;
+    }
+    
+    private boolean willCombineAir(int id)
+    {
+    	if(fluid16Blocks.get(id)==null)return false;
+    	Integer[][] blockData = fluid16Blocks.get(id);
+    	return blockData[0].length>7&&blockData[0][7]==1;
     }
     
     private int getReturnToID(int id)
@@ -816,12 +818,15 @@ public class Block16Fluid extends Block
     	if(fluid16Blocks.get(id)[0][2]==null) return false;
     	
     	int idDown = down.getBlockId(worldObj);
-    	if(idDown==0||breaks.contains(idDown))
+    	
+    	boolean flag = willCombineAir(id)&&down.isAir(worldObj);
+    	
+    	if(flag||willBreak(id, idDown))
     	{
     		return false;
     	}
     	if(down.getBlock(worldObj) instanceof Block16Fluid&&
-    			willCombine(id, idDown) &&
+    			willCombine(id, down, worldObj) &&
     			down.getBlockMetadata(worldObj)!=0)
     	{
     		return false;
@@ -852,10 +857,10 @@ public class Block16Fluid extends Block
 		 if(fluid16Blocks.get(idFrom)[0][6]==0) return 8;
     	if(block instanceof Block16Fluid)
     	{
-    		int colourfrom = instance.getMetaData(worldObj,vec);
-    		int colourto = instance.getMetaData(worldObj,vec1);
-    		int i = Math.min(instance.getMetaData(worldObj,vec), ((Block16Fluid)block).instance.getMetaData(worldObj,vec1));
-    		int j = Math.max(instance.getMetaData(worldObj,vec), ((Block16Fluid)block).instance.getMetaData(worldObj,vec1));
+    		int colourfrom = getMetaData(worldObj,vec);
+    		int colourto = getMetaData(worldObj,vec1);
+    		int i = Math.min(getMetaData(worldObj,vec), ((Block16Fluid)block).getMetaData(worldObj,vec1));
+    		int j = Math.max(getMetaData(worldObj,vec), ((Block16Fluid)block).getMetaData(worldObj,vec1));
     		
     		return (ConcreteCore.colourMap.get(i+16*j)==null?colourfrom:(byte)ConcreteCore.colourMap.get(i+16*j));
     	}
@@ -873,10 +878,10 @@ public class Block16Fluid extends Block
 		if(fluid16Blocks.get(idFrom)[0][6]==0) return;
     	if(block instanceof Block16Fluid)
     	{
-    		int colourfrom = instance.getMetaData(worldObj,vec);
-    		int colourto = instance.getMetaData(worldObj,vec1);
-    		int i = Math.min(instance.getMetaData(worldObj,vec), ((Block16Fluid)block).instance.getMetaData(worldObj,vec1));
-    		int j = Math.max(instance.getMetaData(worldObj,vec), ((Block16Fluid)block).instance.getMetaData(worldObj,vec1));
+    		int colourfrom = getMetaData(worldObj,vec);
+    		int colourto = getMetaData(worldObj,vec1);
+    		int i = Math.min(getMetaData(worldObj,vec), ((Block16Fluid)block).getMetaData(worldObj,vec1));
+    		int j = Math.max(getMetaData(worldObj,vec), ((Block16Fluid)block).getMetaData(worldObj,vec1));
     		
     		setColourMetaData(worldObj, vec1, (byte) (ConcreteCore.colourMap.get(i+16*j)==null?colourfrom:(byte)ConcreteCore.colourMap.get(i+16*j)));
     	}
@@ -971,175 +976,164 @@ public class Block16Fluid extends Block
 	 }
 	 
 	 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	 @SideOnly(Side.CLIENT)
+ @SideOnly(Side.CLIENT)
 
-	    /**
-	     * Returns true if the given side of this block type should be rendered, if the adjacent block is at the given
-	     * coordinates.  Args: blockAccess, x, y, z, side
-	     */
-	    public boolean shouldSideBeRendered(IBlockAccess par1IBlockAccess, int x, int y, int z, int dir)
-	    {
+    /**
+     * Returns true if the given side of this block type should be rendered, if the adjacent block is at the given
+     * coordinates.  Args: blockAccess, x, y, z, side
+     */
+    public boolean shouldSideBeRendered(IBlockAccess par1IBlockAccess, int x, int y, int z, int dir)
+    {
 
-	    	ForgeDirection side = ForgeDirection.getOrientation(dir);
-	    	
-	    	int id1 = par1IBlockAccess.getBlockId(x, y, z);
+    	ForgeDirection side = ForgeDirection.getOrientation(dir);
+    	
+    	int id1 = par1IBlockAccess.getBlockId(x, y, z);
 
-	    	int meta = par1IBlockAccess.getBlockMetadata(x-side.offsetX, y-side.offsetX, z-side.offsetX);
-	    	if(side == ForgeDirection.UP && meta !=15)
-	    	{
-	    		return true;
-	    	}
-	    	
-	    	
-	    	if(Block.opaqueCubeLookup[id1]&&meta==0)
+    	int meta = par1IBlockAccess.getBlockMetadata(x-side.offsetX, y-side.offsetX, z-side.offsetX);
+    	if(side == ForgeDirection.UP && meta !=15)
+    	{
+    		return true;
+    	}
+    	
+    	
+    	if(Block.opaqueCubeLookup[id1]&&meta==0)
+    	{
+    		return false;
+    	}
+    	
+    	Block block1 = Block.blocksList[id1];
+    	
+    	
+    	if(block1 instanceof Block16Fluid)
+    	{
+	    	int meta1 = par1IBlockAccess.getBlockMetadata(x, y, z);
+	    	if(meta==0&&meta1==0)
 	    	{
 	    		return false;
 	    	}
-	    	
-	    	Block block1 = Block.blocksList[id1];
-	    	
-	    	
-	    	if(block1 instanceof Block16Fluid)
-	    	{
-		    	int meta1 = par1IBlockAccess.getBlockMetadata(x, y, z);
-		    	if(meta==0&&meta1==0)
-		    	{
-		    		return false;
-		    	}
-	    	}
-	        return true;
-	        //*/
-	    }
+    	}
+        return true;
+        //*/
+    }
 	 
-	 
-	    /**
-	     * Checks if the block is a solid face on the given side, used by placement logic.
-	     *
-	     * @param world The current world
-	     * @param x X Position
-	     * @param y Y position
-	     * @param z Z position
-	     * @param side The side to check
-	     * @return True if the block is solid on the specified side.
-	     */
-	    public boolean isBlockSolidOnSide(World world, int x, int y, int z, ForgeDirection side)
-	    {
-	        int meta = world.getBlockMetadata(x, y, z);
-	        switch (side)
-	        {
-		            case UP:
-		            {
-		                return (meta==0);
-		            }
-		            case DOWN:
-		            {
-		                return true;
-		            }
-		            case NORTH:
-		            {
-		            	return (meta==0);
-		            }
-		            case SOUTH:
-		            {
-		            	return (meta==0);
-		            }
-		            case EAST:
-		            {
-		            	return (meta==0);
-		            }
-		            case WEST:
-		            {
-		            	return (meta==0);
-		            }
-		            default:
-		            {
-		            	return (meta==0);
-		            }
-	        }//*/
-	    }
-	 ////////////////////////////////////////////////////////////////////////////////////////////////////////
+ 
+    /**
+     * Checks if the block is a solid face on the given side, used by placement logic.
+     *
+     * @param world The current world
+     * @param x X Position
+     * @param y Y position
+     * @param z Z position
+     * @param side The side to check
+     * @return True if the block is solid on the specified side.
+     */
+    public boolean isBlockSolidOnSide(World world, int x, int y, int z, ForgeDirection side)
+    {
+        int meta = world.getBlockMetadata(x, y, z);
+        switch (side)
+        {
+	            case UP:
+	            {
+	                return (meta==0);
+	            }
+	            case DOWN:
+	            {
+	                return true;
+	            }
+	            case NORTH:
+	            {
+	            	return (meta==0);
+	            }
+	            case SOUTH:
+	            {
+	            	return (meta==0);
+	            }
+	            case EAST:
+	            {
+	            	return (meta==0);
+	            }
+	            case WEST:
+	            {
+	            	return (meta==0);
+	            }
+	            default:
+	            {
+	            	return (meta==0);
+	            }
+        }//*/
+    }
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-		 public void doFluidTick(World worldObj, int xCoord, int yCoord, int zCoord)
+	 public void doFluidTick(World worldObj, int xCoord, int yCoord, int zCoord)
+	 {
+		 if(!worldObj.isRemote&&Block.blocksList[worldObj.getBlockId(xCoord, yCoord, zCoord)]instanceof Block16Fluid)
 		 {
-			 if(!worldObj.isRemote&&Block.blocksList[worldObj.getBlockId(xCoord, yCoord, zCoord)]instanceof Block16Fluid)
-			 {
-				Block16Fluid.instance.tryFall(worldObj, xCoord, yCoord, zCoord);
-				Block16Fluid.instance.trySpread(worldObj, xCoord, yCoord, zCoord);	
-			 }
+			tryFall(worldObj, xCoord, yCoord, zCoord);
+			trySpread(worldObj, xCoord, yCoord, zCoord);
 		 }
-		 
-		 public void doHardenTick(World worldObj, int xCoord, int yCoord, int zCoord)
-		 {
-			 Vector3 vec = new Vector3(xCoord, yCoord, zCoord);
-			Block blockf = Block.blocksList[worldObj.getBlockId( xCoord, yCoord, zCoord)];
-			if(!isHardenable(worldObj, vec)) return;
-			if(blockf!=null&&blockf instanceof Block16Fluid&&((Block16Fluid)blockf).solidifiable)
-			{
-				boolean bool = false;
-				int num = Block16Fluid.instance.canHarden(worldObj, xCoord, yCoord, zCoord);
-				 if(Math.random()>(1-(Block16Fluid.instance.SOLIDIFY_CHANCE*num)))
-				 {
-					 bool = true;
-					 int metai = Block16Fluid.instance.getMetaData(worldObj,vec);
-					 if(!worldObj.isRemote)
-					 {
-						 worldObj.setBlock(xCoord, yCoord, zCoord, Block16Fluid.instance.getTurnToID(worldObj.getBlockId( xCoord, yCoord, zCoord)), worldObj.getBlockMetadata( xCoord, yCoord, zCoord), 2);
-					 }
-					 Block16Fluid.instance.setColourMetaData(worldObj,vec, (byte) metai);
-				 }
-				 if(!bool)
-				worldObj.scheduleBlockUpdate( xCoord, yCoord, zCoord,worldObj.getBlockId( xCoord, yCoord, zCoord) ,5);
-			}
-		 }
-		 
+	 }
+	 
+	 public void doHardenTick(World worldObj, int xCoord, int yCoord, int zCoord)
+	 {
+		Vector3 vec = new Vector3(xCoord, yCoord, zCoord);
+		if(!isHardenable(worldObj, vec)) return;
+		int num = canHarden(worldObj, xCoord, yCoord, zCoord);
+		if(!worldObj.isRemote&&Math.random()>(1-(SOLIDIFY_CHANCE*num)))
+		{
+			int metai = getMetaData(worldObj,vec);
+			worldObj.setBlock(xCoord, yCoord, zCoord, getTurnToID(worldObj.getBlockId( xCoord, yCoord, zCoord)), worldObj.getBlockMetadata( xCoord, yCoord, zCoord), 2);
+			setColourMetaData(worldObj,vec, (byte) metai);
+		}
+	 }
+	 
 	    
-		    public void tickSides(World worldObj, int x, int y, int z, int rate){
-		    	int[][]sides = {{1,0,0},{-1,0,0},{0,0,1},{0,0,-1},{0,1,0},{0,-1,0}};
-		        for(int i=0;i<6;i++){
-		        	Block blocki = Block.blocksList[worldObj.getBlockId(x+sides[i][0], y+sides[i][1], z+sides[i][2])];
-		  
-		        	if(blocki instanceof Block16Fluid && ((Block16Fluid)blocki).solidifiable)
-		        	{
-		        		int id = worldObj.getBlockId( x+sides[i][0], y+sides[i][1], z+sides[i][2]);
-		        		worldObj.scheduleBlockUpdate(x+sides[i][0], y+sides[i][1], z+sides[i][2],id,rate);
-		        	}
-		        }
-		   }
+    public void tickSides(World worldObj, int x, int y, int z, int rate){
+    	int[][]sides = {{1,0,0},{-1,0,0},{0,0,1},{0,0,-1},{0,1,0},{0,-1,0}};
+        for(int i=0;i<6;i++){
+        	Block blocki = Block.blocksList[worldObj.getBlockId(x+sides[i][0], y+sides[i][1], z+sides[i][2])];
+  
+        	if(blocki instanceof Block16Fluid && ((Block16Fluid)blocki).solidifiable)
+        	{
+        		int id = worldObj.getBlockId( x+sides[i][0], y+sides[i][1], z+sides[i][2]);
+        		worldObj.scheduleBlockUpdate(x+sides[i][0], y+sides[i][1], z+sides[i][2],id,rate);
+        	}
+        }
+   }
 
-		    @SideOnly(Side.CLIENT)
+    @SideOnly(Side.CLIENT)
 
-		    /**
-		     * From the specified side and block metadata retrieves the blocks texture. Args: side, metadata
-		     */
-		    public Icon getIcon(int par1, int par2)
-		    {
-		    	return blockIcon;//iconArray[par2];TODO
-		    }
-		    
-		    /**
-		     * Common way to recolour a block with an external tool
-		     * @param world The world
-		     * @param x X
-		     * @param y Y
-		     * @param z Z
-		     * @param side The side hit with the colouring tool
-		     * @param colour The colour to change to
-		     * @return If the recolouring was successful
-		     */
-		    public boolean recolourBlock(World worldObj, int x, int y, int z, ForgeDirection side, int colour)
-		    {
-		    	setData();
-		    	if(canColour(worldObj.getBlockId(x, y, z)))
-		    	{
-			    	int meta1 = (colour);
-		    		this.setColourMetaData(worldObj, new Vector3(x, y, z), (byte) (meta1),side.ordinal());
-		    		setTEUpdate(worldObj, x, y, z);
-		    		return true;
-		    	}
-		        return false;
-		    }		 
-	   
+    /**
+     * From the specified side and block metadata retrieves the blocks texture. Args: side, metadata
+     */
+    public Icon getIcon(int par1, int par2)
+    {
+    	return blockIcon;//iconArray[par2];TODO
+    }
+    
+    /**
+     * Common way to recolour a block with an external tool
+     * @param world The world
+     * @param x X
+     * @param y Y
+     * @param z Z
+     * @param side The side hit with the colouring tool
+     * @param colour The colour to change to
+     * @return If the recolouring was successful
+     */
+	    public boolean recolourBlock(World worldObj, int x, int y, int z, ForgeDirection side, int colour)
+	    {
+	    	setData();
+	    	if(canColour(worldObj.getBlockId(x, y, z)))
+	    	{
+		    	int meta1 = (colour);
+	    		this.setColourMetaData(worldObj, new Vector3(x, y, z), (byte) (meta1),side.ordinal());
+	    		setTEUpdate(worldObj, x, y, z);
+	    		return true;
+	    	}
+	        return false;
+	    }		 
+   
 		    
 	 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	 

@@ -26,6 +26,7 @@ import net.minecraft.util.DamageSource;
 import net.minecraft.util.Vec3;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
+import net.minecraftforge.common.ForgeDirection;
 import net.minecraftforge.liquids.ILiquid;
 import net.minecraftforge.liquids.LiquidContainerRegistry;
 import net.minecraftforge.liquids.LiquidStack;
@@ -139,6 +140,11 @@ public class Vector3
 		{
 			this.set(new Vector3((double[])a));
 		}
+		else if(a instanceof ForgeDirection)
+		{
+			ForgeDirection side = (ForgeDirection)a;
+			this.set(new Vector3(side.offsetX, side.offsetY, side.offsetZ));
+		}
 	}
 
 	public List<Entity> livingEntityInBox(World worldObj)
@@ -227,10 +233,6 @@ public class Vector3
 	{
 		setBlock(worldObj,0);
 	}
-	public boolean isAir(World worldObj)
-	{
-		return worldObj.isAirBlock(intX(), intY(), intZ());
-	}
 	//*/
 	public boolean aabbClear(AxisAlignedBB aabb)
 	{
@@ -242,6 +244,13 @@ public class Vector3
 			return false;
 		
 		return true;
+	}
+	
+	public Vector3 offset(ForgeDirection side)
+	{
+		Vector3 ret = this.Copy();
+		ret = ret.add(new Vector3(side));
+		return ret;
 	}
 	
 	public boolean inMatBox(Matrix3 box)
@@ -382,26 +391,6 @@ public class Vector3
 	public void playSoundEffect(World worldObj, float volume, float pitch, String sound)
 	{
 		worldObj.playSoundEffect(x, y, z, sound, volume, pitch);
-	}
-	
-	public TileEntity getTileEntity(World worldObj)
-	{
-		return worldObj.getBlockTileEntity(intX(), intY(), intZ());
-	}
-	
-	public int getBlockId(World worldObj)
-	{
-		return worldObj.getBlockId(intX(), intY(), intZ());
-	}
-	
-	public int getBlockMetadata(World worldObj)
-	{
-		return worldObj.getBlockMetadata(intX(), intY(), intZ());
-	}
-	
-	public Material getBlockMaterial(World worldObj)
-	{
-		return worldObj.getBlockMaterial(intX(), intY(), intZ());
 	}
 	
 	public int intX()
@@ -1753,6 +1742,11 @@ public class Vector3
 		  
 		  public boolean doEntityCollision(Entity pusher, Entity e, Vector3 offset, Vector3 entity)
 		  {
+			  return doCollision(new Vector3(pusher), new Vector3(pusher.motionX,pusher.motionY,pusher.motionZ), e, offset, entity);
+		  }
+		  
+		  public boolean doCollision(Vector3 push, Vector3 v, Entity e, Vector3 offset, Vector3 entity)
+		  {
 			  	boolean ret = false;
 			  	
 			  	offset.y += e.yOffset;
@@ -1762,8 +1756,6 @@ public class Vector3
 			  		entity.clear();
 			  	}
 			  	
-			  	
-			  	Vector3 push = new Vector3(pusher);
 			  	Vector3 r = ((new Vector3(e)).subtract(offset).subtract(push)).add(entity);
 
 			  	boolean rot = false;
@@ -1847,7 +1839,7 @@ public class Vector3
 					location.clear();
 				}
 				{
-					boolean entitymovingup = (e.motionY-pusher.motionY)>0;
+					boolean entitymovingup = (e.motionY-v.y)>0;
 					location = location.add(new Vector3(0.5,0,0.5));
 					
 					boolean xpositive = location.x>0&&location.x>=Math.abs(location.z);
@@ -1856,47 +1848,37 @@ public class Vector3
 					boolean zpositive = location.z>0&&location.z>=Math.abs(location.x);
 					boolean znegative = location.z<0&&-location.z>=Math.abs(location.x);
 
-					boolean ynegative = (entitymovingup||(e.motionY-pusher.motionY)>0.2)&&location.y<0;
-					boolean ypositive = Math.abs(yDiff-e.posY)<=e.stepHeight||((e.motionY-pusher.motionY)<-0.2&&(e.posY-e.motionY > yDiff));//&&!entitymovingup;//||(((pusher.motionY)<0)&&(yDiff-e.posY)<=e.stepHeight)||(flag&&(yDiff-e.posY)<=e.stepHeight);
+					boolean ynegative = (entitymovingup||(e.motionY-v.y)>0.2)&&location.y<0;
+					boolean ypositive = Math.abs(yDiff-e.posY)<=e.stepHeight||((e.motionY-v.y)<-0.2&&(e.posY-e.motionY > yDiff));//&&!entitymovingup;//||(((pusher.motionY)<0)&&(yDiff-e.posY)<=e.stepHeight)||(flag&&(yDiff-e.posY)<=e.stepHeight);
 					
-				//	System.out.println(location.toString());
-					
-					double fx = 0.15, fy = 0.15, fz = 0.15;
-			//		System.out.println(fx+" "+fy+" "+fz);
+					double f = 0.005;
+					double fx = f, fy = f, fz = f;
 					if(ypositive)
 					{
-					//	System.out.println(yDiff+" "+push.y+" "+max.y+" "+offset.y+" "+(Math.sqrt(r.x*r.x+r.z*r.z)*Math.sin(-rotation.y))+" "+(-rotation.y));
-						pushDir.y  = pusher.motionY>0? pusher.motionY:0;
-					//	System.out.println((yDiff-e.posY)+" "+e.stepHeight+" "+(e.motionY-pusher.motionY));
+						pushDir.y  = v.y>0? v.y:0;
 						if(e instanceof EntityLiving)
 						{
-							int damage = Math.max((int)((-e.motionY+pusher.motionY+0.15)*(-e.motionY+pusher.motionY+0.15)),0);
-						//	System.out.println(damage+" "+(-e.motionY+pusher.motionY)+" "+pusher.motionY);
+							int damage = Math.max((int)((-e.motionY+v.y+0.15)*(-e.motionY+v.y+0.15)),0);
 							if(damage>0)
 								((EntityLiving)e).attackEntityFrom(DamageSource.fall, damage);
 						}
-						e.motionY = pusher.motionY>0? pusher.motionY:0;
-						e.motionX += pusher.motionX;
-						e.motionZ += pusher.motionZ;
-						e.setPosition(e.posX, yDiff, e.posZ);
+						e.motionY = v.y>0? v.y:0;
+						e.setPosition(e.posX+v.x, yDiff, e.posZ+v.z);
 						e.isAirBorne = false;
 						e.onGround = true;
 						e.fallDistance = 0;
 						movedy = true;
-					//	System.out.println("pushed+y");
 					}					
 					else if(ynegative)
 					{
-						pushDir.y = -e.motionY-fy+pusher.motionY;
+						pushDir.y = -e.motionY-fy+v.y;
 						movedy = true;
 
 						if(e instanceof EntityLiving)
 						{
-							int damage = Math.max((int)((e.motionY+pusher.motionY+0.15)*(e.motionY+pusher.motionY+0.15)),0);
-						//	System.out.println(damage+" "+(-e.motionY+pusher.motionY)+" "+pusher.motionY);
+							int damage = Math.max((int)((e.motionY+v.y+0.15)*(e.motionY+v.y+0.15)),0);
 							((EntityLiving)e).attackEntityFrom(DamageSource.fall, damage);
 						}
-					//	System.out.println("pushed-y");
 					}
 					
 					
@@ -1919,14 +1901,14 @@ public class Vector3
 						if(znegative)
 						{
 							pushDir.z = -fz;
-							pushLoc.x = min.z;
+							pushLoc.z = min.z;
 				//			System.out.println("pushed3"+location.toString());
 							movedz = true;
 						}
 						else if(zpositive)
 						{
 							pushDir.z = fz;
-							pushLoc.x = max.z;
+							pushLoc.z = max.z;
 				//			System.out.println("pushed4"+location.toString());
 							movedz = true;
 						}
@@ -1939,10 +1921,8 @@ public class Vector3
 					pushDir = pushDir.rotateAboutAngles(-rotation.y, -rotation.z);
 					pushLoc = pushLoc.rotateAboutAngles(-rotation.y, -rotation.z);
 				}
-				//System.out.println(pushLoc.toString()+" "+toString());
 				if(movedy||movedx||movedz)
 				{
-				//	System.out.println("pushDir"+pushDir);
 					if(pushDir.y!=0&&!Double.isNaN(pushDir.y))
 					{
 						e.motionY = pushDir.y;
@@ -1950,18 +1930,16 @@ public class Vector3
 					}
 					if(pushDir.x!=0&&!Double.isNaN(pushDir.x))
 					{
-						e.motionX = pushDir.x;
 						if(pushLoc.x!=0&&!pushLoc.isNaN())
 						{
-				//			e.setPosition(pusher.posX + pushLoc.x, e.posY + pushLoc.y, e.posZ + pushLoc.z);
+							e.setPosition(push.x + pushLoc.x + pushDir.x + offset.x + (pushLoc.x>0?e.width/2:-e.width/2), e.posY, e.posZ);
 						}
 					}
 					if(pushDir.z!=0&&!Double.isNaN(pushDir.z))
 					{
-						e.motionZ = pushDir.z;
-						if(pushLoc.x!=0&&!pushLoc.isNaN())
+						if(pushLoc.z!=0&&!pushLoc.isNaN())
 						{
-					//		e.setPosition(e.posX + pushLoc.x, e.posY + pushLoc.y, pusher.posZ + pushLoc.z);
+							e.setPosition(e.posX, e.posY, push.z + pushLoc.z + pushDir.z + offset.z + (pushLoc.z>0?e.width/2:-e.width/2));
 						}
 						
 					}
@@ -1980,6 +1958,11 @@ public class Vector3
 		  
 		  public Vector3 getEntityCollisionVector(Entity pusher, Entity e, Vector3 offset, Vector3 entity)
 		  {
+			  return getCollisionVector(new Vector3(pusher), new Vector3(pusher.motionX,pusher.motionY,pusher.motionZ), e, offset, entity);
+		  }
+		  
+		  public Vector3 getCollisionVector(Vector3 push, Vector3 v, Entity e, Vector3 offset, Vector3 entity)
+		  {
 			  	offset.y += e.yOffset;
 			  	if(entity.isNaN())
 			  	{
@@ -1990,7 +1973,7 @@ public class Vector3
 		    	Vector3 pushDir = new Vector3();
 		    	Vector3 pushLoc = new Vector3();
 			  	
-			  	Vector3 push = new Vector3(pusher);
+			  	//Vector3 push = new Vector3(pusher);
 			  	Vector3 r = ((new Vector3(e)).subtract(offset).subtract(push)).add(entity);
 
 			  	boolean rot = false;
@@ -2067,7 +2050,7 @@ public class Vector3
 					location.clear();
 				}
 				{
-					boolean entitymovingup = (e.motionY-pusher.motionY)>0;
+					boolean entitymovingup = (e.motionY-v.y)>0;
 					location = location.add(new Vector3(0.5,0,0.5));
 					
 					boolean xpositive = location.x>0&&location.x>=Math.abs(location.z);
@@ -2076,8 +2059,8 @@ public class Vector3
 					boolean zpositive = location.z>0&&location.z>=Math.abs(location.x);
 					boolean znegative = location.z<0&&-location.z>=Math.abs(location.x);
 
-					boolean ynegative = (entitymovingup||(e.motionY-pusher.motionY)>0.2)&&location.y<0;
-					boolean ypositive = Math.abs(yDiff-e.posY)<=e.stepHeight||((e.motionY-pusher.motionY)<-0.2&&(e.posY-e.motionY > yDiff));//&&!entitymovingup;//||(((pusher.motionY)<0)&&(yDiff-e.posY)<=e.stepHeight)||(flag&&(yDiff-e.posY)<=e.stepHeight);
+					boolean ynegative = (entitymovingup||(e.motionY-v.y)>0.2)&&location.y<0;
+					boolean ypositive = Math.abs(yDiff-e.posY)<=e.stepHeight||((e.motionY-v.y)<-0.2&&(e.posY-e.motionY > yDiff));//&&!entitymovingup;//||(((pusher.motionY)<0)&&(yDiff-e.posY)<=e.stepHeight)||(flag&&(yDiff-e.posY)<=e.stepHeight);
 					
 				//	System.out.println(location.toString());
 					
@@ -2086,19 +2069,19 @@ public class Vector3
 					if(ypositive)
 					{
 					//	System.out.println(yDiff+" "+push.y+" "+max.y+" "+offset.y+" "+(Math.sqrt(r.x*r.x+r.z*r.z)*Math.sin(-rotation.y))+" "+(-rotation.y));
-						pushDir.y  = pusher.motionY>0? pusher.motionY:0;
+						pushDir.y  = v.y>0? v.y:0;
 					//	System.out.println((yDiff-e.posY)+" "+e.stepHeight+" "+(e.motionY-pusher.motionY));
 						if(e instanceof EntityLiving)
 						{
-							int damage = Math.max((int)((-e.motionY+pusher.motionY+0.15)*(-e.motionY+pusher.motionY+0.15)),0);
+							int damage = Math.max((int)((-e.motionY+v.y+0.15)*(-e.motionY+v.y+0.15)),0);
 						//	System.out.println(damage+" "+(-e.motionY+pusher.motionY)+" "+pusher.motionY);
 							if(damage>0)
 								((EntityLiving)e).attackEntityFrom(DamageSource.fall, damage);
 						}
-						e.motionY = pusher.motionY>0? pusher.motionY:0;
-						e.setPosition(e.posX+pusher.motionX, yDiff, e.posZ+pusher.motionZ);
-						e.motionX = (e.motionX+pusher.motionX)*0.9;
-						e.motionZ = (e.motionZ+pusher.motionZ)*0.9;
+						e.motionY = v.y>0? v.y:0;
+						e.setPosition(e.posX+v.x, yDiff, e.posZ+v.z);
+						e.motionX = (e.motionX+v.x)*0.9;
+						e.motionZ = (e.motionZ+v.z)*0.9;
 						e.isAirBorne = false;
 						e.onGround = true;
 						e.fallDistance = 0;
@@ -2107,12 +2090,12 @@ public class Vector3
 					}					
 					else if(ynegative)
 					{
-						pushDir.y = -e.motionY-f+pusher.motionY;
+						pushDir.y = -e.motionY-f+v.y;
 						movedy = true;
 
 						if(e instanceof EntityLiving)
 						{
-							int damage = Math.max((int)((e.motionY+pusher.motionY+0.15)*(e.motionY+pusher.motionY+0.15)),0);
+							int damage = Math.max((int)((e.motionY+v.y+0.15)*(e.motionY+v.y+0.15)),0);
 						//	System.out.println(damage+" "+(-e.motionY+pusher.motionY)+" "+pusher.motionY);
 							if(damage>0)
 								((EntityLiving)e).attackEntityFrom(DamageSource.fall, damage);
@@ -2278,9 +2261,6 @@ public class Vector3
 		  {
 			  Vector3 dir = new Vector3();
 			  
-			  
-			  
-			  
 			  return dir;
 		  }
 	
@@ -2368,18 +2348,26 @@ public class Vector3
     	
     	return null;
     }
-	public Block getBlock(IBlockAccess world) {
-		return Block.blocksList[world.getBlockId(intX(), intY(), intZ())];
+    
+    
+	public Block getBlock(IBlockAccess worldObj) {
+		return Block.blocksList[worldObj.getBlockId(intX(), intY(), intZ())];
 	}
-	public int getBlockMetadata(IBlockAccess world) {
-		return world.getBlockMetadata(intX(), intY(), intZ());
+	public int getBlockId(IBlockAccess worldObj) {
+		return worldObj.getBlockId(intX(), intY(), intZ());
 	}
-	public Material getBlockMaterial(IBlockAccess world)
+	public int getBlockMetadata(IBlockAccess worldObj) {
+		return worldObj.getBlockMetadata(intX(), intY(), intZ());
+	}
+	public Material getBlockMaterial(IBlockAccess worldObj)
 	{
-		return world.getBlockMaterial(intX(), intY(), intZ());
+		return worldObj.getBlockMaterial(intX(), intY(), intZ());
 	}
-	public boolean isAir(IBlockAccess world) {
-		return getBlockMaterial(world)==null||getBlockMaterial(world)==Material.air;
+	public boolean isAir(IBlockAccess worldObj) {
+		return getBlockMaterial(worldObj)==null||worldObj.isAirBlock(intX(), intY(), intZ())||getBlockMaterial(worldObj)==Material.air;
 	}
-
+	public TileEntity getTileEntity(IBlockAccess worldObj)
+	{
+		return worldObj.getBlockTileEntity(intX(), intY(), intZ());
+	}
 }

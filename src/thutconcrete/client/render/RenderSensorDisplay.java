@@ -1,12 +1,12 @@
 package thutconcrete.client.render;
 
 import java.util.Arrays;
-
+import static org.lwjgl.opengl.GL11.*;
 import org.lwjgl.opengl.GL11;
 
 import thutconcrete.common.blocks.BlockLift;
 import thutconcrete.common.tileentity.TileEntityLiftAccess;
-import thutconcrete.common.tileentity.TileEntitySeismicMonitor;
+import thutconcrete.common.tileentity.TileEntitySensors;
 
 import cpw.mods.fml.client.registry.ISimpleBlockRenderingHandler;
 import cpw.mods.fml.client.registry.RenderingRegistry;
@@ -25,7 +25,7 @@ import net.minecraft.tileentity.TileEntity;
 import net.minecraft.world.IBlockAccess;
 import net.minecraftforge.common.ForgeDirection;
 
-public class RenderSeismicMonitor extends TileEntitySpecialRenderer// implements ISimpleBlockRenderingHandler
+public class RenderSensorDisplay extends TileEntitySpecialRenderer// implements ISimpleBlockRenderingHandler
 {
 
 	@Override
@@ -33,17 +33,16 @@ public class RenderSeismicMonitor extends TileEntitySpecialRenderer// implements
 			double z, float f) 
 	{
 		
-		TileEntitySeismicMonitor monitor = (TileEntitySeismicMonitor)tileentity;
+		TileEntitySensors monitor = (TileEntitySensors)tileentity;
 
 		GL11.glPushMatrix();
 		
 
-		GL11.glTranslatef((float)x, (float)y, (float)z);
-		
+		GL11.glTranslated(x, y, z);
 		
 		
        //Draw scale and rate and the control buttons on the front
-       if(monitor.hasSensors)
+       if(monitor.hasDisplay)
        {
 	        //Draw the Graphs
 	       for(int j = 0; j<16; j++) 
@@ -68,7 +67,7 @@ public class RenderSeismicMonitor extends TileEntitySpecialRenderer// implements
 		
 	}
 	
-	public void drawScaleExponant(TileEntitySeismicMonitor monitor)
+	public void drawScaleExponant(TileEntitySensors monitor)
 	{
 		RenderEngine renderengine = Minecraft.getMinecraft().renderEngine;
 		
@@ -148,7 +147,7 @@ public class RenderSeismicMonitor extends TileEntitySpecialRenderer// implements
 		
 	}
 	
-	public void drawScaleCoef(TileEntitySeismicMonitor monitor)
+	public void drawScaleCoef(TileEntitySensors monitor)
 	{
 		RenderEngine renderengine = Minecraft.getMinecraft().renderEngine;
 		
@@ -226,7 +225,7 @@ public class RenderSeismicMonitor extends TileEntitySpecialRenderer// implements
 		GL11.glPopMatrix();
 	}
 	
-	public void drawRate(TileEntitySeismicMonitor monitor)
+	public void drawRate(TileEntitySensors monitor)
 	{
 		RenderEngine renderengine = Minecraft.getMinecraft().renderEngine;
 		
@@ -266,14 +265,26 @@ public class RenderSeismicMonitor extends TileEntitySpecialRenderer// implements
 		Tessellator t = Tessellator.instance;
 		t.startDrawing(GL11.GL_QUADS);
 		
-		int num = monitor.VALUECOUNT-monitor.rate;
-		
-		int hundreds = num/100;
+		int num = monitor.filter?monitor.rate:monitor.maxValuesAll()/monitor.rate;
+
+		int thousands = (num/1000)%10;
+		int hundreds = (num/100)%10;
 		int tens = (num/10)%10;
 		int ones = num%10;
 		
-		double [] UVs = locationFromNumber(hundreds);
-		if(hundreds!=0)
+		double [] UVs = locationFromNumber(thousands);
+		if(thousands!=0)
+		{
+			GL11.glColor4f(1.0F, 0.0F, 0.0F, 0.95F);
+			
+		    t.addVertexWithUV(1.25, 1.0, 0, UVs[0], UVs[2]);
+		    t.addVertexWithUV(1.25, 0.8, 0, UVs[0], UVs[3]);
+		      
+		    t.addVertexWithUV(1.10, 0.8, 0, UVs[1], UVs[3]);
+		    t.addVertexWithUV(1.10, 1.0, 0, UVs[1], UVs[2]);
+		}
+	    UVs = locationFromNumber(hundreds);
+		if(hundreds!=0||thousands!=0)
 		{
 			GL11.glColor4f(1.0F, 0.0F, 0.0F, 0.95F);
 			
@@ -283,9 +294,8 @@ public class RenderSeismicMonitor extends TileEntitySpecialRenderer// implements
 		    t.addVertexWithUV(0.90, 0.8, 0, UVs[1], UVs[3]);
 		    t.addVertexWithUV(0.90, 1.0, 0, UVs[1], UVs[2]);
 		}
-
 	    UVs = locationFromNumber(tens);
-		if(tens!=0||hundreds!=0)
+		if(tens!=0||hundreds!=0||thousands!=0)
 		{
 			GL11.glColor4f(1.0F, 0.0F, 0.0F, 0.95F);
 			
@@ -366,10 +376,11 @@ public class RenderSeismicMonitor extends TileEntitySpecialRenderer// implements
 		return ret;
 	}
 	
-	public void drawFrontButtons(TileEntitySeismicMonitor monitor)
+	public void drawFrontButtons(TileEntitySensors monitor)
 	{
 		RenderEngine renderengine = Minecraft.getMinecraft().renderEngine;
-	   	
+
+		float shade;
       GL11.glPushMatrix();
       
       if(monitor.getFacing() == ForgeDirection.EAST)
@@ -402,31 +413,31 @@ public class RenderSeismicMonitor extends TileEntitySpecialRenderer// implements
 		t.startDrawing(GL11.GL_QUADS);
 		GL11.glColor4f(1.0F, 1.0F, 1.0F, 0.5F);
 		
-		////////////////Big Buttons////////////////////
-	    t.addVertexWithUV(1, 0.75, 0, 0, 1);
-	    t.addVertexWithUV(1, 0.5, 0, 0, 0);
+		////////////////Big Buttons////////
+	    t.addVertexWithUV(1, 0.8, 0, 0, 1);
+	    t.addVertexWithUV(1, 0.6, 0, 0, 0);
 	      
-	    t.addVertexWithUV(0.75, 0.5, 0, 1, 0);
-	    t.addVertexWithUV(0.75, 0.75, 0, 1, 1);
-	    /////////////////////////////////////////
-	    t.addVertexWithUV(0.25, 0.75, 0, 0, 0);
-	    t.addVertexWithUV(0.25, 0.5, 0, 0, 1);
+	    t.addVertexWithUV(0.8, 0.6, 0, 1, 0);
+	    t.addVertexWithUV(0.8, 0.8, 0, 1, 1);
+	    ///////////////////////////////////////
+	    t.addVertexWithUV(0.2, 0.8, 0, 0, 0);
+	    t.addVertexWithUV(0.2, 0.6, 0, 0, 1);
 	      
-	    t.addVertexWithUV(0, 0.5, 0, 1, 1);
-	    t.addVertexWithUV(0, 0.75, 0, 1, 0);
+	    t.addVertexWithUV(0, 0.6, 0, 1, 1);
+	    t.addVertexWithUV(0, 0.8, 0, 1, 0);
 	    
-		////////////////Small Buttons////////////////////
-	    t.addVertexWithUV(0.95, 0.95, 0, 0, 1);
-	    t.addVertexWithUV(0.95, 0.8, 0, 0, 0);
+		////////////////Small Buttons/////////
+	    t.addVertexWithUV(1, 1, 0, 0, 1);
+	    t.addVertexWithUV(1, 0.8, 0, 0, 0);
 	      
 	    t.addVertexWithUV(0.8, 0.8, 0, 1, 0);
-	    t.addVertexWithUV(0.8, 0.95, 0, 1, 1);
-	    /////////////////////////////////////////
-	    t.addVertexWithUV(0.20, 0.95, 0, 0, 0);
+	    t.addVertexWithUV(0.8, 1, 0, 1, 1);
+	    //////////////////////////////////////
+	    t.addVertexWithUV(0.20, 1, 0, 0, 0);
 	    t.addVertexWithUV(0.20, 0.8, 0, 0, 1);
 	      
-	    t.addVertexWithUV(0.05, 0.8, 0, 1, 1);
-	    t.addVertexWithUV(0.05, 0.95, 0, 1, 0);
+	    t.addVertexWithUV(0.0, 0.8, 0, 1, 1);
+	    t.addVertexWithUV(0.0, 1, 0, 1, 0);
 
 		t.draw();
 		
@@ -449,30 +460,30 @@ public class RenderSeismicMonitor extends TileEntitySpecialRenderer// implements
 		GL11.glColor4f(1.0F, 1.0F, 1.0F, 0.5F);
 		
 		//////////////////Big buttons/////////////////
-	    t.addVertexWithUV(0.75, 0.5, 0, 1, 0);
-	    t.addVertexWithUV(0.75, 0.25, 0, 1, 1);
+	    t.addVertexWithUV(0.8, 0.6, 0, 1, 0);
+	    t.addVertexWithUV(0.8, 0.4, 0, 1, 1);
 	      
-	    t.addVertexWithUV(0.50, 0.25, 0, 0, 1);
-	    t.addVertexWithUV(0.50, 0.5, 0, 0, 0);
+	    t.addVertexWithUV(0.6, 0.4, 0, 0, 1);
+	    t.addVertexWithUV(0.6, 0.6, 0, 0, 0);
 	    /////////////////////////////////////////
-	    t.addVertexWithUV(0.50, 0.5, 0, 0, 0);
-	    t.addVertexWithUV(0.50, 0.25, 0, 0, 1);
+	    t.addVertexWithUV(0.4, 0.6, 0, 0, 0);
+	    t.addVertexWithUV(0.4, 0.4, 0, 0, 1);
 	      
-	    t.addVertexWithUV(0.25, 0.25, 0, 1, 1);
-	    t.addVertexWithUV(0.25, 0.5, 0, 1, 0);
+	    t.addVertexWithUV(0.2, 0.4, 0, 1, 1);
+	    t.addVertexWithUV(0.2, 0.6, 0, 1, 0);
 	    
 		//////////////////small buttons/////////////////
-	    t.addVertexWithUV(0.70, 0.7, 0, 1, 0);
-	    t.addVertexWithUV(0.70, 0.55, 0, 1, 1);
+	    t.addVertexWithUV(0.8, 0.8, 0, 1, 0);
+	    t.addVertexWithUV(0.8, 0.6, 0, 1, 1);
 	      
-	    t.addVertexWithUV(0.55, 0.55, 0, 0, 1);
-	    t.addVertexWithUV(0.55, 0.7, 0, 0, 0);
+	    t.addVertexWithUV(0.6, 0.6, 0, 0, 1);
+	    t.addVertexWithUV(0.6, 0.8, 0, 0, 0);
 	    /////////////////////////////////////////
-	    t.addVertexWithUV(0.45, 0.7, 0, 0, 0);
-	    t.addVertexWithUV(0.45, 0.55, 0, 0, 1);
+	    t.addVertexWithUV(0.4, 0.8, 0, 0, 0);
+	    t.addVertexWithUV(0.4, 0.6, 0, 0, 1);
 	      
-	    t.addVertexWithUV(0.3, 0.55, 0, 1, 1);
-	    t.addVertexWithUV(0.3, 0.7, 0, 1, 0);
+	    t.addVertexWithUV(0.2, 0.6, 0, 1, 1);
+	    t.addVertexWithUV(0.2, 0.8, 0, 1, 0);
 	    
 		t.draw();
 
@@ -480,17 +491,17 @@ public class RenderSeismicMonitor extends TileEntitySpecialRenderer// implements
 	    GL11.glColor4f(0.6F, 1.0F, 0.0F, 0.5F);
 	    
 		//////////////////small buttons/////////////////
-	    t.addVertexWithUV(0.70, 0.95, 0, 1, 0);
-	    t.addVertexWithUV(0.70, 0.8, 0, 1, 1);
+	    t.addVertexWithUV(0.8, 1, 0, 1, 0);
+	    t.addVertexWithUV(0.8, 0.8, 0, 1, 1);
 	      
-	    t.addVertexWithUV(0.55, 0.8, 0, 0, 1);
-	    t.addVertexWithUV(0.55, 0.95, 0, 0, 0);
+	    t.addVertexWithUV(0.6, 0.8, 0, 0, 1);
+	    t.addVertexWithUV(0.6, 1, 0, 0, 0);
 	    /////////////////////////////////////////
-	    t.addVertexWithUV(0.45, 0.95, 0, 0, 0);
-	    t.addVertexWithUV(0.45, 0.8, 0, 0, 1);
+	    t.addVertexWithUV(0.4, 1, 0, 0, 0);
+	    t.addVertexWithUV(0.4, 0.8, 0, 0, 1);
 	      
-	    t.addVertexWithUV(0.3, 0.8, 0, 1, 1);
-	    t.addVertexWithUV(0.3, 0.95, 0, 1, 0);
+	    t.addVertexWithUV(0.2, 0.8, 0, 1, 1);
+	    t.addVertexWithUV(0.2, 1, 0, 1, 0);
 
 		t.draw();
 		GL11.glEnable(GL11.GL_LIGHTING);
@@ -508,11 +519,11 @@ public class RenderSeismicMonitor extends TileEntitySpecialRenderer// implements
 		GL11.glColor4f(1.0F, 0.0F, 0.0F, 1F);
 		
 		//////////////////Reset Button/////////////////
-	    t.addVertexWithUV(0.75, 0.25, 0, 1, 0);
-	    t.addVertexWithUV(0.75, 0.00, 0, 1, 1);
+	    t.addVertexWithUV(0.6, 0.4, 0, 1, 0);
+	    t.addVertexWithUV(0.6, 0.2, 0, 1, 1);
 	      
-	    t.addVertexWithUV(0.25, 0.00, 0, 0, 1);
-	    t.addVertexWithUV(0.25, 0.25, 0, 0, 0);
+	    t.addVertexWithUV(0.4, 0.2, 0, 0, 1);
+	    t.addVertexWithUV(0.4, 0.4, 0, 0, 0);
 	    
 		t.draw();
 		
@@ -537,11 +548,39 @@ public class RenderSeismicMonitor extends TileEntitySpecialRenderer// implements
 		
 	    double[] UVs = locationFromIndex(!monitor.paused?29:30);
 		
-	    t.addVertexWithUV(1, 0.5, 0, UVs[0], UVs[2]);
-	    t.addVertexWithUV(1, 0.25, 0, UVs[0], UVs[3]);
+	    t.addVertexWithUV(0.6, 1, 0, UVs[0], UVs[2]);
+	    t.addVertexWithUV(0.6, 0.8, 0, UVs[0], UVs[3]);
 	      
-	    t.addVertexWithUV(0.75, 0.25, 0, UVs[1], UVs[3]);
-	    t.addVertexWithUV(0.75, 0.5, 0, UVs[1], UVs[2]);
+	    t.addVertexWithUV(0.4, 0.8, 0, UVs[1], UVs[3]);
+	    t.addVertexWithUV(0.4, 1, 0, UVs[1], UVs[2]);
+	    
+		t.draw();
+		
+		t.startDrawing(GL11.GL_QUADS);
+		shade = monitor.grid?1:0.5F;
+		GL11.glColor4f(shade, shade, shade, monitor.grid?1F:0.5F);
+		
+	    UVs = locationFromIndex(95);
+		
+	    t.addVertexWithUV(0.6, 0.6, 0, UVs[0], UVs[2]);
+	    t.addVertexWithUV(0.6, 0.4, 0, UVs[0], UVs[3]);
+	      
+	    t.addVertexWithUV(0.4, 0.4, 0, UVs[1], UVs[3]);
+	    t.addVertexWithUV(0.4, 0.6, 0, UVs[1], UVs[2]);
+	    
+		t.draw();
+		
+		t.startDrawing(GL11.GL_QUADS);
+		shade = monitor.filter?1:0.5F;
+		GL11.glColor4f(shade, shade, shade, monitor.filter?1F:0.5F);
+		
+	    UVs = locationFromIndex(94);
+		
+	    t.addVertexWithUV(0.6, 0.8, 0, UVs[0], UVs[2]);
+	    t.addVertexWithUV(0.6, 0.6, 0, UVs[0], UVs[3]);
+	      
+	    t.addVertexWithUV(0.4, 0.6, 0, UVs[1], UVs[3]);
+	    t.addVertexWithUV(0.4, 0.8, 0, UVs[1], UVs[2]);
 	    
 		t.draw();
 		
@@ -629,7 +668,7 @@ public class RenderSeismicMonitor extends TileEntitySpecialRenderer// implements
 		GL11.glColor4d(red, green, blue, alpha);
 	}
 			
-	public void drawGraph(TileEntitySeismicMonitor monitor, int index)
+	public void drawGraph(TileEntitySensors monitor, int index)
 	{
  	   if(!monitor.getButton(index+1))
 		   return;
@@ -638,7 +677,7 @@ public class RenderSeismicMonitor extends TileEntitySpecialRenderer// implements
 	   if(monitor.stations[index]==null)
 		   return;
 	   
-		Double[] values = monitor.stations[index].getValues();
+		Double[] values = monitor.getValues(index);
 		if(values == null)
 			return;
 		
@@ -658,65 +697,77 @@ public class RenderSeismicMonitor extends TileEntitySpecialRenderer// implements
 		if(values.length>0)
 		{
 			t.startDrawing(GL11.GL_LINES);
-			GL11.glLineWidth(2.0F);
+			GL11.glLineWidth(2.5F);
 			setColour(index, 1);
 	
-			double yMin = Integer.MAX_VALUE;
-			double yMax = Integer.MIN_VALUE;
-	
-			for(int i = 0; i < values.length; i++)
-			{
-				Double v = values[i];
-				if(v == null)
-				{
-					continue;
-				}
-				if(v > yMax)
-				{
-					yMax = v;
-				}
-				if(v < yMin)
-				{
-					yMin = v;
-				}
-			}
-	
-			yMax = monitor.scale;
-			yMin = -monitor.scale;
-	
+			double yMin = -monitor.scale;
+			double yMax = monitor.scale;
+
 			Double lastValue = null;
 			int lastX = 0;
 			
-			double num = values.length-monitor.rate;
-			double xOffset = -(3/num)*((double)monitor.offset);
-			//System.out.println(xOffset+" "+values.length+" "+monitor.rate+" "+num);
-			for(int i = 1+monitor.offset; i < monitor.offset + num; i++)
+			double num = values.length/monitor.rate;
+			
+			if(!monitor.filter)
 			{
-				if(i>=values.length||values[i] == null)
+				for(int i = 1+monitor.offset; i < monitor.offset + num; i++)
 				{
-					continue;
-				}
-				if(lastValue == null)
-				{
-					lastValue = values[i];
-					lastX = i;
-				}
-				else
-				{
-					double x1 = xOffset + 3*(0.999)/(num) * lastX+0.001;
-					double x2 = xOffset + 3*(0.999)/(num) * (i)+0.001;
-					double y1 = (values[i - 1]) / (yMax - yMin);
-					double y2 = (values[i]) / (yMax - yMin);
-					
-					t.addVertex(x1-1, y1>0?Math.min(y1, 1):Math.max(y1,-1), 0);
-					t.addVertex(x2-1, y2>0?Math.min(y2, 1):Math.max(y2,-1), 0);
-					
-					lastValue = values[i];
-					lastX = i;
+					if(i>=values.length||values[i] == null)
+					{
+						continue;
+					}
+					if(lastValue == null)
+					{
+						lastValue = values[i];
+						lastX = i;
+					}
+					else
+					{
+						double x1 = 3*(0.999)/(num) * (lastX-monitor.offset)+0.001;
+						double x2 = 3*(0.999)/(num) * (i-monitor.offset)+0.001;
+						double y1 = (values[i - 1]) / (yMax - yMin);
+						double y2 = (values[i]) / (yMax - yMin);
+
+						t.addVertex(x1-1, y1>0?Math.min(y1, 1):Math.max(y1,-1), 0);
+						t.addVertex(x2-1, y2>0?Math.min(y2, 1):Math.max(y2,-1), 0);
+						
+						lastValue = values[i];
+						lastX = i;
+					}
 				}
 			}
-			GL11.glRotatef(180, 0, 1, 0);
-			GL11.glTranslated(-1, 0, -1);
+			else
+			{
+				int i = 1;
+				num = Math.min(values.length,160);
+				int rate = Math.max(monitor.rate, 1);
+				for(int j = rate+monitor.offset; j < monitor.offset + num; j+=rate)
+				{
+					if(j>=values.length||values[j] == null)
+					{
+						continue;
+					}
+					if(lastValue == null)
+					{
+						lastValue = values[j];
+						lastX = i;
+					}
+					else
+					{
+						double x1 = 3*(0.999)/(num/rate) * (lastX-(0*monitor.offset))+0.001;
+						double x2 = 3*(0.999)/(num/rate) * (i-(0*monitor.offset))+0.001;
+						double y1 = (values[j - rate]) / (yMax - yMin);
+						double y2 = (values[j]) / (yMax - yMin);
+						
+						t.addVertex(x1-1, y1>0?Math.min(y1, 1):Math.max(y1,-1), 0);
+						t.addVertex(x2-1, y2>0?Math.min(y2, 1):Math.max(y2,-1), 0);
+						
+						lastValue = values[j];
+						lastX = i;
+					}
+					i++;
+				}
+			}
 			
 			if(monitor.getFacing() == ForgeDirection.EAST)
 			{
@@ -733,6 +784,7 @@ public class RenderSeismicMonitor extends TileEntitySpecialRenderer// implements
 				GL11.glTranslated(0, 0, 1);
 				GL11.glRotatef(90, 0, 1, 0);
 			}
+			GL11.glTranslated(0, 0, 1);
 			t.draw();
 		}
 
@@ -742,11 +794,10 @@ public class RenderSeismicMonitor extends TileEntitySpecialRenderer// implements
 		
 		GL11.glPopAttrib();
 		GL11.glPopAttrib();
-
 		GL11.glPopMatrix();
 	}
 	
-	public void drawGrid(TileEntitySeismicMonitor monitor, int index)
+	public void drawGrid(TileEntitySensors monitor, int index)
 	{
 			GL11.glPushMatrix();
 			
@@ -781,29 +832,34 @@ public class RenderSeismicMonitor extends TileEntitySpecialRenderer// implements
 			GL11.glTranslated(0, 2, 0);
 			Tessellator t = Tessellator.instance;
 			
-			t.startDrawing(GL11.GL_LINES);
-			GL11.glLineWidth(1.5F);
-			setColour(index, 0.25);
-				
-			for(double i = -10; i<=10; i++)
+			if(monitor.grid)
 			{
-				t.addVertex(-1, i/10, 0);
-				t.addVertex(2, i/10, 0);
+				t.startDrawing(GL11.GL_LINES);
+				GL11.glLineWidth(1.5F);
+				setColour(index, 0.25);
+					
+				for(double i = -10; i<=10; i++)
+				{
+					t.addVertex(-1, i/10, 0);
+					t.addVertex(2, i/10, 0);
+				}
+				for(double i = -10; i<=20; i++)
+				{
+					t.addVertex(i/10, 1, 0);
+					t.addVertex(i/10, -1, 0);
+				}
+				t.draw();
 			}
-			for(double i = -10; i<=20; i++)
-			{
-				t.addVertex(i/10, 1, 0);
-				t.addVertex(i/10, -1, 0);
-			}
-			
-			t.draw();
-			
 			t.startDrawing(GL11.GL_LINES);
 			GL11.glLineWidth(2.2F);
 			setColour(index, 0.5);
 			GL11.glTranslated(0, 0, 0.001);
 			t.addVertex(-1, 0, 0);
 			t.addVertex(2, 0, 0);
+			t.addVertex(-1, 0.5, 0);
+			t.addVertex(2, 0.5, 0);
+			t.addVertex(-1, -0.5, 0);
+			t.addVertex(2, -0.5, 0);
 			
 			t.draw();
 
@@ -817,7 +873,7 @@ public class RenderSeismicMonitor extends TileEntitySpecialRenderer// implements
 			GL11.glPopMatrix();
 	}
 	
-	public void drawSelectionOverLay(TileEntitySeismicMonitor monitor, int index, int colour)
+	public void drawSelectionOverLay(TileEntitySensors monitor, int index, int colour)
 	{
 		if(monitor.getButton(index+1))
  	   {

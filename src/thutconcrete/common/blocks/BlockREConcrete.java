@@ -251,10 +251,6 @@ public class BlockREConcrete extends Block16Fluid implements IRebar, ITileEntity
 				}
 			}
 		}
-		if(meta==0)
-		{
-			worldObj.setBlock(x, y, z, BlockMisc.instance.blockID, 1, 3);
-		}
 		
 	}
 	
@@ -318,17 +314,6 @@ public class BlockREConcrete extends Block16Fluid implements IRebar, ITileEntity
 	@SideOnly(Side.CLIENT)
 	public Icon theIcon;
 	
-
-	
-
-    /**
-     * The type of render function that is called for this block
-     */
-    @Override
-    public int getRenderType()
-    {
-        return BlockRenderHandler.ID;
-    }
     
 	public boolean[] sides(IBlockAccess worldObj, int x, int y, int z) {
 		boolean[] side = new boolean[6];
@@ -341,18 +326,6 @@ public class BlockREConcrete extends Block16Fluid implements IRebar, ITileEntity
 		return side;
 	}
 
-	@Override
-	public boolean[] sides(World worldObj, int x, int y, int z) {
-
-		boolean[] side = new boolean[6];
-    	int[][]sides = {{1,0,0},{-1,0,0},{0,0,1},{0,0,-1},{0,1,0},{0,-1,0}};
-		for(int i = 0; i<6; i++){
-			int id = worldObj.getBlockId(x+sides[i][0], y+sides[i][1], z+sides[i][2]);
-			Block block = Block.blocksList[id];
-			side[i] = (block instanceof IRebar);
-		}
-		return side;
-	}
 
 	@Override
 	public Icon getIcon(Block block) {

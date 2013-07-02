@@ -11,10 +11,12 @@ import net.minecraft.world.World;
 import com.google.common.io.ByteArrayDataInput;
 
 import cpw.mods.fml.common.network.Player;
+import thutconcrete.api.datasources.DataSources;
+import thutconcrete.api.datasources.IDataSource;
 import thutconcrete.api.network.IPacketProcessor;
-import thutconcrete.common.tileentity.TileEntitySeismicMonitor;
+import thutconcrete.common.tileentity.TileEntitySensors;
 
-public class PacketSeismicMonitor implements IPacketProcessor
+public class PacketDataSource implements IPacketProcessor
 {
 
 	@Override
@@ -31,13 +33,13 @@ public class PacketSeismicMonitor implements IPacketProcessor
         int button = dat.readInt();
         int rate = dat.readInt();
         double coef = dat.readDouble();
-        if(te instanceof TileEntitySeismicMonitor)
+        if(te instanceof TileEntitySensors)
 		{
-			TileEntitySeismicMonitor tel = (TileEntitySeismicMonitor)te;
+        	TileEntitySensors tel = (TileEntitySensors)te;
 			tel.setScale(f);
 			tel.rate = rate;
 			tel.id = id;
-			tel.MAXID = Math.max(maxId, tel.MAXID);
+			DataSources.MAXID = Math.max(maxId, DataSources.MAXID);
 			tel.side = side;
 			tel.button = button;
 			tel.coef = coef;
@@ -52,19 +54,19 @@ public class PacketSeismicMonitor implements IPacketProcessor
         
 	}
 
-	public static Packet250CustomPayload getPacket(TileEntity te)
+	public static Packet250CustomPayload getPacket(TileEntity te, String channel)
 	{
 		
 		int x = te.xCoord;
 		int y = te.yCoord;
 		int z = te.zCoord;
-		if(!(te instanceof TileEntitySeismicMonitor))
+		if(!(te instanceof TileEntitySensors))
 		{
 			return null;
 		}
-		TileEntitySeismicMonitor s = (TileEntitySeismicMonitor)te;
+		TileEntitySensors s = (TileEntitySensors)te;
 		int id = s.id;
-		int maxId = s.MAXID;
+		int maxId = DataSources.MAXID;
 		int f = s.exponent;
 		
 		int side = s.side;
@@ -78,7 +80,7 @@ public class PacketSeismicMonitor implements IPacketProcessor
 		
 		try
         {
-        	dos.writeInt(8);
+        	dos.writeInt(8); 
             dos.writeInt(x);
             dos.writeInt(y);
             dos.writeInt(z);
@@ -99,7 +101,7 @@ public class PacketSeismicMonitor implements IPacketProcessor
             e.printStackTrace();
         }
         Packet250CustomPayload pkt = new Packet250CustomPayload();
-        pkt.channel = "Thut's Concrete";
+        pkt.channel = channel;
         pkt.data = bos.toByteArray();
         pkt.length = bos.size();
         pkt.isChunkDataPacket = true;

@@ -1,5 +1,6 @@
 package thutconcrete.common.items;
 
+import thutconcrete.api.utils.Vector3;
 import thutconcrete.common.ConcreteCore;
 import thutconcrete.common.blocks.Block16Fluid;
 import thutconcrete.common.blocks.BlockLiquidConcrete;
@@ -62,7 +63,7 @@ public class ItemBucketConcrete extends ItemBucket{
 	    	{
 		    	int meta = worldObj.getBlockMetadata(x, y, z);
 	    		Block16Fluid block = (Block16Fluid)b;
-		    	if(meta!=0&&block.willCombine(BlockLiquidConcrete.instance.blockID, id))
+		    	if(meta!=0&&block.willCombine(BlockLiquidConcrete.instance.blockID, new Vector3(x,y,z), worldObj))
 		    	{
 		    		return placedStack(worldObj,x, y, z, ForgeDirection.getOrientation(1), block);
 		    	}

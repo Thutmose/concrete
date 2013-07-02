@@ -34,8 +34,6 @@ public class BlockLift extends Block implements ITileEntityProvider, IConnectabl
 
 	public static BlockLift instance;
 	
-	public Icon[] faces;
-	
 	public int size = 5;
 	
 	public BlockLift(int par1) 
@@ -57,6 +55,7 @@ public class BlockLift extends Block implements ITileEntityProvider, IConnectabl
 			 if(te!=null)
 			 {
 				ForgeDirection side =  getFacingfromEntity(entity);
+				System.out.println("set: "+side+" "+entity.rotationYaw);
 				te.setSide(side.getOpposite().ordinal());
 			 }
 		 }
@@ -238,7 +237,6 @@ public class BlockLift extends Block implements ITileEntityProvider, IConnectabl
 	{
 		blockIcon = iconRegister.registerIcon("thutconcrete:blockLift");
 		icon = iconRegister.registerIcon("thutconcrete:liftControl");
-		faces = new Icon[17];
 		icon2 = iconRegister.registerIcon("thutconcrete:controlPanel_1");
 	}
 	
@@ -248,7 +246,7 @@ public class BlockLift extends Block implements ITileEntityProvider, IConnectabl
      */
     public Icon getIcon(int par1, int par2)
     {
-        return par2==0?blockIcon:icon;
+        return par2==0?blockIcon:par1==3?icon2:icon;
     }
     
 	 @SideOnly(Side.CLIENT)
@@ -340,7 +338,7 @@ public class BlockLift extends Block implements ITileEntityProvider, IConnectabl
      */
     public int isProvidingStrongPower(IBlockAccess par1IBlockAccess, int par2, int par3, int par4, int par5)
     {
-        return isProvidingWeakPower(par1IBlockAccess, par2, par3, par4, par5);
+        return 0;// isProvidingWeakPower(par1IBlockAccess, par2, par3, par4, par5);
     }
 	
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -54,13 +54,13 @@ public class TCPacket implements IPacketHandler
 		packetTypes.put(5, new PacketLift());
 		packetTypes.put(6, new PacketVolcano());
 		packetTypes.put(7, new PacketSeedMap());
-		packetTypes.put(8, new PacketSeismicMonitor());
+		packetTypes.put(8, new PacketDataSource());
 	}
 	
 	public void handlePacket(ByteArrayDataInput dat,Player player,World world)
 	{
 		int id = dat.readInt();
-	//	System.out.println(id);
+	//	System.out.println("Packet ID: "+id);
 		packetTypes.get(id).processPacket(dat, player, world);
 	}
 	

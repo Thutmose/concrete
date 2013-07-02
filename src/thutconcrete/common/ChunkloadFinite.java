@@ -49,27 +49,17 @@ public class ChunkloadFinite {
 		blockSize = chunkSize*16;
 	}
 	
-	@ForgeSubscribe
-	public void onWorldLoad(Load evt)
-	{
-		if(!evt.world.isRemote)
-		{
-			if(evt.world.playerEntities!=null&&evt.world.playerEntities.size()>0)
-				for(Object o:evt.world.playerEntities)
-				{
-					PacketSeedMap.sendPacket((Player) o);
-				}
-		}
-		
-		Volcano.init(evt.world);
-	}
 	
 	@ForgeSubscribe
 	public void onJoin(EntityJoinWorldEvent evt)
 	{
 		if(evt.entity instanceof Player)
 		{
-			PacketSeedMap.sendPacket((Player)evt.entity);
+			if(!evt.world.isRemote)
+			{
+				Volcano.init(evt.world);
+				PacketSeedMap.sendPacket((Player)evt.entity);
+			}
 		}
 	}
 	

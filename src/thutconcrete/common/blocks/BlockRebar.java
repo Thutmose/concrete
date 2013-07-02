@@ -405,22 +405,22 @@ public class BlockRebar extends Block implements IRebar
     }
     
     
-	@Override
-	public boolean[] sides(World worldObj, int x, int y, int z) {
+//	@Override
+//	public boolean[] sides(World worldObj, int x, int y, int z) {
+//
+//    	int[][]sides = {{1,0,0},{-1,0,0},{0,0,1},{0,0,-1},{0,1,0},{0,-1,0}};
+//		for(int i = 0; i<6; i++){
+//			int id = worldObj.getBlockId(x+sides[i][0], y+sides[i][1], z+sides[i][2]);
+//			Block block = Block.blocksList[id];
+//			side[i] = (block instanceof IRebar);
+//		}
+//		return side;
+//	}
 
-    	int[][]sides = {{1,0,0},{-1,0,0},{0,0,1},{0,0,-1},{0,1,0},{0,-1,0}};
-		for(int i = 0; i<6; i++){
-			int id = worldObj.getBlockId(x+sides[i][0], y+sides[i][1], z+sides[i][2]);
-			Block block = Block.blocksList[id];
-			side[i] = (block instanceof IRebar);
-		}
-		return side;
-	}
-
-	@Override 
-	public String getItemIconName(){
-		return "thutconcrete:" + "rebar";
-	}
+//	@Override 
+//	public String getItemIconName(){
+//		return "thutconcrete:" + "rebar";
+//	}
 	
 	@Override
 	public Icon getIcon(Block block) {

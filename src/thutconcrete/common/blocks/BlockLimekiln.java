@@ -86,6 +86,15 @@ public class BlockLimekiln extends Block implements ITileEntityProvider
 		faceIconLit = iconRegister.registerIcon("thutconcrete:Kiln_Front_Lit");
 	}
 	
+    @SideOnly(Side.CLIENT)
+    /**
+     * From the specified side and block metadata retrieves the blocks texture. Args: side, metadata
+     */
+    public Icon getIcon(int par1, int par2)
+    {
+        return par1==3?faceIconUnlit:blockIcon;
+    }
+	
 	@Override
 	public void onBlockPlacedBy(World world, int x, int y, int z, EntityLiving entity, ItemStack itemStack)
 	{

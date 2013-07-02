@@ -29,6 +29,7 @@ public class PacketSeedMap implements IPacketProcessor
 			long seed = dat.readLong();
 			Volcano.seedMap.put(id, seed);
 		}
+		Volcano.init(world);
 	}
 	
 	public static void sendPacket(Player player)

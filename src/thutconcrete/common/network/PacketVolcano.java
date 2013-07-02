@@ -28,11 +28,13 @@ public class PacketVolcano implements IPacketProcessor
         int active = dat.readInt();
         int growth = dat.readInt();
         long seed = dat.readLong();
-		System.out.println("read: "+active+" "+growth);
+        byte b = dat.readByte();
+		//System.out.println("read: "+active+" "+growth);
         Volcano.setSeed(world.provider.dimensionId, seed);
         if(world.getBlockTileEntity(x, y, z) instanceof TileEntityVolcano)
         {
         	TileEntityVolcano v = (TileEntityVolcano)world.getBlockTileEntity(x, y, z);
+        	v.byteToBools(b);
         	v.age = age;
         	v.activeCount = active;
         	v.growthTimes = growth;
@@ -58,7 +60,8 @@ public class PacketVolcano implements IPacketProcessor
 		int active = v.activeCount;
 		int growth = v.growthTimes;
 		long seed = v.worldObj.getSeed();
-		System.out.println("wrote: "+active+" "+growth);
+		byte bools = v.booleansToByte();
+		//System.out.println("wrote: "+active+" "+growth);
 	 	ByteArrayOutputStream bos = new ByteArrayOutputStream(128);
 	 	DataOutputStream dos = new DataOutputStream(bos);
 		int n = v.sideVents.size();
@@ -72,6 +75,7 @@ public class PacketVolcano implements IPacketProcessor
             dos.writeInt(active);
             dos.writeInt(growth);
             dos.writeLong(seed);
+            dos.writeByte(bools);
             v.mainVent.writeToData(dos);
             dos.writeInt(n);
             {

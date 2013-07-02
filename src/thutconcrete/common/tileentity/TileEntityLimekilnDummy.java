@@ -67,56 +67,54 @@ public class TileEntityLimekilnDummy extends TileEntity implements ISidedInvento
 	}
 	
 	@Override
+	public void invalidate()
+	{
+		tileEntityCore.invalidateMultiblock();
+		super.invalidate();
+	}
+	
+	@Override
 	public int getSizeInventory() {
-		// TODO Auto-generated method stub
 		return tileEntityCore.getSizeInventory();
 	}
 
 	@Override
 	public ItemStack getStackInSlot(int i) {
-		// TODO Auto-generated method stub
 		return tileEntityCore.getStackInSlot(i);
 	}
 
 	@Override
 	public ItemStack decrStackSize(int i, int j) {
-		// TODO Auto-generated method stub
 		return tileEntityCore.decrStackSize(i, j);
 	}
 
 	@Override
 	public ItemStack getStackInSlotOnClosing(int i) {
-		// TODO Auto-generated method stub
 		return tileEntityCore.getStackInSlotOnClosing(i);
 	}
 
 	@Override
 	public void setInventorySlotContents(int i, ItemStack itemstack) {
-		// TODO Auto-generated method stub
 		tileEntityCore.setInventorySlotContents(i, itemstack);
 	}
 
 	@Override
 	public String getInvName() {
-		// TODO Auto-generated method stub
 		return tileEntityCore.getInvName();
 	}
 
 	@Override
 	public boolean isInvNameLocalized() {
-		// TODO Auto-generated method stub
 		return tileEntityCore.isInvNameLocalized();
 	}
 
 	@Override
 	public int getInventoryStackLimit() {
-		// TODO Auto-generated method stub
 		return tileEntityCore.getInventoryStackLimit();
 	}
 
 	@Override
 	public boolean isUseableByPlayer(EntityPlayer entityplayer) {
-		// TODO Auto-generated method stub
 		return worldObj.getBlockTileEntity(xCoord, yCoord, zCoord) != this ? false : entityplayer.getDistanceSq((double)xCoord + 0.5, (double)yCoord + 0.5, (double)zCoord + 0.5) <= 64.0;
 	}
 
@@ -128,7 +126,6 @@ public class TileEntityLimekilnDummy extends TileEntity implements ISidedInvento
 
 	@Override
 	public boolean isStackValidForSlot(int i, ItemStack itemstack) {
-		// TODO Auto-generated method stub
 		return tileEntityCore.isStackValidForSlot(i, itemstack);
 	}
 

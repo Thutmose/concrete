@@ -30,7 +30,8 @@ public class CommonProxy  implements IGuiHandler
     {
 		GameRegistry.registerTileEntity(TileEntityBlock16Fluid.class, "Fluid16BlockTE");
 		GameRegistry.registerTileEntity(TileEntityVolcano.class, "VolcanoTE");
-		GameRegistry.registerTileEntity(TileEntitySeismicMonitor.class, "seismicMonitorTE");
+		GameRegistry.registerTileEntity(TileEntitySensors.class, "sensorsTE");
+		GameRegistry.registerTileEntity(TileEntityRTG.class, "RTGsource");
 		
 		GameRegistry.registerTileEntity(TileEntityLimekiln.class, "tileEntityLimekiln");
 		GameRegistry.registerTileEntity(TileEntityLimekilnDummy.class, "tileEntityLimekilnDummy");

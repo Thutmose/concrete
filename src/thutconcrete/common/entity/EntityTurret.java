@@ -21,6 +21,7 @@ import com.google.common.io.ByteArrayDataOutput;
 import net.minecraft.block.Block;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLiving;
+import net.minecraft.entity.WatchableObject;
 import net.minecraft.entity.item.EntityMinecartEmpty;
 import net.minecraft.entity.passive.EntityPig;
 import net.minecraft.entity.player.EntityPlayer;
@@ -36,6 +37,7 @@ import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.AxisAlignedBB;
 import net.minecraft.world.World;
 import net.minecraftforge.common.ForgeDirection;
+import net.minecraftforge.event.terraingen.BiomeEvent.GetWaterColor;
 import cpw.mods.fml.common.network.PacketDispatcher;
 import cpw.mods.fml.common.registry.IEntityAdditionalSpawnData;
 import net.minecraft.inventory.IInventory;
@@ -75,9 +77,6 @@ public class EntityTurret  extends EntityLiving implements IEntityAdditionalSpaw
 	
 	public ConcurrentHashMap<String, Matrix3> boxes = new ConcurrentHashMap<String, Matrix3>();
 	public ConcurrentHashMap<String, Vector3> offsets = new ConcurrentHashMap<String, Vector3>();
-	
-//	public List<Matrix3> boxes = new ArrayList<Matrix3>();
-//  List<Vector3> offsets = new ArrayList<Vector3>();
 	
 	public Matrix3 turretBox = new Matrix3();
 	
@@ -233,7 +232,6 @@ public class EntityTurret  extends EntityLiving implements IEntityAdditionalSpaw
 		
 		double requiredEnergy = type==0?100000:1000;
 		
-		
 		boolean energy = checkEnergy(requiredEnergy);
 		if(energyEnabled&&!energy)
 		{
@@ -266,25 +264,7 @@ public class EntityTurret  extends EntityLiving implements IEntityAdditionalSpaw
 				EntityBeam beam = new EntityBeam(worldObj, origin.add(turretDir.scalarMult(size)), turretDir, false,size,10);
 				worldObj.spawnEntityInWorld(beam);
 				
-				Vector3 next = Vector3.getNextSurfacePoint(worldObj, origin.add(turretDir.scalarMult(size)), turretDir, 256);
-				
-				if(false&&next!=null&&!worldObj.isRemote)
-				{
-					Block block = next.getBlock(worldObj);
-					float resistance = next.getExplosionResistance(worldObj);
-					if(resistance<100&&block!=null&&!(block instanceof BlockLava)&&!
-							block.isFlammable(worldObj, next.intX(), next.intY(), next.intZ(), 
-									worldObj.getBlockMetadata(next.intX(), next.intY(), next.intZ()), ForgeDirection.UP))
-					{
-						int meta = 10;
-						if(block instanceof Block16Fluid)
-						{
-							meta = next.getBlockMetadata(worldObj);
-						}
-						next.setBlock(worldObj, BlockLava.getInstance(3).blockID, meta);
-					}
-				}
-				
+				Vector3 next = Vector3.getNextSurfacePoint(worldObj, origin.add(turretDir.scalarMult(size)), turretDir, 256);	
 			}
 			//origin.add(turretDir.scalarMult(size)).playSoundEffect(worldObj, 300, 1, "railgun");
 		}
@@ -425,7 +405,7 @@ public class EntityTurret  extends EntityLiving implements IEntityAdditionalSpaw
 	protected void entityInit() 
 	{
 		super.entityInit();
-		this.dataWatcher.addObject(31, Integer.valueOf((int)0));
+		this.dataWatcher.addObject(31, Integer.valueOf(0));
 	}
 
 
